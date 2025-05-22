@@ -1,0 +1,49 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Coding Standards
+
+## TypeScript
+- Use strict type checking
+- Avoid `any` type
+- Use interfaces for object shapes
+- Use type aliases for complex types
+- Export types from `src/types`
+
+## React Components
+- Use functional components
+- Implement proper prop types
+- Use React Server Components when possible
+- Minimize client-side JavaScript
+- Follow the single responsibility principle
+
+## Styling
+- Use Tailwind CSS for styling
+- Follow mobile-first approach
+- Use Shadcn UI components
+- Maintain consistent spacing and colors
+- Use CSS variables for theming
+
+## Code Organization
+- Keep files under 600 lines
+- Use meaningful file and component names
+- Group related functionality
+- Export components as default
+- Use barrel exports for directories
+
+## Error Handling
+- Use try-catch blocks
+- Implement proper error boundaries
+- Show user-friendly error messages
+- Log errors appropriately
+- Handle edge cases
+
+## Performance
+- Implement proper loading states
+- Use proper image optimization
+- Implement proper caching
+- Minimize bundle size
+- Use proper code splitting
+

@@ -1,0 +1,42 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Data Handling Guidelines
+
+## Data Fetching
+- Use React Server Components for data fetching
+- Implement proper loading states
+- Handle errors gracefully
+- Cache data appropriately
+- Use proper data validation
+
+## State Management
+- Use React hooks for local state
+- Use context for global state
+- Implement proper state updates
+- Handle loading and error states
+- Use proper state initialization
+
+## Data Validation
+- Use Zod for schema validation
+- Validate data on both client and server
+- Show proper validation errors
+- Handle edge cases
+- Implement proper type checking
+
+## Data Transformation
+- Transform data at the API level
+- Use proper data structures
+- Implement proper data formatting
+- Handle null/undefined values
+- Use proper data normalization
+
+## Data Security
+- Validate user input
+- Sanitize data
+- Implement proper access control
+- Handle sensitive data
+- Use proper encryption
+

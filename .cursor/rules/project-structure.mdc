@@ -1,0 +1,36 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Project Structure Guide
+
+## Directory Structure
+- `src/app`: Contains all Next.js pages and API routes
+- `src/components`: Reusable UI components
+- `src/lib`: Utility functions and shared logic
+- `src/types`: TypeScript type definitions
+- `src/styles`: Global styles and Tailwind configuration
+- `public`: Static assets
+
+## Key Files
+- `src/app/layout.tsx`: Root layout component
+- `src/app/page.tsx`: Home page component
+- `src/app/api`: API route handlers
+- `src/components/ui`: Shadcn UI components
+- `src/lib/utils.ts`: Utility functions
+- `src/types/index.ts`: Type definitions
+
+## Component Organization
+- Components are organized by feature/domain
+- Each component has its own directory with:
+  - Component file
+  - Types file
+  - Tests (if applicable)
+  - Styles (if component-specific)
+
+## Data Flow
+- Data fetching happens in page components or API routes
+- State management uses React hooks and context
+- Type safety is enforced throughout the application
+
