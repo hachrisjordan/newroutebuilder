@@ -1,0 +1,35 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Airline {
+  id    String @id @default(cuid())
+  code  String @unique // IATA code
+  name  String // Full name
+  label String // Full name with code
+}
+
+model Airport {
+  id          String   @id @default(cuid())
+  iata        String   @unique
+  name        String
+  cityName    String
+  country     String
+  countryCode String
+  latitude    Float
+  longitude   Float
+  zone        String
+  tc          String
+  copazone    String
+}
