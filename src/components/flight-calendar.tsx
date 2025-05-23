@@ -14,9 +14,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import SeatMapTooltip from './seat-map-tooltip';
 
-// Add CLOUD_STORAGE_BASE_URL constant at the top of the file
-const CLOUD_STORAGE_BASE_URL = 'https://storage.googleapis.com/routebuilder_storage';
-
 interface FlightData {
   flightNumber: string;
   date: string;
@@ -24,7 +21,6 @@ interface FlightData {
   origin: string;
   destination: string;
   ontime: string;
-  airline: string;
 }
 
 interface FlightCalendarProps {
@@ -76,11 +72,12 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
   // Find the most common pair
   const mostCommonPair = Object.entries(pairCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
   const [mostCommonOrigin, mostCommonDestination] = mostCommonPair ? mostCommonPair.split('|') : [null, null];
-
   // Only keep flights for the most common pair
   const filteredFlights = currentMonthFlights.filter(flight =>
     flight.origin === mostCommonOrigin && flight.destination === mostCommonDestination
   );
+  // Airline code (from first flight, fallback to 'JL')
+  const airline = filteredFlights[0]?.flightNumber?.slice(0, 2) || 'JL';
 
   const formatOntime = (ontime: string) => {
     if (ontime === 'N/A') return 'N/A';
@@ -94,34 +91,55 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
   const totalDays = lastDay.getDate();
   const startingDay = firstDay.getDay();
 
-  // Add seat config cache
-  const seatConfigCache: Record<string, any> = {};
+  // Dynamic seat config state
+  const [seatConfigData, setSeatConfigData] = useState<any | null>(null);
+  const [configLoading, setConfigLoading] = useState(false);
+  useEffect(() => {
+    if (!airline) return;
+    setConfigLoading(true);
+    fetch(`https://rbbackend-fzkmdxllwa-uc.a.run.app/api/aircraft-config/${airline}`)
+      .then(res => res.json())
+      .then(data => setSeatConfigData(data))
+      .catch(() => setSeatConfigData(null))
+      .finally(() => setConfigLoading(false));
+  }, [airline]);
 
-  // Update getSeatConfig to dynamically load seat configs
-  async function getSeatConfig(registration: string, airline: string) {
-    if (!registration || registration === 'N/A' || !airline) return null;
-    let seatData = seatConfigCache[airline];
-    if (!seatData) {
-      try {
-        console.log(`DEBUG: Fetching seat config for airline ${airline} from ${CLOUD_STORAGE_BASE_URL}/seat_${airline}.json`);
-        const response = await fetch(`${CLOUD_STORAGE_BASE_URL}/seat_${airline}.json`);
-        if (!response.ok) {
-          console.error(`DEBUG: Failed to fetch seat config for ${airline}, status: ${response.status}`);
-          throw new Error('Config not found');
-        }
-        seatData = await response.json();
-        console.log(`DEBUG: Successfully fetched seat config for ${airline}`);
-        seatConfigCache[airline] = seatData;
-      } catch (error) {
-        console.error('DEBUG: Error fetching seat config:', error);
-        return null;
-      }
+  // Helper: Find seat config for a registration
+  function getSeatConfig(registration: string) {
+    if (!seatConfigData || !registration || registration === 'N/A') return null;
+    
+    // Type guard for seatConfigData structure
+    if (!seatConfigData.tail_number_distribution) {
+      console.warn('Invalid seat config data structure:', seatConfigData);
+      return null;
     }
-    const tailMap = seatData.tail_number_distribution as Record<string, string>;
-    const variant = tailMap[registration];
+
+    const tailMap = seatConfigData.tail_number_distribution as Record<string, string | { default: string; changes: Array<{ date: string; variant: string }> }>;
+    let variant = tailMap[registration];
+    
+    // Handle date-based configuration changes
+    if (variant && typeof variant === 'object' && 'changes' in variant) {
+      // Sort changes by date in descending order
+      const sortedChanges = [...variant.changes].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      
+      // Find the most recent change that applies to the current date
+      const applicableChange = sortedChanges.find(change => new Date() >= new Date(change.date));
+      
+      // Use the applicable change's variant, or fall back to default
+      variant = applicableChange ? applicableChange.variant : variant.default;
+    }
+
     if (!variant) return null;
-    const configsByType = seatData.configurations_by_type as Record<string, any[]>;
+
+    // Try both configs_by_type and configurations_by_type
+    const configsByType = seatConfigData.configs_by_type || seatConfigData.configurations_by_type;
+    if (!configsByType || typeof configsByType !== 'object') {
+      console.warn('Invalid configs_by_type structure:', configsByType);
+      return null;
+    }
+
     for (const [aircraftType, configs] of Object.entries(configsByType)) {
+      if (!Array.isArray(configs)) continue;
       const found = configs.find(cfg => cfg.variant === variant);
       if (found) {
         return { aircraftType, ...found };
@@ -183,58 +201,28 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
     return { color, text };
   }
 
-  // Update the variant collection logic to handle async getSeatConfig
-  const loadSeatConfigs = async () => {
-    const newVariantCounts = new Map<string, number>();
-    const newVariantInfo = new Map<string, { color: string; aircraftType: string; note: string }>();
-    for (const flight of filteredFlights) {
-      const seatConfig = await getSeatConfig(flight.registration, flight.airline);
-      if (seatConfig) {
-        newVariantCounts.set(seatConfig.variant, (newVariantCounts.get(seatConfig.variant) || 0) + 1);
-        if (!newVariantInfo.has(seatConfig.variant)) {
-          newVariantInfo.set(seatConfig.variant, {
-            color: seatConfig.color,
-            aircraftType: seatConfig.aircraftType,
-            note: seatConfig.note,
-          });
-        }
+  // 1. Collect all variants for the most common origin/destination
+  const variantCounts = new Map<string, number>();
+  const variantInfo = new Map<string, { color: string; aircraftType: string; note: string }>();
+  filteredFlights.forEach(flight => {
+    const seatConfig = getSeatConfig(flight.registration);
+    if (seatConfig) {
+      variantCounts.set(seatConfig.variant, (variantCounts.get(seatConfig.variant) || 0) + 1);
+      if (!variantInfo.has(seatConfig.variant)) {
+        variantInfo.set(seatConfig.variant, {
+          color: seatConfig.color,
+          aircraftType: seatConfig.aircraftType,
+          note: seatConfig.note,
+        });
       }
     }
-    setVariantCounts(newVariantCounts);
-    setVariantInfo(newVariantInfo);
-  };
-  useEffect(() => {
-    loadSeatConfigs();
-  }, [filteredFlights]);
-
-  // Update the calendar cell rendering to handle async getSeatConfig
-  const [seatConfigs, setSeatConfigs] = useState<Record<string, any>>({});
-  useEffect(() => {
-    const loadSeatConfigsForFlights = async () => {
-      const newSeatConfigs: Record<string, any> = {};
-      for (const flight of filteredFlights) {
-        const config = await getSeatConfig(flight.registration, flight.airline);
-        if (config) {
-          newSeatConfigs[flight.registration] = config;
-        }
-      }
-      setSeatConfigs(newSeatConfigs);
-    };
-    loadSeatConfigsForFlights();
-  }, [filteredFlights]);
-
-  // Add missing state variables for variant counts and info
-  const [variantCounts, setVariantCounts] = useState<Map<string, number>>(new Map());
-  const [variantInfo, setVariantInfo] = useState<Map<string, { color: string; aircraftType: string; note: string }>>(new Map());
-
-  // Re-add variantStats and allVariants calculation
+  });
   const variantStats = Array.from(variantCounts.entries()).sort((a, b) => b[1] - a[1]);
   const allVariants = variantStats.map(([variant]) => variant);
   const [selectedVariants, setSelectedVariants] = useState<string[]>(allVariants);
-
-  // Re-add useEffect for selectedVariants
   useEffect(() => {
     setSelectedVariants(allVariants);
+    // eslint-disable-next-line
   }, [currentMonthKey, allVariants.join(",")]);
 
   return (
@@ -279,7 +267,7 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="min-w-[220px]" onCloseAutoFocus={(e: Event) => e.preventDefault()}>
+              <DropdownMenuContent className="min-w-[220px]" onCloseAutoFocus={(e: React.FocusEvent<Element>) => e.preventDefault()}>
                 {variantStats.map(([variant, count]) => (
                   <DropdownMenuCheckboxItem
                     key={variant}
@@ -321,8 +309,13 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
               const fDate = new Date(f.date);
               return fDate.toISOString().split('T')[0];
             });
+            if (day === 1) {
+              console.log('DEBUG: dateStr for first day:', dateStr);
+              console.log('DEBUG: normalizedFlightDates:', normalizedFlightDates);
+              console.log('DEBUG: raw filteredFlights:', filteredFlights);
+            }
             const flight: FlightData | undefined = getClosestFlight(dateStr);
-            const seatConfig = flight ? seatConfigs[flight.registration] : null;
+            const seatConfig = flight ? getSeatConfig(flight.registration) : null;
             const isValid = flight && flight.registration && flight.registration !== 'N/A' && seatConfig && selectedVariants.includes(seatConfig.variant);
 
             return (
@@ -352,13 +345,13 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
                   <span className="font-medium text-base border-r-2 border-gray-300 pr-2 font-bold">{day}</span>
                 </div>
                 {/* Main content */}
-                {isValid ? (
+                {isValid && !configLoading && seatConfig ? (
                   <div className="flex flex-col items-center mt-8 gap-1">
                     <div className="font-bold text-[15px] text-center leading-tight">
                       {seatConfig.aircraftType} <span className="font-mono">({seatConfig.variant})</span>
                     </div>
                     <div className="text-[12px] font-mono text-center">{seatConfig.config}</div>
-                    <SeatMapTooltip airline="JL" variant={seatConfig.variant} aircraftType={seatConfig.aircraftType}>
+                    <SeatMapTooltip airline={airline} variant={seatConfig.variant} aircraftType={seatConfig.aircraftType}>
                       <div className="text-[12px] text-muted-foreground text-center italic underline underline-offset-2">
                         {seatConfig.note}
                       </div>
