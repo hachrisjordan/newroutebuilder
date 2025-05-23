@@ -7,8 +7,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 
 const navigation = [
   { name: 'Home', href: '/' },
-  { name: 'Routes', href: '/routes' },
-  { name: 'About', href: '/about' },
+  { name: 'Seat Type / Delay', href: '/seat-type-delay' },
 ];
 
 export function Header() {
