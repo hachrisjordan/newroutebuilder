@@ -279,7 +279,7 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="min-w-[220px]" onCloseAutoFocus={(e: React.FocusEvent<Element>) => e.preventDefault()}>
+              <DropdownMenuContent className="min-w-[220px]" onCloseAutoFocus={(e: Event) => e.preventDefault()}>
                 {variantStats.map(([variant, count]) => (
                   <DropdownMenuCheckboxItem
                     key={variant}
