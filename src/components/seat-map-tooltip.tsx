@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import Image from 'next/image';
 
 interface SeatMapTooltipProps {
   airline: string;
@@ -24,7 +23,7 @@ export default function SeatMapTooltip({ airline, variant, aircraftType, childre
   const [checkedDouble, setCheckedDouble] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const [imgSize, setImgSize] = useState(300); // Default size for 1920px width
+  const [imgSize, setImgSize] = useState(300);
 
   const doubleDecker = isDoubleDecker(aircraftType);
   const url = `${CLOUD_STORAGE_BASE_URL}/seatmap/${airline}_${variant}.png`;
@@ -66,11 +65,10 @@ export default function SeatMapTooltip({ airline, variant, aircraftType, childre
     img2.onerror = () => { setImg2Exists(false); done(); };
   }, [airline, variant, doubleDecker, url1, url2]);
 
-  // Responsive image size logic (from seat-type-viewer.jsx)
+  // Responsive image size logic
   useEffect(() => {
     const calculateSize = () => {
       const viewportWidth = window.innerWidth;
-      // 300px is ~15.6% of 1920px
       const newSize = Math.round(viewportWidth * 0.156);
       setImgSize(newSize);
     };
@@ -78,97 +76,6 @@ export default function SeatMapTooltip({ airline, variant, aircraftType, childre
     window.addEventListener('resize', calculateSize);
     return () => window.removeEventListener('resize', calculateSize);
   }, []);
-
-  // Tooltip content (fit image to Popover, no vertical scroll)
-  let tooltipContent: React.ReactNode = null;
-  if (doubleDecker) {
-    if (!checkedDouble || (!img1Exists && !img2Exists)) tooltipContent = null;
-    else tooltipContent = (
-      <div style={{ display: 'flex', gap: 24, justifyContent: 'center', alignItems: 'flex-start' }}>
-        {img1Exists && (
-          <div style={{ textAlign: 'center' }}>
-            <Image src={url1} alt="Lower Deck" width={900} height={900} style={{ maxWidth: '48vw', maxHeight: '90vh', width: 'auto', height: 'auto', display: 'block' }} loading="lazy" />
-            <div style={{ fontSize: 14, color: '#fff', marginTop: 4 }}>Lower Deck</div>
-          </div>
-        )}
-        {img2Exists && (
-          <div style={{ textAlign: 'center' }}>
-            <Image src={url2} alt="Upper Deck" width={900} height={900} style={{ maxWidth: '48vw', maxHeight: '90vh', width: 'auto', height: 'auto', display: 'block' }} loading="lazy" />
-            <div style={{ fontSize: 14, color: '#fff', marginTop: 4 }}>Upper Deck</div>
-          </div>
-        )}
-      </div>
-    );
-  } else {
-    if (!checked || !imgExists) tooltipContent = null;
-    else tooltipContent = (
-      <div style={{ textAlign: 'center' }}>
-        <Image
-          src={url}
-          alt="Seat map"
-          width={1200}
-          height={900}
-          style={{
-            maxWidth: '90vw',
-            maxHeight: '90vh',
-            width: 'auto',
-            height: 'auto',
-            display: 'block',
-          }}
-          loading="lazy"
-        />
-        <div style={{ fontSize: 12, color: '#333', marginTop: 2 }}>Preview</div>
-      </div>
-    );
-  }
-
-  // Modal content (rotated -90deg, use imgSize for width, allow scroll)
-  let modalContent: React.ReactNode = null;
-  if (doubleDecker) {
-    if (!checkedDouble || (!img1Exists && !img2Exists)) modalContent = null;
-    else modalContent = (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 16, alignItems: 'center' }}>
-        {img2Exists && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-            <div style={{ fontSize: 16, fontWeight: 'bold' }}>Upper Deck</div>
-            <div style={{ textAlign: 'center', transform: 'rotate(-90deg)', transformOrigin: 'center', width: `${imgSize}px`, height: `${imgSize}px`, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '8px' }}>
-              <Image src={url2} alt="Upper Deck" width={imgSize} height={imgSize} style={{ width: `${imgSize}px`, height: 'auto', display: 'block' }} loading="lazy" />
-            </div>
-          </div>
-        )}
-        {img1Exists && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-            <div style={{ fontSize: 16, fontWeight: 'bold' }}>Lower Deck</div>
-            <div style={{ textAlign: 'center', transform: 'rotate(-90deg)', transformOrigin: 'center', width: `${imgSize}px`, height: `${imgSize}px`, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '8px' }}>
-              <Image src={url1} alt="Lower Deck" width={imgSize} height={imgSize} style={{ width: `${imgSize}px`, height: 'auto', display: 'block' }} loading="lazy" />
-            </div>
-          </div>
-        )}
-        <div style={{ fontSize: 12, marginTop: 8, textAlign: 'center' }}>Source: aeroLOPA</div>
-      </div>
-    );
-  } else {
-    if (!checked || !imgExists) modalContent = null;
-    else modalContent = (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 16 }}>
-        <div style={{ textAlign: 'center', transform: 'rotate(-90deg)', transformOrigin: 'center', width: `${imgSize}px`, height: `${imgSize}px`, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '8px' }}>
-          <Image
-            src={url}
-            alt="Seat map"
-            width={imgSize}
-            height={imgSize}
-            style={{
-              width: `${imgSize}px`,
-              height: 'auto',
-              display: 'block',
-            }}
-            loading="lazy"
-          />
-        </div>
-        <div style={{ fontSize: 12, marginTop: 8, textAlign: 'center' }}>Source: aeroLOPA</div>
-      </div>
-    );
-  }
 
   // Only show tooltip/modal if image(s) exist
   if ((doubleDecker && !checkedDouble) || (!doubleDecker && !checked)) {
@@ -181,40 +88,73 @@ export default function SeatMapTooltip({ airline, variant, aircraftType, childre
         <PopoverTrigger asChild>
           <span
             className="italic underline underline-offset-2 cursor-pointer"
-            tabIndex={0}
-            onClick={e => {
-              e.preventDefault();
-              e.stopPropagation();
-              setModalOpen(true);
-            }}
-            onMouseEnter={() => setPopoverOpen(true)}
-            onMouseLeave={() => setPopoverOpen(false)}
+            onClick={() => setModalOpen(true)}
           >
             {children}
           </span>
         </PopoverTrigger>
-        {tooltipContent && (
-          <PopoverContent
-            side="right"
-            className="z-50"
-            style={{
-              width: 'auto',
-              maxWidth: '90vw',
-              height: 'fit-content',
-              maxHeight: 'none',
-              overflow: 'visible',
-              padding: 0,
-            }}
-          >
-            {tooltipContent}
-          </PopoverContent>
-        )}
+        <PopoverContent
+          side="right"
+          className="w-auto p-0"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
+          {doubleDecker ? (
+            <div style={{ display: 'flex', gap: 24, justifyContent: 'center', alignItems: 'flex-start' }}>
+              {img1Exists && (
+                <div style={{ textAlign: 'center' }}>
+                  <img src={url1} alt="Lower Deck" style={{ maxWidth: '48vw', maxHeight: 900, width: '100%', height: 'auto', display: 'block' }} loading="lazy" />
+                  <div style={{ fontSize: 14, color: '#fff', marginTop: 4 }}>Lower Deck</div>
+                </div>
+              )}
+              {img2Exists && (
+                <div style={{ textAlign: 'center' }}>
+                  <img src={url2} alt="Upper Deck" style={{ maxWidth: '48vw', maxHeight: 900, width: '100%', height: 'auto', display: 'block' }} loading="lazy" />
+                  <div style={{ fontSize: 14, color: '#fff', marginTop: 4 }}>Upper Deck</div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center' }}>
+              <img src={url} alt="Seat map" style={{ maxWidth: 1200, maxHeight: 900, display: 'block' }} loading="lazy" />
+              <div style={{ fontSize: 12, color: '#333', marginTop: 2 }}>Preview</div>
+            </div>
+          )}
+        </PopoverContent>
       </Popover>
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="max-w-[98vw] max-h-[98vh] overflow-auto">
-          {modalContent}
+          {doubleDecker ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 16, alignItems: 'center' }}>
+              {img2Exists && (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                  <div style={{ fontSize: 16, fontWeight: 'bold' }}>Upper Deck</div>
+                  <div style={{ textAlign: 'center', transform: 'rotate(-90deg)', transformOrigin: 'center', width: `${imgSize}px`, height: `${imgSize}px`, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '8px' }}>
+                    <img src={url2} alt="Upper Deck" style={{ width: `${imgSize}px`, height: 'auto', display: 'block' }} loading="lazy" />
+                  </div>
+                </div>
+              )}
+              {img1Exists && (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                  <div style={{ fontSize: 16, fontWeight: 'bold' }}>Lower Deck</div>
+                  <div style={{ textAlign: 'center', transform: 'rotate(-90deg)', transformOrigin: 'center', width: `${imgSize}px`, height: `${imgSize}px`, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '8px' }}>
+                    <img src={url1} alt="Lower Deck" style={{ width: `${imgSize}px`, height: 'auto', display: 'block' }} loading="lazy" />
+                  </div>
+                </div>
+              )}
+              <div style={{ fontSize: 12, marginTop: 8, textAlign: 'center' }}>Source: aeroLOPA</div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 16 }}>
+              <div style={{ textAlign: 'center', transform: 'rotate(-90deg)', transformOrigin: 'center', width: `${imgSize}px`, height: `${imgSize}px`, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '8px' }}>
+                <img src={url} alt="Seat map" style={{ width: `${imgSize}px`, height: 'auto', display: 'block' }} loading="lazy" />
+              </div>
+              <div style={{ fontSize: 12, marginTop: 8, textAlign: 'center' }}>Source: aeroLOPA</div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
+      {/* Hidden preloader */}
+      <img src={url} style={{ display: 'none' }} alt="" aria-hidden="true" />
     </>
   );
 } 
