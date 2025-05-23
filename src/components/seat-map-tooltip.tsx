@@ -82,13 +82,21 @@ export default function SeatMapTooltip({ airline, variant, aircraftType, childre
     return <>{children}</>;
   }
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setModalOpen(true);
+  };
+
   return (
     <>
       <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
         <PopoverTrigger asChild>
           <span
             className="italic underline underline-offset-2 cursor-pointer"
-            onClick={() => setModalOpen(true)}
+            onMouseEnter={() => setPopoverOpen(true)}
+            onMouseLeave={() => setPopoverOpen(false)}
+            onClick={handleClick}
           >
             {children}
           </span>
@@ -97,6 +105,8 @@ export default function SeatMapTooltip({ airline, variant, aircraftType, childre
           side="right"
           className="w-auto p-0"
           onOpenAutoFocus={(e) => e.preventDefault()}
+          onMouseEnter={() => setPopoverOpen(true)}
+          onMouseLeave={() => setPopoverOpen(false)}
         >
           {doubleDecker ? (
             <div style={{ display: 'flex', gap: 24, justifyContent: 'center', alignItems: 'flex-start' }}>
