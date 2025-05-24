@@ -132,118 +132,63 @@ export default function SeatMapTooltip({ airline, variant, aircraftType, childre
           onMouseEnter={() => setPopoverOpen(true)}
           onMouseLeave={() => setPopoverOpen(false)}
         >
-          {isPortrait ? (
-            doubleDecker ? (
-              <div className="flex flex-row items-start justify-center gap-2 w-full h-full max-h-screen">
-                {img1Exists && (
-                  <div className="flex flex-col items-center w-full h-full max-h-screen">
-                    <div className="text-xs font-semibold mb-2">Lower Deck</div>
-                    <img
-                      src={url1}
-                      alt="Lower Deck"
-                      className="block h-full max-h-screen w-auto object-contain"
-                      style={{ maxWidth: '100%' }}
-                      loading="lazy"
-                    />
-                  </div>
-                )}
-                {img2Exists && (
-                  <div className="flex flex-col items-center w-full h-full max-h-screen">
-                    <div className="text-xs font-semibold mb-2">Upper Deck</div>
-                    <img
-                      src={url2}
-                      alt="Upper Deck"
-                      className="block h-full max-h-screen w-auto object-contain"
-                      style={{ maxWidth: '100%' }}
-                      loading="lazy"
-                    />
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center w-full h-full max-h-screen">
-                <img
-                  src={url}
-                  alt="Seat map"
-                  className="block h-full max-h-screen w-auto object-contain"
-                  style={{ maxWidth: '100%' }}
-                  loading="lazy"
-                />
-              </div>
-            )
-          ) : (
-            doubleDecker ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 16, alignItems: 'center' }}>
-                {img2Exists && (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-                    <div style={{ fontSize: 16, fontWeight: 'bold' }}>Upper Deck</div>
-                    <div
-                      style={{
-                        textAlign: 'center',
-                        transform: 'rotate(-90deg)',
-                        transformOrigin: 'center',
-                        width: `${imgSize}px`,
-                        height: `${imgSize}px`,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        padding: '8px',
-                      }}
-                    >
-                      <img src={url2} alt="Upper Deck" style={{ width: `${imgSize}px`, height: 'auto', display: 'block' }} loading="lazy" />
-                    </div>
-                  </div>
-                )}
-                {img1Exists && (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-                    <div style={{ fontSize: 16, fontWeight: 'bold' }}>Lower Deck</div>
-                    <div
-                      style={{
-                        textAlign: 'center',
-                        transform: 'rotate(-90deg)',
-                        transformOrigin: 'center',
-                        width: `${imgSize}px`,
-                        height: `${imgSize}px`,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        padding: '8px',
-                      }}
-                    >
-                      <img src={url1} alt="Lower Deck" style={{ width: `${imgSize}px`, height: 'auto', display: 'block' }} loading="lazy" />
-                    </div>
-                  </div>
-                )}
-                <div style={{ fontSize: 12, marginTop: 8, textAlign: 'center' }}>Source: aeroLOPA</div>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 16 }}>
-                <div
-                  style={{
-                    textAlign: 'center',
-                    transform: 'rotate(-90deg)',
-                    transformOrigin: 'center',
-                    width: `${imgSize}px`,
-                    height: `${imgSize}px`,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    padding: '8px',
-                  }}
-                >
-                  <img src={url} alt="Seat map" style={{ width: `${imgSize}px`, height: 'auto', display: 'block' }} loading="lazy" />
+          {doubleDecker ? (
+            <div className="flex items-start justify-center gap-4 text-center">
+              {img1Exists && (
+                <div className="flex flex-col items-center">
+                  <div className="text-xs text-muted-foreground mb-2">Lower Deck</div>
+                  <img
+                    ref={lowerDeckRef}
+                    src={url1}
+                    alt="Lower Deck seat map"
+                    style={{
+                      maxHeight,
+                      width: scaledLowerDeckWidth ? `${scaledLowerDeckWidth}px` : 'auto',
+                      height: 'auto',
+                      display: 'block',
+                    }}
+                    loading="lazy"
+                    onLoad={handleLowerDeckLoad}
+                  />
+                  <div className="mt-2" />
                 </div>
-                <div style={{ fontSize: 12, marginTop: 8, textAlign: 'center' }}>Source: aeroLOPA</div>
-              </div>
-            )
+              )}
+              {img2Exists && (
+                <div className="flex flex-col items-center">
+                  <div className="text-xs text-muted-foreground mb-2">Upper Deck</div>
+                  <img
+                    ref={upperDeckRef}
+                    src={url2}
+                    alt="Upper Deck seat map"
+                    style={{
+                      maxHeight,
+                      width: scaledLowerDeckWidth ? `${scaledLowerDeckWidth}px` : 'auto',
+                      height: scaledUpperDeckHeight ? `${scaledUpperDeckHeight}px` : 'auto',
+                      display: 'block',
+                    }}
+                    loading="lazy"
+                    onLoad={handleUpperDeckLoad}
+                  />
+                  <div className="mt-2" />
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center text-center gap-2">
+              <img src={url} alt="Seat map" style={{ maxWidth: '100%', maxHeight: maxHeight, display: 'block', marginBottom: 8 }} loading="lazy" />
+            </div>
           )}
+          <div className="text-xs text-muted-foreground mt-2 text-center">Source: aeroLOPA</div>
         </PopoverContent>
       </Popover>
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-[98vw] max-h-screen h-full overflow-auto">
+        <DialogContent
+          className={
+            isPortrait
+              ? 'max-w-[98vw] max-h-screen h-full overflow-auto'
+              : 'max-w-[98vw] max-h-[98vh] overflow-auto'
+          }
+        >
           {isPortrait ? (
             doubleDecker ? (
               <div className="flex flex-row items-start justify-center gap-2 w-full h-full max-h-screen">
