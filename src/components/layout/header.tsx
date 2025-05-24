@@ -58,7 +58,14 @@ export function Header() {
                 <Menu className="h-6 w-6" />
               </Button>
             </DialogTrigger>
-            <DialogContent className="p-0 max-w-xs w-full left-auto top-0 right-0 translate-x-0 translate-y-0 rounded-none h-full flex flex-col">
+            <DialogContent
+              className="
+                p-0 max-w-xs w-full left-auto top-0 right-0 translate-x-0 translate-y-0
+                rounded-none h-full flex flex-col
+                data-[state=open]:animate-slide-in-from-right
+                data-[state=closed]:animate-slide-out-to-right
+              "
+            >
               <nav className="flex flex-col gap-2 p-6 text-base font-medium">
                 {navigation.map((item) => (
                   <Link
