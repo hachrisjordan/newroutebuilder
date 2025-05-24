@@ -284,7 +284,7 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
             </div>
             {/* Variant multi-select dropdown, right-aligned */}
             {variantStats.length > 0 && (
-              <div className="mb-4 flex justify-end">
+              <div className="mb-4 flex justify-end w-full">
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="justify-start px-3">
@@ -422,7 +422,7 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
       <div className="block lg:hidden">
         {/* Variant multi-select dropdown, right-aligned, mobile */}
         {variantStats.length > 0 && (
-          <div className="mb-4 flex justify-end">
+          <div className="mb-4 flex justify-end w-full">
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="justify-start px-3">
@@ -537,7 +537,7 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
         </div>
         {/* Modal for selected date */}
         <Dialog open={!!selectedDate} onOpenChange={open => !open && setSelectedDate(null)}>
-          <DialogContent>
+          <DialogContent className="max-w-xs w-full p-4 sm:max-w-sm text-center break-words rounded-lg">
             {selectedDate && (() => {
               const { flight, seatConfig } = getFlightAndConfig(selectedDate);
               if (!flight || !seatConfig) return <div className="text-center text-gray-500">No data for this date.</div>;
