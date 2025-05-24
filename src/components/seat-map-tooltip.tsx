@@ -134,26 +134,26 @@ export default function SeatMapTooltip({ airline, variant, aircraftType, childre
         >
           {isPortrait ? (
             doubleDecker ? (
-              <div className="flex flex-row items-start justify-center gap-4 w-full h-full p-2">
+              <div className="flex flex-row items-start justify-center gap-2 w-full h-full max-h-screen">
                 {img1Exists && (
-                  <div className="flex flex-col items-center w-full h-full">
+                  <div className="flex flex-col items-center w-full h-full max-h-screen">
                     <div className="text-xs font-semibold mb-2">Lower Deck</div>
                     <img
                       src={url1}
                       alt="Lower Deck"
-                      className="block max-h-full h-full w-auto object-contain"
+                      className="block h-full max-h-screen w-auto object-contain"
                       style={{ maxWidth: '100%' }}
                       loading="lazy"
                     />
                   </div>
                 )}
                 {img2Exists && (
-                  <div className="flex flex-col items-center w-full h-full">
+                  <div className="flex flex-col items-center w-full h-full max-h-screen">
                     <div className="text-xs font-semibold mb-2">Upper Deck</div>
                     <img
                       src={url2}
                       alt="Upper Deck"
-                      className="block max-h-full h-full w-auto object-contain"
+                      className="block h-full max-h-screen w-auto object-contain"
                       style={{ maxWidth: '100%' }}
                       loading="lazy"
                     />
@@ -161,11 +161,11 @@ export default function SeatMapTooltip({ airline, variant, aircraftType, childre
                 )}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center w-full h-full p-2">
+              <div className="flex flex-col items-center justify-center w-full h-full max-h-screen">
                 <img
                   src={url}
                   alt="Seat map"
-                  className="block max-h-full h-full w-auto object-contain"
+                  className="block h-full max-h-screen w-auto object-contain"
                   style={{ maxWidth: '100%' }}
                   loading="lazy"
                 />
@@ -243,29 +243,29 @@ export default function SeatMapTooltip({ airline, variant, aircraftType, childre
         </PopoverContent>
       </Popover>
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-[98vw] max-h-[98vh] overflow-auto">
+        <DialogContent className="max-w-[98vw] max-h-screen h-full overflow-auto">
           {isPortrait ? (
             doubleDecker ? (
-              <div className="flex flex-row items-start justify-center gap-4 w-full h-full p-2">
+              <div className="flex flex-row items-start justify-center gap-2 w-full h-full max-h-screen">
                 {img1Exists && (
-                  <div className="flex flex-col items-center w-full h-full">
+                  <div className="flex flex-col items-center w-full h-full max-h-screen">
                     <div className="text-xs font-semibold mb-2">Lower Deck</div>
                     <img
                       src={url1}
                       alt="Lower Deck"
-                      className="block max-h-full h-full w-auto object-contain"
+                      className="block h-full max-h-screen w-auto object-contain"
                       style={{ maxWidth: '100%' }}
                       loading="lazy"
                     />
                   </div>
                 )}
                 {img2Exists && (
-                  <div className="flex flex-col items-center w-full h-full">
+                  <div className="flex flex-col items-center w-full h-full max-h-screen">
                     <div className="text-xs font-semibold mb-2">Upper Deck</div>
                     <img
                       src={url2}
                       alt="Upper Deck"
-                      className="block max-h-full h-full w-auto object-contain"
+                      className="block h-full max-h-screen w-auto object-contain"
                       style={{ maxWidth: '100%' }}
                       loading="lazy"
                     />
@@ -273,11 +273,11 @@ export default function SeatMapTooltip({ airline, variant, aircraftType, childre
                 )}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center w-full h-full p-2">
+              <div className="flex flex-col items-center justify-center w-full h-full max-h-screen">
                 <img
                   src={url}
                   alt="Seat map"
-                  className="block max-h-full h-full w-auto object-contain"
+                  className="block h-full max-h-screen w-auto object-contain"
                   style={{ maxWidth: '100%' }}
                   loading="lazy"
                 />
