@@ -7,6 +7,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { Menu } from 'lucide-react';
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 
 const navigation = [
   { name: 'Home', href: '/' },
@@ -20,9 +21,9 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       {/* Desktop Header */}
       <div className="hidden md:flex w-full px-4 h-16 items-center">
-        <div className="mr-4 flex">
-          <Link href="/" className="flex items-center space-x-2">
-            <span className="font-bold text-xl">RouteBuilder</span>
+        <div className="mr-6 flex items-center">
+          <Link href="/" className="flex items-center">
+            <Image src="/rblogo.png" alt="RouteBuilder Logo" height={40} width={40} className="h-10 w-auto" priority />
           </Link>
         </div>
         <nav className="flex items-center space-x-6 text-sm font-medium">
@@ -47,8 +48,8 @@ export function Header() {
       </div>
       {/* Mobile Header */}
       <div className="flex md:hidden w-full px-4 h-16 items-center justify-between">
-        <Link href="/" className="flex items-center space-x-2">
-          <span className="font-bold text-xl">RouteBuilder</span>
+        <Link href="/" className="flex items-center">
+          <Image src="/rblogo.png" alt="RouteBuilder Logo" height={32} width={32} className="h-8 w-auto" priority />
         </Link>
         <div className="flex items-center space-x-2">
           <ThemeToggle />

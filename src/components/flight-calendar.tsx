@@ -259,7 +259,7 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
     <>
       {/* Desktop/Tablet calendar (>=1000px) */}
       <div className="hidden lg:block">
-        <Card className="w-full xxl:w-4/5 mx-auto">
+        <Card className="w-full mx-auto">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-6">
               <Button
@@ -366,7 +366,7 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
                   return (
                     <div
                       key={day}
-                      className="border rounded-md p-2 text-sm hover:bg-accent transition-colors relative h-full min-h-[120px]"
+                      className="border rounded-md p-2 text-sm hover:bg-accent transition-colors relative h-full min-h-[120px] pt-10"
                     >
                       {/* Top row: delay status (left) and day number (right, with border) */}
                       <div className="absolute top-1 left-2 right-2 flex flex-row items-center justify-between w-auto">
@@ -391,22 +391,26 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
                       </div>
                       {/* Main content */}
                       {isValid && !configLoading && seatConfig ? (
-                        <div className="flex flex-col items-center mt-8 gap-1">
-                          <div className="font-bold text-[15px] text-center leading-tight">
-                            {seatConfig.aircraftType} <span className="font-mono">({seatConfig.variant})</span>
-                          </div>
-                          <div className="text-[12px] font-mono text-center">{seatConfig.config}</div>
-                          <SeatMapTooltip airline={airline} variant={seatConfig.variant} aircraftType={seatConfig.aircraftType}>
-                            <div className="text-[12px] text-muted-foreground text-center italic underline underline-offset-2">
-                              {seatConfig.note}
+                        <div className="flex flex-col items-center h-full min-h-[80px] gap-1 justify-between">
+                          <div>
+                            <div className="font-bold text-[15px] text-center leading-tight">
+                              {seatConfig.aircraftType} <span className="font-mono">({seatConfig.variant})</span>
                             </div>
-                          </SeatMapTooltip>
-                          <span
-                            className="rounded-md px-2 py-0.5 text-[15px] font-bold mt-1"
-                            style={{ background: seatConfig.color, color: '#fff'}}
-                          >
-                            {flight.registration}
-                          </span>
+                            <div className="text-[12px] font-mono text-center">{seatConfig.config}</div>
+                            <SeatMapTooltip airline={airline} variant={seatConfig.variant} aircraftType={seatConfig.aircraftType}>
+                              <div className="text-[12px] text-muted-foreground text-center italic underline underline-offset-2">
+                                {seatConfig.note}
+                              </div>
+                            </SeatMapTooltip>
+                          </div>
+                          <div className="w-full flex justify-center mt-auto">
+                            <span
+                              className="rounded-md px-2 py-0.5 text-[15px] font-bold"
+                              style={{ background: seatConfig.color, color: '#fff'}}
+                            >
+                              {flight.registration}
+                            </span>
+                          </div>
                         </div>
                       ) : null}
                     </div>

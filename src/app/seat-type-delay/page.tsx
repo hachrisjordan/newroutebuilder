@@ -6,6 +6,7 @@ import { FlightCalendar } from '@/components/flight-calendar';
 import dynamic from 'next/dynamic';
 
 const VariantAnalysis = dynamic(() => import('@/components/variant-analysis'), { ssr: false });
+const DelayAnalysis = dynamic(() => import('@/components/delay-analysis'), { ssr: false });
 
 // Simple hook to detect mobile (<1000px)
 function useIsMobile() {
@@ -72,6 +73,7 @@ export default function SeatTypeDelayPage() {
                     seatConfigData={seatConfigData}
                     airline={airline || ''}
                   />
+                  <DelayAnalysis flightData={flightData} />
                 </div>
               )}
             </>
@@ -80,11 +82,14 @@ export default function SeatTypeDelayPage() {
             <div className="w-full xxl:w-4/5 mx-auto flex flex-col gap-4">
               <FlightCalendar flightData={flightData} />
               {seatConfigData && !configLoading && (
-                <VariantAnalysis
-                  flightData={flightData}
-                  seatConfigData={seatConfigData}
-                  airline={airline || ''}
-                />
+                <>
+                  <VariantAnalysis
+                    flightData={flightData}
+                    seatConfigData={seatConfigData}
+                    airline={airline || ''}
+                  />
+                  <DelayAnalysis flightData={flightData} />
+                </>
               )}
             </div>
           )

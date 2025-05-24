@@ -170,7 +170,7 @@ const VariantAnalysis: React.FC<VariantAnalysisProps> = ({ flightData, seatConfi
 
   // Match calendar card width and padding for all screens >1000px (w-full xxl:w-4/5 mx-auto, p-6)
   return (
-    <Card className="w-full xxl:w-4/5 mx-auto">
+    <Card className="w-full mx-auto">
       <CardHeader className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 flex-wrap">
         <CardTitle className="text-lg font-semibold w-full lg:w-auto">Aircraft Variant Analysis</CardTitle>
         {/* Aircraft variant selector: right-aligned on desktop, flexible width, single line with ellipsis */}
