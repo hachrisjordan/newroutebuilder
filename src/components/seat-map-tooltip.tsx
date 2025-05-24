@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
@@ -77,6 +77,27 @@ export default function SeatMapTooltip({ airline, variant, aircraftType, childre
     return () => window.removeEventListener('resize', calculateSize);
   }, []);
 
+  // --- Double-decker image scaling logic for tooltip ---
+  const lowerDeckRef = useRef<HTMLImageElement | null>(null);
+  const upperDeckRef = useRef<HTMLImageElement | null>(null);
+  const [lowerDeckDims, setLowerDeckDims] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
+  const [upperDeckDims, setUpperDeckDims] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
+  const maxHeight = typeof window !== 'undefined' ? window.innerHeight * 0.95 : 600;
+  // When lower deck loads, store its natural dimensions
+  const handleLowerDeckLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    setLowerDeckDims({ width: e.currentTarget.naturalWidth, height: e.currentTarget.naturalHeight });
+  };
+  // When upper deck loads, store its natural dimensions
+  const handleUpperDeckLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    setUpperDeckDims({ width: e.currentTarget.naturalWidth, height: e.currentTarget.naturalHeight });
+  };
+  // Calculate scaled width for lower deck
+  const lowerDeckScale = lowerDeckDims.height > 0 ? Math.min(1, maxHeight / lowerDeckDims.height) : 1;
+  const scaledLowerDeckWidth = lowerDeckDims.width * lowerDeckScale;
+  // Calculate scaled height for upper deck to match lower deck's width
+  const upperDeckScale = upperDeckDims.width > 0 ? scaledLowerDeckWidth / upperDeckDims.width : 1;
+  const scaledUpperDeckHeight = upperDeckDims.height * upperDeckScale;
+
   // Only show tooltip/modal if image(s) exist
   if ((doubleDecker && !checkedDouble) || (!doubleDecker && !checked)) {
     return <>{children}</>;
@@ -103,32 +124,58 @@ export default function SeatMapTooltip({ airline, variant, aircraftType, childre
         </PopoverTrigger>
         <PopoverContent
           side="right"
-          className="w-auto p-0"
+          className="w-auto p-3"
           onOpenAutoFocus={(e) => e.preventDefault()}
           onMouseEnter={() => setPopoverOpen(true)}
           onMouseLeave={() => setPopoverOpen(false)}
         >
           {doubleDecker ? (
-            <div style={{ display: 'flex', gap: 24, justifyContent: 'center', alignItems: 'flex-start' }}>
+            <div className="flex items-start justify-center gap-4 text-center">
               {img1Exists && (
-                <div style={{ textAlign: 'center' }}>
-                  <img src={url1} alt="Lower Deck" style={{ maxWidth: '48vw', maxHeight: 900, width: '100%', height: 'auto', display: 'block' }} loading="lazy" />
-                  <div style={{ fontSize: 14, color: '#fff', marginTop: 4 }}>Lower Deck</div>
+                <div className="flex flex-col items-center">
+                  <div className="text-xs text-muted-foreground mb-2">Lower Deck</div>
+                  <img
+                    ref={lowerDeckRef}
+                    src={url1}
+                    alt="Lower Deck seat map"
+                    style={{
+                      maxHeight,
+                      width: scaledLowerDeckWidth ? `${scaledLowerDeckWidth}px` : 'auto',
+                      height: 'auto',
+                      display: 'block',
+                    }}
+                    loading="lazy"
+                    onLoad={handleLowerDeckLoad}
+                  />
+                  <div className="mt-2" />
                 </div>
               )}
               {img2Exists && (
-                <div style={{ textAlign: 'center' }}>
-                  <img src={url2} alt="Upper Deck" style={{ maxWidth: '48vw', maxHeight: 900, width: '100%', height: 'auto', display: 'block' }} loading="lazy" />
-                  <div style={{ fontSize: 14, color: '#fff', marginTop: 4 }}>Upper Deck</div>
+                <div className="flex flex-col items-center">
+                  <div className="text-xs text-muted-foreground mb-2">Upper Deck</div>
+                  <img
+                    ref={upperDeckRef}
+                    src={url2}
+                    alt="Upper Deck seat map"
+                    style={{
+                      maxHeight,
+                      width: scaledLowerDeckWidth ? `${scaledLowerDeckWidth}px` : 'auto',
+                      height: scaledUpperDeckHeight ? `${scaledUpperDeckHeight}px` : 'auto',
+                      display: 'block',
+                    }}
+                    loading="lazy"
+                    onLoad={handleUpperDeckLoad}
+                  />
+                  <div className="mt-2" />
                 </div>
               )}
             </div>
           ) : (
-            <div style={{ textAlign: 'center' }}>
-              <img src={url} alt="Seat map" style={{ maxWidth: 1200, maxHeight: 900, display: 'block' }} loading="lazy" />
-              <div style={{ fontSize: 12, color: '#333', marginTop: 2 }}>Preview</div>
+            <div className="flex flex-col items-center text-center gap-2">
+              <img src={url} alt="Seat map" style={{ maxWidth: '100%', maxHeight: maxHeight, display: 'block', marginBottom: 8 }} loading="lazy" />
             </div>
           )}
+          <div className="text-xs text-muted-foreground mt-2 text-center">Source: aeroLOPA</div>
         </PopoverContent>
       </Popover>
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
