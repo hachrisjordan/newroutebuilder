@@ -4,7 +4,7 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background">
       <div className="container py-10">
-        <h1 className="text-4xl font-bold mb-6">Welcome to RouteBuilder</h1>
+        <h1 className="text-4xl font-bold mb-6">Welcome to bbairtools</h1>
         <p className="text-lg text-muted-foreground mb-8">
           Build and manage your flight routes efficiently with our powerful tools.
         </p>

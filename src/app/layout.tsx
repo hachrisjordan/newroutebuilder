@@ -5,8 +5,8 @@ import { Footer } from "@/components/layout/footer";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
-  title: "RouteBuilder",
-  description: "Build and manage your flight routes efficiently",
+  title: "bbairtools",
+  description: "Just some tools for better flying",
 };
 
 export default function RootLayout({

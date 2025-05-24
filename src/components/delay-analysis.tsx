@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -109,7 +109,7 @@ const DelayAnalysis: React.FC<DelayAnalysisProps> = ({ flightData }) => {
   const validStats = delayStats.filter(Boolean) as NonNullable<typeof delayStats[number]>[];
 
   return (
-    <Card className="w-full xxl:w-4/5 mx-auto mt-8">
+    <Card className="w-full mx-auto mt-8">
       <CardHeader>
         <CardTitle className="text-lg font-semibold">Delay Analysis</CardTitle>
       </CardHeader>
@@ -188,7 +188,7 @@ const DelayAnalysis: React.FC<DelayAnalysisProps> = ({ flightData }) => {
         {/* Mobile: horizontal bar view */}
         <div className="block lg:hidden">
           <div className="flex flex-col gap-4">
-            {validStats.map(period => {
+            {validStats.map((period, idx) => {
               // Prepare ordered categories and colors
               const categories = [
                 'On Time',
@@ -213,6 +213,7 @@ const DelayAnalysis: React.FC<DelayAnalysisProps> = ({ flightData }) => {
                 'Other': '#9e9e9e',
               };
               const total = period.total;
+              const [open, setOpen] = useState(false);
               return (
                 <div key={period.label} className="flex flex-col gap-1">
                   <div className="flex justify-between text-xs mb-1">
@@ -220,9 +221,19 @@ const DelayAnalysis: React.FC<DelayAnalysisProps> = ({ flightData }) => {
                     <span className="font-semibold">{period.avgDelay} ({period.onTimePct.toFixed(1)}%, {period.onTime}/{period.total})</span>
                   </div>
                   <TooltipProvider delayDuration={100}>
-                    <Tooltip>
+                    <Tooltip open={open} onOpenChange={setOpen}>
                       <TooltipTrigger asChild>
-                        <div className="w-full h-3 bg-gray-200 rounded flex overflow-hidden cursor-pointer">
+                        <div
+                          className="w-full h-3 bg-gray-200 rounded flex overflow-hidden cursor-pointer"
+                          onClick={e => {
+                            e.stopPropagation();
+                            setOpen(v => !v);
+                          }}
+                          onTouchEnd={e => {
+                            e.stopPropagation();
+                            setOpen(v => !v);
+                          }}
+                        >
                           {categories.map(cat => {
                             const count = period.delayDist[cat] || 0;
                             const pct = total > 0 ? (count / total) * 100 : 0;
