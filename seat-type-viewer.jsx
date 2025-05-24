@@ -122,9 +122,9 @@ const getOntimeStatus = (ontime, date) => {
   }
 
   if (minutes === 0) {
-    text = 'Arrived on time';
+    text = 'On time';
   } else if (minutes < 0) {
-    text = `Arrived ${Math.abs(minutes)}m early`;
+    text = `${Math.abs(minutes)}m early`;
   } else {
     // Format time for delays over 60 minutes
     if (minutes >= 60) {
@@ -133,9 +133,9 @@ const getOntimeStatus = (ontime, date) => {
       const timeStr = remainingMinutes > 0 
         ? `${hours}h${remainingMinutes}m`
         : `${hours}h`;
-      text = `Arrived ${timeStr} late`;
+      text = `${timeStr} late`;
     } else {
-      text = `Arrived ${minutes}m late`;
+      text = `${minutes}m late`;
     }
   }
 

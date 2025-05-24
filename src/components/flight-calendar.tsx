@@ -13,6 +13,10 @@ import {
   DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
 import SeatMapTooltip from './seat-map-tooltip';
+import { formatDivertedOntime } from "@/lib/utils"
+import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
+import { Calendar as ShadcnCalendar } from '@/components/ui/calendar';
+import { addMonths, isSameMonth } from 'date-fns';
 
 interface FlightData {
   flightNumber: string;
@@ -172,7 +176,7 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
       return { color: '#000000', text: 'Canceled' };
     }
     if (ontime.startsWith('Diverted to')) {
-      return { color: '#9c27b0', text: ontime };
+      return { color: '#9c27b0', text: formatDivertedOntime(ontime) };
     }
     const flightDate = new Date(date);
     const today = new Date();
@@ -190,14 +194,14 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
     if (minutes <= 0) color = '#4caf50';
     else if (minutes < 30) color = '#ffc107';
     else color = '#f44336';
-    if (minutes === 0) text = 'Arrived on time';
-    else if (minutes < 0) text = `Arrived ${Math.abs(minutes)}m early`;
+    if (minutes === 0) text = 'On time';
+    else if (minutes < 0) text = `${Math.abs(minutes)}m early`;
     else if (minutes >= 60) {
       const hours = Math.floor(minutes / 60);
       const remainingMinutes = minutes % 60;
       const timeStr = remainingMinutes > 0 ? `${hours}h${remainingMinutes}m` : `${hours}h`;
-      text = `Arrived ${timeStr} late`;
-    } else text = `Arrived ${minutes}m late`;
+      text = `${timeStr} late`;
+    } else text = `${minutes}m late`;
     return { color, text };
   }
 
@@ -228,31 +232,195 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
     // eslint-disable-next-line
   }, [currentMonthKey, allVariants.join(",")]);
 
+  // Add after useEffect for selectedVariants
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+  // Helper: get flight and seat config for a date
+  function getFlightAndConfig(dateStr: string) {
+    const flight: FlightData | undefined = getClosestFlight(dateStr);
+    const seatConfig = flight ? getSeatConfig(flight.registration) : null;
+    return { flight, seatConfig };
+  }
+
+  // Helper to determine if a color is dark (for badge text contrast)
+  function isDarkColor(hex: string): boolean {
+    if (!hex) return false;
+    const c = hex.replace('#', '');
+    const rgb = parseInt(c.length === 3
+      ? c.split('').map(x => x + x).join('')
+      : c, 16);
+    const r = (rgb >> 16) & 0xff;
+    const g = (rgb >> 8) & 0xff;
+    const b = rgb & 0xff;
+    return (0.299 * r + 0.587 * g + 0.114 * b) < 150;
+  }
+
   return (
-    <Card className="w-[80%]">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handlePreviousMonth}
-            disabled={currentMonthIndex === 0}
-            className="h-10 w-10"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <h3 className="text-2xl font-semibold">{monthName}</h3>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleNextMonth}
-            disabled={currentMonthIndex === months.length - 1}
-            className="h-10 w-10"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </Button>
-        </div>
-        {/* Variant multi-select dropdown, right-aligned */}
+    <>
+      {/* Desktop/Tablet calendar (>=1000px) */}
+      <div className="hidden lg:block">
+        <Card className="w-full xxl:w-4/5 mx-auto">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handlePreviousMonth}
+                disabled={currentMonthIndex === 0}
+                className="h-10 w-10"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              <h3 className="text-2xl font-semibold">{monthName}</h3>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleNextMonth}
+                disabled={currentMonthIndex === months.length - 1}
+                className="h-10 w-10"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            </div>
+            {/* Variant multi-select dropdown, right-aligned */}
+            {variantStats.length > 0 && (
+              <div className="mb-4 flex justify-end">
+                <DropdownMenu modal={false}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="justify-start px-3">
+                      {selectedVariants.length === allVariants.length ? (
+                        'All variants'
+                      ) : selectedVariants.length === 1 ? (
+                        <span className="inline-flex items-center gap-2">
+                          <span className="w-3 h-3 rounded-sm inline-block" style={{ background: variantInfo.get(selectedVariants[0])?.color || '#ccc' }} />
+                          <span className="font-bold">{variantInfo.get(selectedVariants[0])?.aircraftType} ({selectedVariants[0]})</span>
+                        </span>
+                      ) : (
+                        <span>{selectedVariants.length} variants selected</span>
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="min-w-[220px]" onCloseAutoFocus={(e: Event) => e.preventDefault()}>
+                    {variantStats.map(([variant, count]) => (
+                      <DropdownMenuCheckboxItem
+                        key={variant}
+                        checked={selectedVariants.includes(variant)}
+                        onCheckedChange={(checked: boolean) => {
+                          if (checked) setSelectedVariants([...selectedVariants, variant]);
+                          else setSelectedVariants(selectedVariants.filter(v => v !== variant));
+                        }}
+                        onPointerDown={(e: React.PointerEvent<Element>) => e.stopPropagation()}
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <span className="w-3 h-3 rounded-sm inline-block" style={{ background: variantInfo.get(variant)?.color || '#ccc' }} />
+                          <span className="font-bold">{variantInfo.get(variant)?.aircraftType} ({variant})</span>
+                          <span className="italic text-xs ml-2">{variantInfo.get(variant)?.note}</span>
+                          <span className="ml-2 text-xs text-muted-foreground">{count}x</span>
+                        </span>
+                      </DropdownMenuCheckboxItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
+            <div className="grid grid-cols-7 gap-4 sm:gap-2 w-full items-start">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                <div key={day} className="text-center text-base font-medium text-muted-foreground py-3">
+                  {day}
+                </div>
+              ))}
+              {/* Render each week as a row of 7 cells; use invisible divs for non-date slots to preserve alignment */}
+              {(() => {
+                const weeks: (number | null)[][] = [];
+                let currentDay = 1;
+                const totalSlots = Math.ceil((startingDay + totalDays) / 7) * 7;
+                for (let i = 0; i < totalSlots; i += 7) {
+                  const week: (number | null)[] = [];
+                  for (let j = 0; j < 7; j++) {
+                    const slot = i + j;
+                    if (slot < startingDay || currentDay > totalDays) {
+                      week.push(null);
+                    } else {
+                      week.push(currentDay++);
+                    }
+                  }
+                  weeks.push(week);
+                }
+                // Render each week as a row of 7 cells
+                return weeks.flat().map((day, idx) => {
+                  if (!day) {
+                    // Render invisible cell to preserve grid structure
+                    return <div key={`empty-${idx}`} className="invisible border rounded-md p-2 min-h-[120px]" />;
+                  }
+                  // Use UTC and ISO string for robust date handling
+                  const dateObj = new Date(Date.UTC(Number(year), Number(month) - 1, day));
+                  const dateStr = dateObj.toISOString().split('T')[0];
+                  const normalizedFlightDates = filteredFlights.map(f => {
+                    const fDate = new Date(f.date);
+                    return fDate.toISOString().split('T')[0];
+                  });
+                  const flight: FlightData | undefined = getClosestFlight(dateStr);
+                  const seatConfig = flight ? getSeatConfig(flight.registration) : null;
+                  const isValid = flight && flight.registration && flight.registration !== 'N/A' && seatConfig && selectedVariants.includes(seatConfig.variant);
+
+                  return (
+                    <div
+                      key={day}
+                      className="border rounded-md p-2 text-sm hover:bg-accent transition-colors relative h-full min-h-[120px]"
+                    >
+                      {/* Top row: delay status (left) and day number (right, with border) */}
+                      <div className="absolute top-1 left-2 right-2 flex flex-row items-center justify-between w-auto">
+                        {(() => {
+                          const status = isValid ? getOntimeStatus(flight.ontime, dateStr) : null;
+                          if (!status) return <span />;
+                          return (
+                            <span className="flex items-center gap-1" style={{ color: status.color }}>
+                              <span style={{
+                                display: 'inline-block',
+                                width: 8,
+                                height: 8,
+                                borderRadius: '50%',
+                                background: status.color,
+                                marginRight: 4
+                              }} />
+                              <span className="font-medium text-xs">{status.text}</span>
+                            </span>
+                          );
+                        })()}
+                        <span className="font-medium text-base border-r-2 border-gray-300 pr-2 font-bold">{day}</span>
+                      </div>
+                      {/* Main content */}
+                      {isValid && !configLoading && seatConfig ? (
+                        <div className="flex flex-col items-center mt-8 gap-1">
+                          <div className="font-bold text-[15px] text-center leading-tight">
+                            {seatConfig.aircraftType} <span className="font-mono">({seatConfig.variant})</span>
+                          </div>
+                          <div className="text-[12px] font-mono text-center">{seatConfig.config}</div>
+                          <SeatMapTooltip airline={airline} variant={seatConfig.variant} aircraftType={seatConfig.aircraftType}>
+                            <div className="text-[12px] text-muted-foreground text-center italic underline underline-offset-2">
+                              {seatConfig.note}
+                            </div>
+                          </SeatMapTooltip>
+                          <span
+                            className="rounded-md px-2 py-0.5 text-[15px] font-bold mt-1"
+                            style={{ background: seatConfig.color, color: '#fff'}}
+                          >
+                            {flight.registration}
+                          </span>
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Mobile compact calendar (<1000px) */}
+      <div className="block lg:hidden">
+        {/* Variant multi-select dropdown, right-aligned, mobile */}
         {variantStats.length > 0 && (
           <div className="mb-4 flex justify-end">
             <DropdownMenu modal={false}>
@@ -293,98 +461,129 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
             </DropdownMenu>
           </div>
         )}
-        <div className="grid grid-cols-7 gap-4 sm:gap-2 w-full items-start">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-            <div key={day} className="text-center text-base font-medium text-muted-foreground py-3">
-              {day}
-            </div>
-          ))}
-          {/* Render each week as a row of 7 cells; use invisible divs for non-date slots to preserve alignment */}
-          {(() => {
-            const weeks: (number | null)[][] = [];
-            let currentDay = 1;
-            const totalSlots = Math.ceil((startingDay + totalDays) / 7) * 7;
-            for (let i = 0; i < totalSlots; i += 7) {
-              const week: (number | null)[] = [];
-              for (let j = 0; j < 7; j++) {
-                const slot = i + j;
-                if (slot < startingDay || currentDay > totalDays) {
-                  week.push(null);
-                } else {
-                  week.push(currentDay++);
-                }
-              }
-              weeks.push(week);
-            }
-            // Render each week as a row of 7 cells
-            return weeks.flat().map((day, idx) => {
-              if (!day) {
-                // Render invisible cell to preserve grid structure
-                return <div key={`empty-${idx}`} className="invisible border rounded-md p-2 min-h-[120px]" />;
-              }
-              // Use UTC and ISO string for robust date handling
-              const dateObj = new Date(Date.UTC(Number(year), Number(month) - 1, day));
-              const dateStr = dateObj.toISOString().split('T')[0];
-              const normalizedFlightDates = filteredFlights.map(f => {
-                const fDate = new Date(f.date);
-                return fDate.toISOString().split('T')[0];
+        <div className="w-full max-w-[1000px] p-1 sm:p-2 mx-auto">
+          <ShadcnCalendar
+            mode="single"
+            month={new Date(Number(year), Number(month) - 1)}
+            onMonthChange={date => {
+              // Find the index in months array for the new month
+              const idx = months.findIndex(m => {
+                const [y, mth] = m.split('-');
+                return Number(y) === date.getFullYear() && Number(mth) === date.getMonth() + 1;
               });
-              const flight: FlightData | undefined = getClosestFlight(dateStr);
-              const seatConfig = flight ? getSeatConfig(flight.registration) : null;
-              const isValid = flight && flight.registration && flight.registration !== 'N/A' && seatConfig && selectedVariants.includes(seatConfig.variant);
-
+              if (idx !== -1) setCurrentMonthIndex(idx);
+            }}
+            selected={selectedDate ? new Date(selectedDate) : undefined}
+            onSelect={date => {
+              console.log('onSelect', date);
+              setSelectedDate(date ? date.toISOString().split('T')[0] : null);
+            }}
+            className="rounded-md border"
+            components={{
+              Day: (props) => {
+                const dateObj = props.date;
+                const dateStr = dateObj.toISOString().split('T')[0];
+                // Only enable days in the current visible month
+                const isInCurrentMonth = isSameMonth(dateObj, new Date(Number(year), Number(month) - 1));
+                // Use filteredFlights and airline logic from desktop
+                const flight: FlightData | undefined = getClosestFlight(dateStr);
+                const seatConfig = flight ? getSeatConfig(flight.registration) : null;
+                const isValid = isInCurrentMonth && flight && flight.registration && flight.registration !== 'N/A' && seatConfig && selectedVariants.includes(seatConfig.variant);
+                // Delay status color
+                let delayColor = '#9e9e9e';
+                if (isValid) {
+                  const status = getOntimeStatus(flight.ontime, dateStr);
+                  if (status) delayColor = status.color;
+                }
+                const isSelected = selectedDate === dateStr;
+                // Determine badge text color for contrast
+                let badgeTextColor = '';
+                if (isValid && seatConfig) {
+                  badgeTextColor = isDarkColor(seatConfig.color) ? '#fff' : '#111';
+                }
+                return (
+                  <button
+                    {...props}
+                    className={cn(
+                      'flex flex-col items-center justify-center w-12 h-12 rounded-md focus:outline-none',
+                      isSelected ? 'ring-2 ring-primary ring-offset-2' : '',
+                      !isValid && 'opacity-50'
+                    )}
+                    aria-label={`Show details for ${dateStr}`}
+                    onClick={e => {
+                      e.stopPropagation();
+                      console.log('Button clicked', dateStr);
+                      setSelectedDate(dateStr);
+                    }}
+                  >
+                    {/* Date number with badge background if valid */}
+                    <span
+                      className={cn(
+                        'text-base font-bold mb-0.5 flex items-center justify-center w-8 h-8 rounded-full border',
+                        isValid && seatConfig ? 'border-black/10 dark:border-white/20' : 'bg-gray-200 dark:bg-zinc-800',
+                        isValid && seatConfig ? '' : 'text-gray-400'
+                      )}
+                      style={isValid && seatConfig ? { background: seatConfig.color, color: badgeTextColor } : {}}
+                    >
+                      {dateObj.getDate()}
+                    </span>
+                    {/* Dot for delay status */}
+                    <span className="w-2 h-2 rounded-full" style={{ background: delayColor }} />
+                  </button>
+                );
+              }
+            }}
+          />
+        </div>
+        {/* Modal for selected date */}
+        <Dialog open={!!selectedDate} onOpenChange={open => !open && setSelectedDate(null)}>
+          <DialogContent>
+            {selectedDate && (() => {
+              const { flight, seatConfig } = getFlightAndConfig(selectedDate);
+              if (!flight || !seatConfig) return <div className="text-center text-gray-500">No data for this date.</div>;
+              // Render the normal grid/details for this date only
               return (
-                <div
-                  key={day}
-                  className="border rounded-md p-2 text-sm hover:bg-accent transition-colors relative h-full min-h-[120px]"
-                >
-                  {/* Top row: delay status (left) and day number (right, with border) */}
-                  <div className="absolute top-1 left-2 right-2 flex flex-row items-center justify-between w-auto">
-                    {(() => {
-                      const status = isValid ? getOntimeStatus(flight.ontime, dateStr) : null;
-                      if (!status) return <span />;
-                      return (
-                        <span className="flex items-center gap-1" style={{ color: status.color }}>
-                          <span style={{
-                            display: 'inline-block',
-                            width: 8,
-                            height: 8,
-                            borderRadius: '50%',
-                            background: status.color,
-                            marginRight: 4
-                          }} />
-                          <span className="font-medium text-xs">{status.text}</span>
-                        </span>
-                      );
-                    })()}
-                    <span className="font-medium text-base border-r-2 border-gray-300 pr-2 font-bold">{day}</span>
+                <div className="flex flex-col items-center gap-2">
+                  <div className="text-lg font-bold">{selectedDate}</div>
+                  <div className="font-bold text-[15px] text-center leading-tight">
+                    {seatConfig.aircraftType} <span className="font-mono">({seatConfig.variant})</span>
                   </div>
-                  {/* Main content */}
-                  {isValid && !configLoading && seatConfig ? (
-                    <div className="flex flex-col items-center mt-8 gap-1">
-                      <div className="font-bold text-[15px] text-center leading-tight">
-                        {seatConfig.aircraftType} <span className="font-mono">({seatConfig.variant})</span>
-                      </div>
-                      <div className="text-[12px] font-mono text-center">{seatConfig.config}</div>
-                      <SeatMapTooltip airline={airline} variant={seatConfig.variant} aircraftType={seatConfig.aircraftType}>
-                        <div className="text-[12px] text-muted-foreground text-center italic underline underline-offset-2">
-                          {seatConfig.note}
-                        </div>
-                      </SeatMapTooltip>
-                      <span
-                        className="rounded-md px-2 py-0.5 text-[15px] font-bold mt-1"
-                        style={{ background: seatConfig.color, color: '#fff'}}
-                      >
-                        {flight.registration}
-                      </span>
+                  <div className="text-[12px] font-mono text-center">{seatConfig.config}</div>
+                  <SeatMapTooltip airline={airline} variant={seatConfig.variant} aircraftType={seatConfig.aircraftType}>
+                    <div className="text-[12px] text-muted-foreground text-center italic underline underline-offset-2">
+                      {seatConfig.note}
                     </div>
-                  ) : null}
+                  </SeatMapTooltip>
+                  <span
+                    className="rounded-md px-2 py-0.5 text-[15px] font-bold mt-1"
+                    style={{ background: seatConfig.color, color: '#fff'}}
+                  >
+                    {flight.registration}
+                  </span>
+                  {/* Delay status */}
+                  {(() => {
+                    const status = getOntimeStatus(flight.ontime, selectedDate);
+                    if (!status) return null;
+                    return (
+                      <span className="mt-2 font-medium text-xs" style={{ color: status.color }}>
+                        <span style={{
+                          display: 'inline-block',
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          background: status.color,
+                          marginRight: 4
+                        }} />
+                        {status.text}
+                      </span>
+                    );
+                  })()}
                 </div>
               );
-            });
-          })()}
-        </div>
-      </CardContent>
-    </Card>
+            })()}
+          </DialogContent>
+        </Dialog>
+      </div>
+    </>
   );
 } 

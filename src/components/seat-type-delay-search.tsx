@@ -140,7 +140,10 @@ export function SeatTypeDelaySearch({ onSearch }: SeatTypeDelaySearchProps) {
                       className="absolute left-2 top-1/2 -translate-y-1/2 object-contain rounded-[4px]"
                       unoptimized
                     />
-                    <span className="dark:text-foreground/90">{airlines.find(a => a.code === selectedAirline)?.name} - <span className="font-bold">{selectedAirline}</span></span>
+                    <span className="block sm:hidden font-bold">{selectedAirline}</span>
+                    <span className="hidden sm:block dark:text-foreground/90">
+                      {airlines.find(a => a.code === selectedAirline)?.name} - <span className="font-bold">{selectedAirline}</span>
+                    </span>
                     <button
                       type="button"
                       className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-accent/50 dark:hover:bg-accent/30 rounded-sm"
