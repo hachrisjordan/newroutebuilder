@@ -59,7 +59,7 @@ module.exports = {
   			padding: "2rem",
   			screens: {
   				"2xl": "1280px",
-  				'xxl': '1200px',
+  				"xxl": "1200px",
   			},
   		},
   		keyframes: {
@@ -75,6 +75,14 @@ module.exports = {
   		animation: {
   			'slide-in-from-right': 'slide-in-from-right 0.3s ease-out',
   			'slide-out-to-right': 'slide-out-to-right 0.2s ease-in',
+  		},
+  		screens: {
+  			sm: "640px",
+  			md: "768px",
+  			lg: "1000px",
+  			xl: "1280px",
+  			"2xl": "1536px",
+  			"xxl": "1200px",
   		},
   	}
   },
