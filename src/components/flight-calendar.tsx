@@ -17,6 +17,7 @@ import { formatDivertedOntime } from "@/lib/utils"
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
 import { Calendar as ShadcnCalendar } from '@/components/ui/calendar';
 import { addMonths, isSameMonth } from 'date-fns';
+import { useTheme } from 'next-themes';
 
 interface FlightData {
   flightNumber: string;
@@ -63,8 +64,9 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
 
   // Filter flights for current month
   const currentMonthFlights = flightData.filter(flight => {
-    const flightDate = new Date(flight.date);
-    return `${flightDate.getFullYear()}-${flightDate.getMonth() + 1}` === currentMonthKey;
+    // Extract year and month from date string (YYYY-MM-DD)
+    const [fYear, fMonth] = flight.date.split('-').map(Number);
+    return fYear === parseInt(year) && fMonth === parseInt(month);
   });
 
   // Group and count (origin, destination) pairs
@@ -98,6 +100,7 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
   // Dynamic seat config state
   const [seatConfigData, setSeatConfigData] = useState<any | null>(null);
   const [configLoading, setConfigLoading] = useState(false);
+  const { resolvedTheme } = useTheme();
   useEffect(() => {
     if (!airline) return;
     setConfigLoading(true);
@@ -152,21 +155,9 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
     return null;
   }
 
-  const getClosestFlight = (targetDateStr: string): FlightData | undefined => {
-    const targetDate = new Date(targetDateStr);
-    let closestFlight: FlightData | undefined = undefined;
-    let minDiff = 3; // Only consider within 2 days
-
-    filteredFlights.forEach(f => {
-      const fDate = new Date(f.date);
-      const diff = Math.abs((fDate.getTime() - targetDate.getTime()) / (1000 * 60 * 60 * 24));
-      if (diff <= 2 && diff < minDiff) {
-        minDiff = diff;
-        closestFlight = f;
-      }
-    });
-
-    return closestFlight;
+  // Only return a flight if the date matches exactly
+  const getFlightForDate = (targetDateStr: string): FlightData | undefined => {
+    return filteredFlights.find(f => f.date === targetDateStr);
   };
 
   // Helper: Delay status color and text logic from seat-type-viewer.jsx
@@ -211,7 +202,7 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
   for (let day = 1; day <= totalDays; day++) {
     const dateObj = new Date(Date.UTC(Number(year), Number(month) - 1, day));
     const dateStr = dateObj.toISOString().split('T')[0];
-    const flight: FlightData | undefined = getClosestFlight(dateStr);
+    const flight: FlightData | undefined = getFlightForDate(dateStr);
     const seatConfig = flight ? getSeatConfig(flight.registration) : null;
     if (flight && flight.registration && flight.registration !== 'N/A' && seatConfig) {
       variantCountsByDay.set(seatConfig.variant, (variantCountsByDay.get(seatConfig.variant) || 0) + 1);
@@ -237,7 +228,7 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
 
   // Helper: get flight and seat config for a date
   function getFlightAndConfig(dateStr: string) {
-    const flight: FlightData | undefined = getClosestFlight(dateStr);
+    const flight: FlightData | undefined = getFlightForDate(dateStr);
     const seatConfig = flight ? getSeatConfig(flight.registration) : null;
     return { flight, seatConfig };
   }
@@ -338,10 +329,13 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
                   const week: (number | null)[] = [];
                   for (let j = 0; j < 7; j++) {
                     const slot = i + j;
-                    if (slot < startingDay || currentDay > totalDays) {
+                    if (slot < startingDay) {
+                      week.push(null);
+                    } else if (currentDay > totalDays) {
                       week.push(null);
                     } else {
-                      week.push(currentDay++);
+                      week.push(currentDay);
+                      currentDay++;
                     }
                   }
                   weeks.push(week);
@@ -355,13 +349,11 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
                   // Use UTC and ISO string for robust date handling
                   const dateObj = new Date(Date.UTC(Number(year), Number(month) - 1, day));
                   const dateStr = dateObj.toISOString().split('T')[0];
-                  const normalizedFlightDates = filteredFlights.map(f => {
-                    const fDate = new Date(f.date);
-                    return fDate.toISOString().split('T')[0];
-                  });
-                  const flight: FlightData | undefined = getClosestFlight(dateStr);
+                  const flight: FlightData | undefined = getFlightForDate(dateStr);
                   const seatConfig = flight ? getSeatConfig(flight.registration) : null;
-                  const isValid = flight && flight.registration && flight.registration !== 'N/A' && seatConfig && selectedVariants.includes(seatConfig.variant);
+                  // Show delay status if flight exists and (registration is valid and selected, or registration is 'N/A' and ontime is CANCELED)
+                  const isCanceled = flight && flight.registration === 'N/A' && flight.ontime === 'CANCELED';
+                  const isValid = (flight && flight.registration && flight.registration !== 'N/A' && seatConfig && selectedVariants.includes(seatConfig.variant)) || isCanceled;
 
                   return (
                     <div
@@ -371,16 +363,22 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
                       {/* Top row: delay status (left) and day number (right, with border) */}
                       <div className="absolute top-1 left-2 right-2 flex flex-row items-center justify-between w-auto">
                         {(() => {
-                          const status = isValid ? getOntimeStatus(flight.ontime, dateStr) : null;
+                          const status = (isValid && flight) ? getOntimeStatus(flight.ontime, dateStr) : null;
                           if (!status) return <span />;
+                          let dotColor = status.color;
+                          let textColor = status.color;
+                          if (flight && flight.ontime === 'CANCELED' && resolvedTheme === 'dark') {
+                            dotColor = '#fff';
+                            textColor = '#fff';
+                          }
                           return (
-                            <span className="flex items-center gap-1" style={{ color: status.color }}>
+                            <span className="flex items-center gap-1" style={{ color: textColor }}>
                               <span style={{
                                 display: 'inline-block',
                                 width: 8,
                                 height: 8,
                                 borderRadius: '50%',
-                                background: status.color,
+                                background: dotColor,
                                 marginRight: 4
                               }} />
                               <span className="font-medium text-xs">{status.text}</span>
@@ -411,6 +409,10 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
                               {flight.registration}
                             </span>
                           </div>
+                        </div>
+                      ) : isCanceled ? (
+                        <div className="flex flex-col items-center h-full min-h-[80px] gap-1 justify-between">
+                          {/* Only show the status dot and text for canceled flights with N/A registration */}
                         </div>
                       ) : null}
                     </div>
@@ -490,9 +492,11 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
                 // Only enable days in the current visible month
                 const isInCurrentMonth = isSameMonth(dateObj, new Date(Number(year), Number(month) - 1));
                 // Use filteredFlights and airline logic from desktop
-                const flight: FlightData | undefined = getClosestFlight(dateStr);
+                const flight: FlightData | undefined = getFlightForDate(dateStr);
                 const seatConfig = flight ? getSeatConfig(flight.registration) : null;
-                const isValid = isInCurrentMonth && flight && flight.registration && flight.registration !== 'N/A' && seatConfig && selectedVariants.includes(seatConfig.variant);
+                // Show delay status if flight exists and (registration is valid and selected, or registration is 'N/A' and ontime is CANCELED)
+                const isCanceled = flight && flight.registration === 'N/A' && flight.ontime === 'CANCELED';
+                const isValid = (flight && flight.registration && flight.registration !== 'N/A' && seatConfig && selectedVariants.includes(seatConfig.variant)) || isCanceled;
                 // Delay status color
                 let delayColor = '#9e9e9e';
                 if (isValid) {
