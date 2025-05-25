@@ -6,6 +6,8 @@ export interface DelayAnalysisProps {
   flightData: Array<{
     date: string;
     ontime: string;
+    origin: string;
+    destination: string;
   }>;
 }
 
@@ -47,13 +49,40 @@ const timePeriods = [3, 7, 14, 28, 60, 180, 360];
 const timeLabels = ['Last 3 days', 'Last 7 days', 'Last 14 days', 'Last 28 days', 'Last 60 days', 'Last 180 days', 'Last 360 days'];
 
 const DelayAnalysis: React.FC<DelayAnalysisProps> = ({ flightData }) => {
+  // Find the most common origin/destination pair
+  const pairCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    flightData.forEach(f => {
+      const key = `${f.origin}|${f.destination}`;
+      counts.set(key, (counts.get(key) || 0) + 1);
+    });
+    return counts;
+  }, [flightData]);
+  const mostCommonPair = useMemo(() => {
+    let max = 0;
+    let pair = '';
+    pairCounts.forEach((count, key) => {
+      if (count > max) {
+        max = count;
+        pair = key;
+      }
+    });
+    return pair;
+  }, [pairCounts]);
+  const [mostCommonOrigin, mostCommonDestination] = mostCommonPair.split('|');
+  // Only use flights with the most common pair
+  const scopedFlights = useMemo(() =>
+    flightData.filter(f => f.origin === mostCommonOrigin && f.destination === mostCommonDestination),
+    [flightData, mostCommonOrigin, mostCommonDestination]
+  );
+
   const delayStats = useMemo(() => {
-    if (!flightData) return [];
+    if (!scopedFlights) return [];
     const now = new Date();
     return timePeriods.map((days, idx) => {
       const cutoff = new Date(now);
       cutoff.setDate(now.getDate() - days);
-      const flights = flightData.filter(item => {
+      const flights = scopedFlights.filter(item => {
         const d = new Date(item.date);
         return d >= cutoff && d <= now && item.ontime !== 'N/A';
       });
@@ -101,7 +130,7 @@ const DelayAnalysis: React.FC<DelayAnalysisProps> = ({ flightData }) => {
         canceledPct,
       };
     }).filter(Boolean);
-  }, [flightData]);
+  }, [scopedFlights]);
 
   if (!delayStats || delayStats.length === 0) return null;
 
