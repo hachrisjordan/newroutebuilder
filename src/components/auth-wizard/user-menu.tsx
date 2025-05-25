@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { createSupabaseBrowserClient } from '@/lib/supabase';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
