@@ -150,7 +150,8 @@ const VariantAnalysis: React.FC<VariantAnalysisProps> = ({ flightData, seatConfi
     const stats = Array(7).fill(0).map(() => ({ total: 0, count: 0 }));
     scopedFlights.forEach(f => {
       if (!f.registration || f.registration === 'N/A') return;
-      const d = new Date(f.date);
+      const [year, month, day] = f.date.split('-').map(Number);
+      const d = new Date(year, month - 1, day);
       const dow = d.getDay();
       stats[dow].total++;
       if (getVariant(f.registration, f.date) === selectedVariant) {
