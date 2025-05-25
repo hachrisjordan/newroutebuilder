@@ -8,6 +8,7 @@ import { Menu } from 'lucide-react';
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
+import HeaderUserMenu from '@/components/auth-wizard/header-user-menu';
 
 const navigation = [
   { name: 'Home', href: '/' },
@@ -43,6 +44,7 @@ export function Header() {
           ))}
         </nav>
         <div className="ml-auto flex items-center space-x-4">
+          <HeaderUserMenu />
           <ThemeToggle />
         </div>
       </div>
