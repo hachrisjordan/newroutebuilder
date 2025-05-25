@@ -47,7 +47,20 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
     return aYear !== bYear ? aYear - bYear : aMonth - bMonth;
   });
 
-  const [currentMonthIndex, setCurrentMonthIndex] = useState(months.length > 0 ? months.length - 1 : 0);
+  // Default to the latest month with a non-N/A registration
+  const latestValidDate = React.useMemo(() => {
+    const valid = flightData.filter(f => f.registration && f.registration !== 'N/A');
+    if (valid.length === 0) return null;
+    // Find the latest date
+    return valid.reduce((latest, curr) => (curr.date > latest.date ? curr : latest)).date;
+  }, [flightData]);
+  const latestValidMonth = latestValidDate ? `${latestValidDate.split('-')[0]}-${parseInt(latestValidDate.split('-')[1], 10)}` : null;
+  const defaultMonthIndex = React.useMemo(() => {
+    if (!latestValidMonth) return months.length > 0 ? months.length - 1 : 0;
+    const idx = months.findIndex(m => m === latestValidMonth);
+    return idx !== -1 ? idx : (months.length > 0 ? months.length - 1 : 0);
+  }, [months, latestValidMonth]);
+  const [currentMonthIndex, setCurrentMonthIndex] = useState(defaultMonthIndex);
 
   const currentMonthKey = months[currentMonthIndex];
   const [year, month] = currentMonthKey.split('-');
@@ -499,9 +512,20 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
                 const isValid = (flight && flight.registration && flight.registration !== 'N/A' && seatConfig && selectedVariants.includes(seatConfig.variant)) || isCanceled;
                 // Delay status color
                 let delayColor = '#9e9e9e';
+                let showStatus = false;
+                let status = null;
                 if (isValid) {
-                  const status = getOntimeStatus(flight.ontime, dateStr);
-                  if (status) delayColor = status.color;
+                  status = getOntimeStatus(flight.ontime, dateStr);
+                  if (status) {
+                    delayColor = status.color;
+                    showStatus = true;
+                  }
+                }
+                // Show white dot for canceled in dark mode
+                if (flight && flight.ontime === 'CANCELED' && resolvedTheme === 'dark') {
+                  delayColor = '#fff';
+                  showStatus = true;
+                  status = getOntimeStatus(flight.ontime, dateStr);
                 }
                 const isSelected = selectedDate === dateStr;
                 // Determine badge text color for contrast
@@ -536,7 +560,9 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
                       {dateObj.getDate()}
                     </span>
                     {/* Dot for delay status */}
-                    <span className="w-2 h-2 rounded-full" style={{ background: delayColor }} />
+                    {showStatus && (
+                      <span className="w-2 h-2 rounded-full" style={{ background: delayColor }} />
+                    )}
                   </button>
                 );
               }
@@ -548,38 +574,49 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
           <DialogContent className="max-w-xs w-full p-4 sm:max-w-sm text-center break-words rounded-lg">
             {selectedDate && (() => {
               const { flight, seatConfig } = getFlightAndConfig(selectedDate);
-              if (!flight || !seatConfig) return <div className="text-center text-gray-500">No data for this date.</div>;
-              // Render the normal grid/details for this date only
+              if (!flight) return <div className="text-center text-gray-500">No data for this date.</div>;
+              // If canceled, show status even if registration is N/A
+              const isCanceled = flight.ontime === 'CANCELED';
               return (
                 <div className="flex flex-col items-center gap-2">
                   <div className="text-lg font-bold">{selectedDate}</div>
-                  <div className="font-bold text-[15px] text-center leading-tight">
-                    {seatConfig.aircraftType} <span className="font-mono">({seatConfig.variant})</span>
-                  </div>
-                  <div className="text-[12px] font-mono text-center">{seatConfig.config}</div>
-                  <SeatMapTooltip airline={airline} variant={seatConfig.variant} aircraftType={seatConfig.aircraftType}>
-                    <div className="text-[12px] text-muted-foreground text-center italic underline underline-offset-2">
-                      {seatConfig.note}
-                    </div>
-                  </SeatMapTooltip>
-                  <span
-                    className="rounded-md px-2 py-0.5 text-[15px] font-bold mt-1"
-                    style={{ background: seatConfig.color, color: '#fff'}}
-                  >
-                    {flight.registration}
-                  </span>
-                  {/* Delay status */}
+                  {seatConfig && (
+                    <>
+                      <div className="font-bold text-[15px] text-center leading-tight">
+                        {seatConfig.aircraftType} <span className="font-mono">({seatConfig.variant})</span>
+                      </div>
+                      <div className="text-[12px] font-mono text-center">{seatConfig.config}</div>
+                      <SeatMapTooltip airline={airline} variant={seatConfig.variant} aircraftType={seatConfig.aircraftType}>
+                        <div className="text-[12px] text-muted-foreground text-center italic underline underline-offset-2">
+                          {seatConfig.note}
+                        </div>
+                      </SeatMapTooltip>
+                      <span
+                        className="rounded-md px-2 py-0.5 text-[15px] font-bold mt-1"
+                        style={{ background: seatConfig.color, color: '#fff'}}
+                      >
+                        {flight.registration}
+                      </span>
+                    </>
+                  )}
+                  {/* Delay status for canceled flights or valid flights */}
                   {(() => {
                     const status = getOntimeStatus(flight.ontime, selectedDate);
                     if (!status) return null;
+                    let dotColor = status.color;
+                    let textColor = status.color;
+                    if (flight.ontime === 'CANCELED' && resolvedTheme === 'dark') {
+                      dotColor = '#fff';
+                      textColor = '#fff';
+                    }
                     return (
-                      <span className="mt-2 font-medium text-xs" style={{ color: status.color }}>
+                      <span className="mt-2 font-medium text-xs" style={{ color: textColor }}>
                         <span style={{
                           display: 'inline-block',
                           width: 8,
                           height: 8,
                           borderRadius: '50%',
-                          background: status.color,
+                          background: dotColor,
                           marginRight: 4
                         }} />
                         {status.text}
