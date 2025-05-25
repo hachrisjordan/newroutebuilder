@@ -1,7 +1,10 @@
+import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { z, ZodError } from 'zod';
 
-const prisma = new PrismaClient();
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const ALLOWED_AIRLINES = [
   'EI', 'LX', 'UX', 'WS', 'VJ', 'DE', '4Y', 'WK', 'EW', 'FI', 'AZ', 'HO', 'VA',
@@ -13,34 +16,43 @@ const ALLOWED_AIRLINES = [
   'ET', 'PR', 'OS'
 ];
 
+const AirlineSchema = z.object({
+  code: z.string(),
+  name: z.string(),
+});
+
 export async function GET() {
   try {
-    const airlines = await prisma.airline.findMany({
-      where: {
-        code: {
-          in: ALLOWED_AIRLINES
-        }
-      },
-      select: {
-        code: true,
-        name: true,
-      },
-      orderBy: {
-        name: 'asc',
-      },
-    });
+    const { data, error } = await supabase
+      .from('airlines')
+      .select('code, name')
+      .in('code', ALLOWED_AIRLINES)
+      .order('name', { ascending: true });
+    if (error) throw error;
+    if (!data) return NextResponse.json([]);
+
+    // Validate data
+    const airlines = z.array(AirlineSchema).parse(data);
 
     // Add logo path to each airline
     const airlinesWithLogos = airlines.map(airline => ({
       ...airline,
-      logo: `/${airline.code}.png`
+      logo: `/${airline.code}.png`,
     }));
 
     return NextResponse.json(airlinesWithLogos);
   } catch (error) {
+    if (error instanceof ZodError) {
+      console.error('Zod validation error:', error.errors);
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.errors },
+        { status: 500 }
+      );
+    }
     console.error('Failed to fetch airlines:', error);
+    const message = typeof error === 'object' && error && 'message' in error ? (error.message as string) : String(error);
     return NextResponse.json(
-      { error: 'Failed to fetch airlines' },
+      { error: message || 'Failed to fetch airlines' },
       { status: 500 }
     );
   }

@@ -14,7 +14,7 @@ interface AirportOption {
   value: string;
   label: string;
   data: {
-    name: string;
+    city_name: string;
     country: string;
   };
 }
@@ -51,9 +51,9 @@ export function AirportSearch({ value, onChange, placeholder }: AirportSearchPro
         const data = await response.json();
         setOptions(data.airports.map((airport: any) => ({
           value: airport.iata,
-          label: `${airport.iata} - ${airport.cityName} (${airport.country})`,
+          label: `${airport.iata} - ${airport.city_name} (${airport.country})`,
           data: {
-            name: airport.cityName,
+            city_name: airport.city_name,
             country: airport.country
           }
         })));
@@ -173,7 +173,7 @@ export function AirportSearch({ value, onChange, placeholder }: AirportSearchPro
               <div className="flex flex-col">
                 <span className="font-bold dark:text-foreground/90">{option.value}</span>
                 <span className="text-sm text-muted-foreground dark:text-muted-foreground/80">
-                  {option.data.name} ({option.data.country})
+                  {option.data.city_name} ({option.data.country})
                 </span>
               </div>
             </div>

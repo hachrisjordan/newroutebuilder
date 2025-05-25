@@ -1,4 +1,4 @@
-[
+const airlines = [
   { value: '2I', label: '21 Air (2I)' },
   { value: 'FE', label: '748 Air Services (FE)' },
   { value: 'AQ', label: '9 Air (AQ)' },
@@ -870,4 +870,4 @@
   { value: 'ZG', label: 'Zipair (ZG)' },
 ]
 
-module.exports = { airlines };
+module.exports = airlines;
