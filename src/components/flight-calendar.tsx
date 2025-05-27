@@ -484,7 +484,7 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
           <ShadcnCalendar
             mode="single"
             month={new Date(Number(year), Number(month) - 1)}
-            onMonthChange={date => {
+            onMonthChange={(date: Date) => {
               // Find the index in months array for the new month
               const idx = months.findIndex(m => {
                 const [y, mth] = m.split('-');
@@ -493,13 +493,13 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
               if (idx !== -1) setCurrentMonthIndex(idx);
             }}
             selected={selectedDate ? new Date(selectedDate) : undefined}
-            onSelect={date => {
+            onSelect={(date: Date | undefined) => {
               console.log('onSelect', date);
               setSelectedDate(date ? date.toISOString().split('T')[0] : null);
             }}
             className="rounded-md border"
             components={{
-              Day: (props) => {
+              Day: (props: any) => {
                 const dateObj = props.date;
                 const dateStr = dateObj.toISOString().split('T')[0];
                 // Only enable days in the current visible month

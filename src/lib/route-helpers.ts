@@ -51,7 +51,8 @@ export async function fetchPaths(
     .select('*')
     .eq('originRegion', originRegion)
     .eq('destinationRegion', destinationRegion)
-    .lte('totalDistance', maxDistance);
+    .lte('totalDistance', maxDistance)
+    .limit(10000);
   if (error || !data) return [];
   return data as unknown as Path[];
 }
