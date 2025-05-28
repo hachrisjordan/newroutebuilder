@@ -1,0 +1,45 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Project Structure and API Orchestration
+
+## Main API Orchestration
+
+- The orchestration for building full itineraries is handled by a dedicated API route (to be implemented, e.g., `/api/build-itineraries`).
+- This route coordinates the following steps:
+  1. Calls [src/app/api/create-full-route-path/route.ts](mdc:src/app/api/create-full-route-path/route.ts) to get all eligible routing paths and query params.
+  2. For each query param, calls [src/app/api/availability-v2/route.ts](mdc:src/app/api/availability-v2/route.ts) in parallel to fetch flight availability.
+  3. Composes all valid itineraries by joining flights for each segment, ensuring date/time continuity and no duplicate airports.
+
+## API Endpoints
+
+- [src/app/api/create-full-route-path/route.ts](mdc:src/app/api/create-full-route-path/route.ts):  
+  Accepts `origin`, `destination`, and `maxStop`. Returns all eligible routing paths and logs query params for downstream availability queries.
+
+- [src/app/api/availability-v2/route.ts](mdc:src/app/api/availability-v2/route.ts):  
+  Accepts `routeId`, `startDate`, `endDate`, and `apiKey` (plus optional `cabin`, `carriers`). Returns available flights for the given route segment and date range.
+
+## Data Flow
+
+- User input: `origin`, `destination`, `maxStop`, `startDate`, `endDate`, `apiKey`.
+- The orchestration API:
+  - Calls the full route path API to get all possible route segments.
+  - For each segment, calls the availability API in parallel.
+  - Merges the results to build all valid full itineraries, grouped by route and date.
+
+## Caching
+
+- Route paths and availability responses are cached using Redis/Valkey for fast repeated queries.
+
+## Output Structure
+
+- The final output is a mapping of route (e.g., `"HAN-SGN-BKK"`) and date to arrays of valid flight combinations (itineraries), where each itinerary is an array of flight UUIDs or objects.
+
+## Implementation Notes
+
+- All orchestration and composition logic should be implemented in the orchestration API route.
+- Use efficient data structures (maps, sets) for fast lookup and composition.
+
+- Ensure robust error handling and input validation throughout the flow.
