@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import type { FullRoutePathResult } from '@/types/route';
+import { createHash } from 'crypto';
 
 // Input validation schema
 const buildItinerariesSchema = z.object({
@@ -35,26 +36,33 @@ interface AvailabilityGroup {
   flights: AvailabilityFlight[];
 }
 
+function getFlightUUID(flight: AvailabilityFlight): string {
+  const key = `${flight.FlightNumbers}|${flight.DepartsAt}|${flight.ArrivesAt}`;
+  return createHash('md5').update(key).digest('hex');
+}
+
 /**
  * Compose all valid itineraries for a given route path.
  * @param segments Array of [from, to] pairs (e.g., [[HAN, SGN], [SGN, BKK]])
  * @param segmentAvail Array of arrays of AvailabilityGroup (one per segment)
  * @param alliances Array of arrays of allowed alliances for each segment
- * @returns Map of date to array of valid itineraries (each as array of flight objects)
+ * @param flightMap Map to store all unique flights
+ * @returns Map of date to array of valid itineraries (each as array of UUIDs)
  */
 function composeItineraries(
   segments: [string, string][],
   segmentAvail: AvailabilityGroup[][],
   alliances: (string[] | null)[],
+  flightMap: Map<string, AvailabilityFlight>,
   minConnectionMinutes = 45
-): Record<string, AvailabilityFlight[][]> {
-  const results: Record<string, AvailabilityFlight[][]> = {};
+): Record<string, string[][]> {
+  const results: Record<string, string[][]> = {};
   if (segments.length === 0 || segmentAvail.some(arr => arr.length === 0)) return results;
 
   // Helper: recursively build combinations
   function dfs(
     segIdx: number,
-    path: AvailabilityFlight[],
+    path: string[],
     usedAirports: Set<string>,
     prevArrival: string | null,
     date: string
@@ -89,9 +97,13 @@ function composeItineraries(
             continue;
           }
         }
+        const uuid = getFlightUUID(flight);
+        if (!flightMap.has(uuid)) {
+          flightMap.set(uuid, flight);
+        }
         usedAirports.add(from);
         usedAirports.add(to);
-        path.push(flight);
+        path.push(uuid);
         dfs(segIdx + 1, path, usedAirports, flight.ArrivesAt, date);
         path.pop();
         usedAirports.delete(from);
@@ -108,7 +120,7 @@ function composeItineraries(
     if (results[date]) {
       const seen = new Set<string>();
       results[date] = results[date].filter(itinerary => {
-        const key = itinerary.map(f => `${f.FlightNumbers}|${f.DepartsAt}`).join('>');
+        const key = itinerary.join('>');
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
@@ -173,19 +185,24 @@ export async function POST(req: NextRequest) {
         ...(cabin ? { cabin } : {}),
         ...(carriers ? { carriers } : {}),
       };
-      const res = await fetch(`${baseUrl}/api/availability-v2`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'partner-authorization': apiKey,
-        },
-        body: JSON.stringify(params),
-      });
-      if (!res.ok) {
+      try {
+        const res = await fetch(`${baseUrl}/api/availability-v2`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'partner-authorization': apiKey,
+          },
+          body: JSON.stringify(params),
+        });
+        if (!res.ok) {
+          return { routeId, error: true, data: [] };
+        }
+        const data = await res.json();
+        return { routeId, error: false, data };
+      } catch (err) {
+        console.error(`Fetch error for routeId ${routeId}:`, err);
         return { routeId, error: true, data: [] };
       }
-      const data = await res.json();
-      return { routeId, error: false, data };
     });
     const availabilityResults = await Promise.all(availabilityPromises);
 
@@ -202,7 +219,8 @@ export async function POST(req: NextRequest) {
     }
 
     // 6. Compose itineraries for each route path
-    const output: Record<string, Record<string, AvailabilityFlight[][]>> = {};
+    const output: Record<string, Record<string, string[][]>> = {};
+    const flightMap = new Map<string, AvailabilityFlight>();
     for (const route of routes as FullRoutePathResult[]) {
       // Decompose route into segments
       const codes = [route.O, route.A, route.h1, route.h2, route.B, route.D].filter((c): c is string => !!c);
@@ -223,9 +241,9 @@ export async function POST(req: NextRequest) {
         else if (i === segments.length - 1) alliances.push(Array.isArray(route.all3) ? route.all3 : (route.all3 ? [route.all3] : null));
         else alliances.push(Array.isArray(route.all2) ? route.all2 : (route.all2 ? [route.all2] : null));
       }
-      // Compose itineraries
+      // Compose itineraries (now with UUIDs)
       const routeKey = codes.join('-');
-      output[routeKey] = composeItineraries(segments, segmentAvail, alliances);
+      output[routeKey] = composeItineraries(segments, segmentAvail, alliances, flightMap);
     }
 
     // Remove empty route keys
@@ -235,7 +253,8 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    return NextResponse.json({ itineraries: output });
+    // Return itineraries and flights map
+    return NextResponse.json({ itineraries: output, flights: Object.fromEntries(flightMap) });
   } catch (err) {
     console.error('Error in /api/build-itineraries:', err);
     return NextResponse.json({ error: 'Internal server error', details: (err as Error).message }, { status: 500 });
