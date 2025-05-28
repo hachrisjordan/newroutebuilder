@@ -33,7 +33,7 @@ export async function fetchAirportByIata(
   const { data, error } = await supabase
     .from('airports')
     .select('*')
-    .eq('iata', iata)
+    .ilike('iata', iata)
     .single();
   if (error || !data) return null;
   return data as unknown as Airport;

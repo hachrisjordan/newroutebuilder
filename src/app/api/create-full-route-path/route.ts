@@ -64,6 +64,38 @@ async function batchFetchIntraRoutes(supabase: SupabaseClient, pairs: { origin: 
   }).filter(Boolean) as IntraRoute[];
 }
 
+// Helper to get total unique airports in a group (from + to)
+function totalAirports(key: string, set: Set<string>) {
+  // key is the from or to airport, set is the set of destinations or sources
+  // Return the size of the set plus 1 (for the key itself)
+  return set.size + 1;
+}
+
+function mergeGroups(groups: { keys: string[], dests: string[] }[]): { keys: string[], dests: string[] }[] {
+  let merged = [...groups];
+  let changed = true;
+  while (changed) {
+    changed = false;
+    outer: for (let i = 0; i < merged.length; i++) {
+      for (let j = 0; j < merged.length; j++) {
+        if (i === j) continue;
+        // If i's dests are a subset of j's dests
+        const setI = new Set(merged[i].dests);
+        const setJ = new Set(merged[j].dests);
+        if ([...setI].every(d => setJ.has(d))) {
+          // Merge i into j
+          merged[j].keys = Array.from(new Set([...merged[j].keys, ...merged[i].keys])).sort();
+          // Remove i
+          merged.splice(i, 1);
+          changed = true;
+          break outer;
+        }
+      }
+    }
+  }
+  return merged;
+}
+
 export async function POST(req: NextRequest) {
   const startTime = performance.now();
   try {
@@ -74,13 +106,47 @@ export async function POST(req: NextRequest) {
     if (!parseResult.success) {
       return NextResponse.json({ error: 'Invalid input', details: parseResult.error.errors }, { status: 400 });
     }
-    const { origin, destination } = parseResult.data;
+    const { origin, destination, maxStop: inputMaxStop } = parseResult.data;
+    const maxStop = Math.max(0, Math.min(4, inputMaxStop ?? 4));
     console.log(`Input validation took: ${(performance.now() - validationStart).toFixed(2)}ms`);
 
     // 1.5. Try cache first
     const cacheStart = performance.now();
-    const cached = await getCachedRoute(origin, destination);
+    const cached = await getCachedRoute(`${origin}:${maxStop}`, destination);
+    // Build the query params string (merged group strings) for logging
+    let queryParamsLog = null;
     if (cached) {
+      // We need to reconstruct the mergedGroups logic for logging
+      // Use the same logic as below, but with cached results
+      const segmentMap: Record<string, Set<string>> = {};
+      const destMap: Record<string, Set<string>> = {};
+      for (const route of cached) {
+        const codes = [route.O, route.A, route.h1, route.h2, route.B, route.D].filter((c): c is string => !!c);
+        for (let i = 0; i < codes.length - 1; i++) {
+          const from = codes[i];
+          const to = codes[i + 1];
+          if (to === destination) {
+            if (!destMap[to]) destMap[to] = new Set();
+            destMap[to].add(from);
+          } else {
+            if (!segmentMap[from]) segmentMap[from] = new Set();
+            segmentMap[from].add(to);
+          }
+        }
+      }
+      const groups: { keys: string[], dests: string[] }[] = [];
+      Object.entries(segmentMap).forEach(([from, tos]) => {
+        groups.push({ keys: [from], dests: Array.from(tos).sort() });
+      });
+      Object.entries(destMap).forEach(([to, froms]) => {
+        groups.push({ keys: Array.from(froms).sort(), dests: [to] });
+      });
+      const mergedGroups = mergeGroups(groups);
+      const queryParamsArr = mergedGroups
+        .sort((a, b) => b.dests.length - a.dests.length || a.keys.join('/').localeCompare(b.keys.join('/')))
+        .map(g => `${g.keys.join('/')}-${g.dests.join('/')}`);
+      queryParamsLog = `query params: {${queryParamsArr.map(s => `"${s}"`).join(",\n")}}`;
+      console.log(queryParamsLog);
       console.log(`Cache hit for ${origin}-${destination} (took ${(performance.now() - cacheStart).toFixed(2)}ms)`);
       return NextResponse.json({ routes: cached, cached: true });
     }
@@ -93,10 +159,12 @@ export async function POST(req: NextRequest) {
 
     // 3. Fetch airport info
     const airportStart = performance.now();
+    console.log('Fetching airports:', { origin, destination });
     const [originAirport, destinationAirport] = await Promise.all([
       fetchAirportByIata(supabase, origin),
       fetchAirportByIata(supabase, destination),
     ]);
+    console.log('Fetched airports:', { originAirport, destinationAirport });
     if (!originAirport || !destinationAirport) {
       return NextResponse.json({ error: 'Origin or destination airport not found' }, { status: 404 });
     }
@@ -250,73 +318,75 @@ export async function POST(req: NextRequest) {
     }
     console.log(`Case 3 processing took: ${(performance.now() - case3Start).toFixed(2)}ms`);
 
-    if (results.length === 0) {
-      return NextResponse.json({ error: 'No valid route found' }, { status: 404 });
+    // Filter by maxStop: only allow entries with at most (maxStop + 2) non-null, non-empty subentries among O, A, h1, h2, B, D
+    // Also ensure each airport appears at most once
+    const filteredResults = results.filter(route => {
+      const codes = [route.O, route.A, route.h1, route.h2, route.B, route.D]
+        .filter(x => x !== null && typeof x === 'string' && x.trim() !== '');
+      const stops = codes.length;
+      const uniqueCodes = new Set(codes);
+      return stops <= (maxStop + 2) && uniqueCodes.size === codes.length;
+    });
+    if (filteredResults.length === 0) {
+      return NextResponse.json({ error: 'No valid route found for the given maxStop' }, { status: 404 });
     }
 
     // Store in cache (fire and forget)
-    setCachedRoute(origin, destination, results).catch((err) => {
+    setCachedRoute(`${origin}:${maxStop}`, destination, filteredResults).catch((err) => {
       console.error('Valkey cache set error (non-blocking):', err);
     });
 
-    // Log summary of routes in terminal, grouped by caseType, merging alternatives
-    const groupByCase = results.reduce((acc, route) => {
-      if (!acc[route.caseType]) acc[route.caseType] = [];
-      acc[route.caseType].push(route);
-      return acc;
-    }, {} as Record<string, typeof results>);
+    // Group segments by departure airport (except those ending at input destination)
+    const segmentMap: Record<string, Set<string>> = {};
+    // Group segments by destination (for those ending at input destination)
+    const destMap: Record<string, Set<string>> = {};
 
-    Object.entries(groupByCase).forEach(([caseType, routes]) => {
-      // Group by route structure (positions)
-      const structureMap = new Map<string, Record<string, Set<string>>>();
-      for (const r of routes) {
-        // Build structure key and collect values for each position
-        const positions = [];
-        if (r.O) positions.push('O');
-        positions.push('A');
-        if (r.h1) positions.push('h1');
-        if (r.h2) positions.push('h2');
-        positions.push('B');
-        if (r.D) positions.push('D');
-        const structureKey = positions.join('-');
-        if (!structureMap.has(structureKey)) {
-          structureMap.set(structureKey, {
-            O: new Set(),
-            A: new Set(),
-            h1: new Set(),
-            h2: new Set(),
-            B: new Set(),
-            D: new Set(),
-          });
-        }
-        const valueMap = structureMap.get(structureKey)!;
-        if (r.O) valueMap.O.add(r.O);
-        valueMap.A.add(r.A);
-        if (r.h1) valueMap.h1.add(r.h1);
-        if (r.h2) valueMap.h2.add(r.h2);
-        valueMap.B.add(r.B);
-        if (r.D) valueMap.D.add(r.D);
-      }
-      if (structureMap.size > 0) {
-        console.log(`${caseType}:`);
-        for (const [structureKey, valueMap] of structureMap.entries()) {
-          // Build merged pattern
-          const parts: string[] = [];
-          if (structureKey.includes('O')) parts.push(Array.from(valueMap.O).join('/'));
-          parts.push(Array.from(valueMap.A).join('/'));
-          if (structureKey.includes('h1')) parts.push(Array.from(valueMap.h1).join('/'));
-          if (structureKey.includes('h2')) parts.push(Array.from(valueMap.h2).join('/'));
-          parts.push(Array.from(valueMap.B).join('/'));
-          if (structureKey.includes('D')) parts.push(Array.from(valueMap.D).join('/'));
-          // Remove empty
-          const mergedRoute = parts.filter(Boolean).join('-');
-          console.log(mergedRoute);
+    for (const route of filteredResults) {
+      const codes = [route.O, route.A, route.h1, route.h2, route.B, route.D].filter((c): c is string => !!c);
+
+      for (let i = 0; i < codes.length - 1; i++) {
+        const from = codes[i];
+        const to = codes[i + 1];
+        if (to === destination) {
+          // Group by destination for segments ending at input destination
+          if (!destMap[to]) destMap[to] = new Set();
+          destMap[to].add(from);
+        } else {
+          // Group by departure for all other segments
+          if (!segmentMap[from]) segmentMap[from] = new Set();
+          segmentMap[from].add(to);
         }
       }
+    }
+
+    // Build the initial groups
+    const groups: { keys: string[], dests: string[] }[] = [];
+    Object.entries(segmentMap).forEach(([from, tos]) => {
+      groups.push({ keys: [from], dests: Array.from(tos).sort() });
+    });
+    Object.entries(destMap).forEach(([to, froms]) => {
+      groups.push({ keys: Array.from(froms).sort(), dests: [to] });
     });
 
+    // Merge groups
+    const mergedGroups = mergeGroups(groups);
+
+    // Log the merged groups
+    mergedGroups
+      .sort((a, b) => b.dests.length - a.dests.length || a.keys.join('/').localeCompare(b.keys.join('/')))
+      .forEach(g => {
+        console.log(`${g.keys.join('/')}-${g.dests.join('/')}`);
+      });
+
+    // After mergedGroups is built and before returning response, log query params
+    const queryParamsArr = mergedGroups
+      .sort((a, b) => b.dests.length - a.dests.length || a.keys.join('/').localeCompare(b.keys.join('/')))
+      .map(g => `${g.keys.join('/')}-${g.dests.join('/')}`);
+    queryParamsLog = `query params: {${queryParamsArr.map(s => `"${s}"`).join(",\n")}}`;
+    console.log(queryParamsLog);
+
     console.log(`Total API execution time: ${(performance.now() - startTime).toFixed(2)}ms`);
-    return NextResponse.json({ routes: results });
+    return NextResponse.json({ routes: filteredResults });
   } catch (err) {
     console.error(`Error occurred after ${(performance.now() - startTime).toFixed(2)}ms:`, err);
     return NextResponse.json({ error: 'Internal server error', details: (err as Error).message }, { status: 500 });

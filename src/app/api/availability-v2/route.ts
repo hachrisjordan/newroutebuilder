@@ -92,63 +92,32 @@ export async function POST(req: NextRequest) {
       if (data.data && Array.isArray(data.data) && data.data.length > 0) {
         for (const item of data.data) {
           if (uniqueItems.has(item.ID)) continue;
-          const baseObject: any = {
-            originAirport: item.Route.OriginAirport,
-            destinationAirport: item.Route.DestinationAirport,
-            date: item.Date,
-            distance: item.Route.Distance,
-          };
-
-          // Process AvailabilityTrips if present
+          // Only process direct flights (Stops === 0) and flatten
           if (item.AvailabilityTrips && Array.isArray(item.AvailabilityTrips) && item.AvailabilityTrips.length > 0) {
-            let earliestDeparture = item.AvailabilityTrips[0].DepartsAt || '';
-            let latestArrival = item.AvailabilityTrips[0].ArrivesAt || '';
-            const flightNumberGroups: Record<string, any> = {};
-            item.AvailabilityTrips.forEach((trip: any) => {
-              if (!trip.FlightNumbers) return;
-              if (trip.DepartsAt && (!earliestDeparture || trip.DepartsAt < earliestDeparture)) {
-                earliestDeparture = trip.DepartsAt;
-              }
-              if (trip.ArrivesAt && (!latestArrival || trip.ArrivesAt > latestArrival)) {
-                latestArrival = trip.ArrivesAt;
-              }
-              const flightNumberKey = trip.FlightNumbers;
-              if (!flightNumberGroups[flightNumberKey]) {
-                flightNumberGroups[flightNumberKey] = {
-                  FlightNumbers: (trip.FlightNumbers || '').split(/,\s*/),
+            for (const trip of item.AvailabilityTrips) {
+              if (trip.Stops !== 0) continue;
+              const flightNumbersArr = (trip.FlightNumbers || '').split(/,\s*/);
+              for (const flightNumber of flightNumbersArr) {
+                results.push({
+                  originAirport: item.Route.OriginAirport,
+                  destinationAirport: item.Route.DestinationAirport,
+                  date: item.Date,
+                  distance: item.Route.Distance,
+                  FlightNumbers: flightNumber,
                   TotalDuration: trip.TotalDuration || 0,
-                  Stops: trip.Stops || 0,
-                  Aircraft: Array.isArray(trip.Aircraft) ? trip.Aircraft : [],
+                  Aircraft: Array.isArray(trip.Aircraft) && trip.Aircraft.length > 0 ? trip.Aircraft[0] : '',
                   DepartsAt: trip.DepartsAt || '',
                   ArrivesAt: trip.ArrivesAt || '',
-                  YMile: 0,
-                  WMile: 0,
-                  JMile: 0,
-                  FMile: 0,
-                };
+                  YMile: (trip.Cabin && trip.Cabin.toLowerCase() === 'economy') ? (trip.MileageCost || 0) : 0,
+                  WMile: (trip.Cabin && trip.Cabin.toLowerCase() === 'premium') ? (trip.MileageCost || 0) : 0,
+                  JMile: (trip.Cabin && trip.Cabin.toLowerCase() === 'business') ? (trip.MileageCost || 0) : 0,
+                  FMile: (trip.Cabin && trip.Cabin.toLowerCase() === 'first') ? (trip.MileageCost || 0) : 0,
+                });
               }
-              const cabinType = (trip.Cabin || '').toLowerCase();
-              if (cabinType === 'economy') {
-                flightNumberGroups[flightNumberKey].YMile = trip.MileageCost || 0;
-              } else if (cabinType === 'premium') {
-                flightNumberGroups[flightNumberKey].WMile = trip.MileageCost || 0;
-              } else if (cabinType === 'business') {
-                flightNumberGroups[flightNumberKey].JMile = trip.MileageCost || 0;
-              } else if (cabinType === 'first') {
-                flightNumberGroups[flightNumberKey].FMile = trip.MileageCost || 0;
-              }
-            });
-            baseObject.AvailabilityTrips = Object.values(flightNumberGroups);
-            baseObject.earliestDeparture = earliestDeparture;
-            baseObject.latestArrival = latestArrival;
-          } else {
-            baseObject.AvailabilityTrips = [];
-            baseObject.earliestDeparture = '';
-            baseObject.latestArrival = '';
+            }
           }
           uniqueItems.set(item.ID, true);
           processedCount++;
-          results.push(baseObject);
         }
       }
       hasMore = data.hasMore || false;
@@ -157,7 +126,131 @@ export async function POST(req: NextRequest) {
         cursor = data.cursor;
       }
     }
-    return NextResponse.json(results);
+    // Merge duplicates based on originAirport, destinationAirport, date, FlightNumbers
+    const mergedMap = new Map<string, any>();
+    for (const entry of results) {
+      const key = [
+        entry.originAirport,
+        entry.destinationAirport,
+        entry.date,
+        entry.FlightNumbers
+      ].join('|');
+      if (!mergedMap.has(key)) {
+        mergedMap.set(key, {
+          ...entry,
+          YCount: entry.YMile > 0 ? 1 : 0,
+          WCount: entry.WMile > 0 ? 1 : 0,
+          JCount: entry.JMile > 0 ? 1 : 0,
+          FCount: entry.FMile > 0 ? 1 : 0,
+          YMile: undefined,
+          WMile: undefined,
+          JMile: undefined,
+          FMile: undefined,
+        });
+      } else {
+        const merged = mergedMap.get(key);
+        merged.YCount += entry.YMile > 0 ? 1 : 0;
+        merged.WCount += entry.WMile > 0 ? 1 : 0;
+        merged.JCount += entry.JMile > 0 ? 1 : 0;
+        merged.FCount += entry.FMile > 0 ? 1 : 0;
+        // Accept the longer Aircraft string
+        if ((entry.Aircraft || '').length > (merged.Aircraft || '').length) {
+          merged.Aircraft = entry.Aircraft;
+        }
+        // Accept the earliest DepartsAt and latest ArrivesAt
+        if (entry.DepartsAt && (!merged.DepartsAt || entry.DepartsAt < merged.DepartsAt)) {
+          merged.DepartsAt = entry.DepartsAt;
+        }
+        if (entry.ArrivesAt && (!merged.ArrivesAt || entry.ArrivesAt > merged.ArrivesAt)) {
+          merged.ArrivesAt = entry.ArrivesAt;
+        }
+      }
+    }
+    // Prepare final output, removing YMile/WMile/JMile/FMIle
+    const mergedResults = Array.from(mergedMap.values()).map(({ YMile, WMile, JMile, FMile, ...rest }) => {
+      // Alliance logic
+      const flightPrefix = (rest.FlightNumbers || '').slice(0, 2).toUpperCase();
+      const starAlliance = [
+        'A3','AC','CA','AI','NZ','NH','OZ','OS','AV','SN','CM','OU','MS','ET','BR','LO','LH','CL','ZH','SQ','SA','LX','TP','TG','TK','UA'
+      ];
+      const skyTeam = [
+        'AR','AM','UX','AF','CI','MU','DL','GA','KQ','ME','KL','KE','SV','SK','RO','VN','VS','MF'
+      ];
+      const oneWorld = [
+        'AS','AA','BA','CX','FJ','AY','IB','JL','MS','QF','QR','RJ','AT','UL'
+      ];
+      let alliance: 'SA' | 'ST' | 'OW' | undefined;
+      if (starAlliance.includes(flightPrefix)) alliance = 'SA';
+      else if (skyTeam.includes(flightPrefix)) alliance = 'ST';
+      else if (oneWorld.includes(flightPrefix)) alliance = 'OW';
+      else alliance = undefined;
+      return alliance ? { ...rest, alliance } : null;
+    }).filter(Boolean);
+
+    // Group by originAirport, destinationAirport, date, alliance
+    const groupedMap = new Map<string, any>();
+    for (const entry of mergedResults) {
+      const groupKey = [
+        entry.originAirport,
+        entry.destinationAirport,
+        entry.date,
+        entry.alliance
+      ].join('|');
+      if (!groupedMap.has(groupKey)) {
+        groupedMap.set(groupKey, {
+          originAirport: entry.originAirport,
+          destinationAirport: entry.destinationAirport,
+          date: entry.date,
+          distance: entry.distance,
+          alliance: entry.alliance,
+          earliestDeparture: entry.DepartsAt,
+          latestDeparture: entry.DepartsAt,
+          earliestArrival: entry.ArrivesAt,
+          latestArrival: entry.ArrivesAt,
+          flights: [
+            {
+              FlightNumbers: entry.FlightNumbers,
+              TotalDuration: entry.TotalDuration,
+              Aircraft: entry.Aircraft,
+              DepartsAt: entry.DepartsAt,
+              ArrivesAt: entry.ArrivesAt,
+              YCount: entry.YCount,
+              WCount: entry.WCount,
+              JCount: entry.JCount,
+              FCount: entry.FCount,
+            }
+          ]
+        });
+      } else {
+        const group = groupedMap.get(groupKey);
+        // Update earliest/latest departure/arrival
+        if (entry.DepartsAt && (!group.earliestDeparture || entry.DepartsAt < group.earliestDeparture)) {
+          group.earliestDeparture = entry.DepartsAt;
+        }
+        if (entry.DepartsAt && (!group.latestDeparture || entry.DepartsAt > group.latestDeparture)) {
+          group.latestDeparture = entry.DepartsAt;
+        }
+        if (entry.ArrivesAt && (!group.earliestArrival || entry.ArrivesAt < group.earliestArrival)) {
+          group.earliestArrival = entry.ArrivesAt;
+        }
+        if (entry.ArrivesAt && (!group.latestArrival || entry.ArrivesAt > group.latestArrival)) {
+          group.latestArrival = entry.ArrivesAt;
+        }
+        group.flights.push({
+          FlightNumbers: entry.FlightNumbers,
+          TotalDuration: entry.TotalDuration,
+          Aircraft: entry.Aircraft,
+          DepartsAt: entry.DepartsAt,
+          ArrivesAt: entry.ArrivesAt,
+          YCount: entry.YCount,
+          WCount: entry.WCount,
+          JCount: entry.JCount,
+          FCount: entry.FCount,
+        });
+      }
+    }
+    const groupedResults = Array.from(groupedMap.values());
+    return NextResponse.json(groupedResults);
   } catch (error: any) {
     console.error('Error in /api/availability-v2:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
