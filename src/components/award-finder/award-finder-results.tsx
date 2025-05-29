@@ -2,7 +2,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import type { AwardFinderResults, Flight } from '@/types/award-finder-results';
 import React from 'react';
 import Image from 'next/image';
-import { Progress } from '@/components/ui/progress';
+import { Progress } from '../ui/progress';
 
 interface AwardFinderResultsProps {
   results: AwardFinderResults;
@@ -97,7 +97,7 @@ interface ClassBarProps {
 
 const ClassBar: React.FC<ClassBarProps> = ({ label, percent }) => (
   <div className="flex items-center min-w-[60px] gap-1">
-    <div className="relative w-10 h-3">
+    <div className="relative w-16 h-3">
       <div className={`absolute left-0 top-0 h-3 rounded-full transition-all duration-200 w-full bg-muted`} />
       <div
         className={`absolute left-0 top-0 h-3 rounded-full transition-all duration-200 ${classBarColors[label]}`}
@@ -127,8 +127,8 @@ const AwardFinderResults: React.FC<AwardFinderResultsProps> = ({ results }) => {
             const totalDuration = getTotalDuration(flights);
             const { y, w, j, f } = getClassPercentages(flights);
             return (
-              <Card key={`${route}-${date}-${idx}`} className="rounded-lg border bg-card shadow-lg transition-all cursor-pointer">
-                <CardContent className="flex flex-col md:flex-row items-center justify-between py-4 gap-2 p-6">
+              <Card key={`${route}-${date}-${idx}`} className="rounded-xl border bg-card shadow transition-all cursor-pointer">
+                <CardContent className="flex flex-col md:flex-row items-center justify-between py-4 gap-2 p-4">
                   <div className="flex flex-col md:flex-row md:items-center gap-2 w-full">
                     <span className="font-semibold text-lg text-primary">{route}</span>
                     <span className="text-muted-foreground text-sm md:ml-4">{date}</span>
@@ -179,4 +179,6 @@ const AwardFinderResults: React.FC<AwardFinderResultsProps> = ({ results }) => {
   );
 };
 
-export default AwardFinderResults; 
+export { AwardFinderResults };
+
+export const __awardFinderResultsIsComponent = true; 

@@ -25,7 +25,7 @@ export function AwardFinderSearch() {
   };
 
   return (
-    <form className="flex flex-col gap-6 w-fit mx-auto bg-card p-6 rounded-lg border shadow-lg">
+    <form className="flex flex-col gap-6 w-fit mx-auto bg-card p-4 rounded-xl border shadow">
       <div className="flex flex-col gap-4 md:flex-row md:gap-6">
         <div className="flex flex-col gap-2 flex-1 min-w-[250px]">
           <label htmlFor="origin" className="block text-sm font-medium text-foreground mb-1">Origin</label>
