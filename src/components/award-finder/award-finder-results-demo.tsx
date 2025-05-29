@@ -46,8 +46,8 @@ const getSortValue = (card: any, results: AwardFinderResults, sortBy: string) =>
 
 const sortOptions = [
   { value: "duration", label: "Duration" },
-  { value: "departure", label: "Departure Time (earliest)" },
-  { value: "arrival", label: "Arrival Time (latest)" },
+  { value: "departure", label: "Departure (earliest)" },
+  { value: "arrival", label: "Arrival (latest)" },
   { value: "y", label: "Economy %" },
   { value: "w", label: "Premium Economy %" },
   { value: "j", label: "Business %" },
@@ -135,8 +135,8 @@ const AwardFinderResultsDemo: React.FC = () => {
           />
           <span>Reliable results</span>
         </label>
-        <div className="flex items-center gap-2">
-          <label htmlFor="sort" className="text-sm text-muted-foreground mr-2">Sort by:</label>
+        <div className="flex items-center w-fit gap-2">
+          <label htmlFor="sort" className="text-sm text-muted-foreground mr-2">Sort:</label>
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-56" id="sort">
               <SelectValue />

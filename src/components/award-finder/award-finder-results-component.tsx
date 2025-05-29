@@ -212,12 +212,12 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsProps> = ({ result
             return (
               <Card key={cardKey} className="rounded-xl border bg-card shadow transition-all cursor-pointer">
                 <div onClick={() => handleToggle(cardKey)} className="flex items-center justify-between">
-                  <CardContent className="flex flex-col md:flex-row items-center justify-between py-4 gap-2 p-4 w-full">
+                  <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between py-4 gap-2 p-4 w-full">
                     <div className="flex flex-col md:flex-row md:items-center gap-2 w-full">
                       <span className="font-semibold text-lg text-primary">{route}</span>
                       <span className="text-muted-foreground text-sm md:ml-4">{date}</span>
                     </div>
-                    <div className="flex flex-row items-center justify-end w-full gap-6">
+                    <div className="flex flex-col md:flex-row md:items-center w-full md:w-auto gap-1 md:gap-6 mt-2 md:mt-0">
                       <div className="flex items-center gap-6">
                         <span className="text-sm font-mono text-muted-foreground font-bold whitespace-nowrap">{formatDuration(totalDuration)}</span>
                         <div className="flex items-center gap-2">
@@ -236,7 +236,9 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsProps> = ({ result
                           </span>
                         </div>
                       </div>
-                      {isOpen ? <ChevronUp className="h-5 w-5 ml-2" /> : <ChevronDown className="h-5 w-5 ml-2" />}
+                      <span className="self-end md:self-center">
+                        {isOpen ? <ChevronUp className="h-5 w-5 ml-2" /> : <ChevronDown className="h-5 w-5 ml-2" />}
+                      </span>
                     </div>
                   </CardContent>
                 </div>
