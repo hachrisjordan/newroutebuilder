@@ -14,7 +14,6 @@ export function AwardFinderSearch() {
   const [destination, setDestination] = useState<string>('');
   const [date, setDate] = useState<DateRange | undefined>(undefined);
   const [open, setOpen] = useState(false);
-  const [nonstopOnly, setNonstopOnly] = useState(false);
 
   const getDateLabel = () => {
     if (date?.from && date?.to) {
@@ -72,17 +71,6 @@ export function AwardFinderSearch() {
               />
             </PopoverContent>
           </Popover>
-        </div>
-        <div className="flex items-center flex-1 min-w-[250px] pt-6 md:pt-0">
-          <Checkbox
-            id="nonstopOnly"
-            checked={nonstopOnly}
-            onCheckedChange={checked => setNonstopOnly(!!checked)}
-            className="mr-2"
-          />
-          <label htmlFor="nonstopOnly" className="text-sm text-foreground select-none cursor-pointer">
-            Nonstop flights only
-          </label>
         </div>
         <div className="flex items-end flex-1 pt-6 md:pt-0">
           <Button type="submit" className="w-full h-9">Search</Button>

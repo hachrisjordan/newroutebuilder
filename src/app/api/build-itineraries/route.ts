@@ -65,8 +65,7 @@ function composeItineraries(
     path: string[],
     usedAirports: Set<string>,
     prevArrival: string | null,
-    date: string,
-    middleAlliance: string | null
+    date: string
   ) {
     if (segIdx === segments.length) {
       // Valid itinerary
@@ -76,7 +75,6 @@ function composeItineraries(
     }
     const [from, to] = segments[segIdx];
     const allowedAlliances = alliances[segIdx];
-    const isMiddle = segIdx > 0 && segIdx < segments.length - 1 && alliances[segIdx] && alliances[segIdx]?.length > 0;
     for (const group of segmentAvail[segIdx]) {
       if (group.originAirport !== from || group.destinationAirport !== to) continue;
       // For the first segment, require group.date === date; for later segments, allow any date
@@ -89,16 +87,6 @@ function composeItineraries(
         // Alliance filter: if allowedAlliances is set and not empty, only allow those
         if (allowedAlliances && allowedAlliances.length > 0 && !allowedAlliances.includes(group.alliance)) {
           continue;
-        }
-        // Enforce same alliance for all middle segments
-        if (isMiddle) {
-          if (!middleAlliance) {
-            // First middle segment: set alliance
-            // Only allow if this alliance is in allowedAlliances
-            if (!allowedAlliances || !allowedAlliances.includes(group.alliance)) continue;
-          } else if (group.alliance !== middleAlliance) {
-            continue;
-          }
         }
         // Check connection time
         if (prevArrival) {
@@ -116,14 +104,7 @@ function composeItineraries(
         usedAirports.add(from);
         usedAirports.add(to);
         path.push(uuid);
-        dfs(
-          segIdx + 1,
-          path,
-          usedAirports,
-          flight.ArrivesAt,
-          date,
-          isMiddle ? (middleAlliance || group.alliance) : middleAlliance
-        );
+        dfs(segIdx + 1, path, usedAirports, flight.ArrivesAt, date);
         path.pop();
         usedAirports.delete(from);
         usedAirports.delete(to);
@@ -134,7 +115,7 @@ function composeItineraries(
   // For each possible date in the first segment, try to build full itineraries
   const firstSegmentDates = new Set(segmentAvail[0].map(g => g.date));
   for (const date of firstSegmentDates) {
-    dfs(0, [], new Set(), null, date, null);
+    dfs(0, [], new Set(), null, date);
     // Deduplicate itineraries for this date
     if (results[date]) {
       const seen = new Set<string>();
@@ -146,6 +127,31 @@ function composeItineraries(
       });
     }
   }
+  return results;
+}
+
+// Simple concurrency pool for async tasks
+async function pool<T>(tasks: (() => Promise<T>)[], limit: number): Promise<T[]> {
+  const results: T[] = [];
+  let i = 0;
+  const executing: Promise<void>[] = [];
+  async function run(task: () => Promise<T>) {
+    const result = await task();
+    results.push(result);
+  }
+  while (i < tasks.length) {
+    while (executing.length < limit && i < tasks.length) {
+      const p = run(tasks[i++]).finally(() => {
+        const idx = executing.indexOf(p);
+        if (idx > -1) executing.splice(idx, 1);
+      });
+      executing.push(p);
+    }
+    if (executing.length >= limit) {
+      await Promise.race(executing);
+    }
+  }
+  await Promise.all(executing);
   return results;
 }
 
@@ -195,52 +201,35 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 4. For each group, call availability-v2 in parallel (batch in groups of 15)
-    const routeGroupArray = Array.from(routeGroups);
-    const batchSize = 15;
-    const availabilityResults: any[] = [];
-    let rateLimitHit = false;
-    for (let i = 0; i < routeGroupArray.length && !rateLimitHit; i += batchSize) {
-      const batch = routeGroupArray.slice(i, i + batchSize).map((routeId) => {
-        const params = {
-          routeId,
-          startDate,
-          endDate,
-          ...(cabin ? { cabin } : {}),
-          ...(carriers ? { carriers } : {}),
-        };
-        return fetch(`${baseUrl}/api/availability-v2`, {
+    // 4. For each group, call availability-v2 in parallel (limit 10 at a time)
+    const availabilityTasks = Array.from(routeGroups).map((routeId) => async () => {
+      const params = {
+        routeId,
+        startDate,
+        endDate,
+        ...(cabin ? { cabin } : {}),
+        ...(carriers ? { carriers } : {}),
+      };
+      try {
+        const res = await fetch(`${baseUrl}/api/availability-v2`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'partner-authorization': apiKey,
           },
           body: JSON.stringify(params),
-        })
-          .then(async (res) => {
-            if (res.status === 429) {
-              // Too Many Requests
-              return { routeId, error: true, data: [], rateLimit: true };
-            }
-            if (!res.ok) {
-              return { routeId, error: true, data: [] };
-            }
-            const data = await res.json();
-            return { routeId, error: false, data };
-          })
-          .catch((err) => {
-            console.error(`Fetch error for routeId ${routeId}:`, err);
-            return { routeId, error: true, data: [] };
-          });
-      });
-      const batchResults = await Promise.all(batch);
-      // Check for rate limit in this batch
-      if (batchResults.some(r => 'rateLimit' in r && r.rateLimit)) {
-        rateLimitHit = true;
-        return NextResponse.json({ error: 'Rate limited by upstream API. Please try again later.' }, { status: 429 });
+        });
+        if (!res.ok) {
+          return { routeId, error: true, data: [] };
+        }
+        const data = await res.json();
+        return { routeId, error: false, data };
+      } catch (err) {
+        console.error(`Fetch error for routeId ${routeId}:`, err);
+        return { routeId, error: true, data: [] };
       }
-      availabilityResults.push(...batchResults);
-    }
+    });
+    const availabilityResults = await pool(availabilityTasks, 10);
 
     // 5. Build a pool of all segment availabilities from all responses
     const segmentPool: Record<string, AvailabilityGroup[]> = {};
@@ -295,4 +284,4 @@ export async function POST(req: NextRequest) {
     console.error('Error in /api/build-itineraries:', err);
     return NextResponse.json({ error: 'Internal server error', details: (err as Error).message }, { status: 500 });
   }
-}
+} 

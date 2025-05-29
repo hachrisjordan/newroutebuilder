@@ -7,6 +7,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { ChevronDown, ChevronUp, Loader2, X } from 'lucide-react';
 import { AirportSearch } from '@/components/airport-search';
+import { useAirlineLogoSrc } from '@/lib/utils';
 
 interface Airline {
   code: string;
@@ -133,7 +134,7 @@ export function SeatTypeDelaySearch({ onSearch }: SeatTypeDelaySearchProps) {
                     onClick={() => setShowDropdown(true)}
                   >
                     <Image
-                      src={`/${selectedAirline}.png`}
+                      src={useAirlineLogoSrc(selectedAirline || '')}
                       alt={airlines.find(a => a.code === selectedAirline)?.name || ''}
                       width={20}
                       height={20}
@@ -190,7 +191,7 @@ export function SeatTypeDelaySearch({ onSearch }: SeatTypeDelaySearchProps) {
                         }}
                       >
                         <Image
-                          src={`/${airline.code}.png`}
+                          src={useAirlineLogoSrc(airline.code)}
                           alt={airline.name}
                           width={20}
                           height={20}
