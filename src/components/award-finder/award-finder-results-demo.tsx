@@ -96,24 +96,65 @@ const AwardFinderResultsDemo: React.FC = () => {
   const [results, setResults] = React.useState<AwardFinderResults | null>(null);
   const [page, setPage] = React.useState(0);
   const [sortBy, setSortBy] = React.useState<string>("duration");
+  const [reliableOnly, setReliableOnly] = React.useState(false);
+  const [reliability, setReliability] = React.useState<Record<string, { min_count: number }>>({});
+  const [reliabilityLoading, setReliabilityLoading] = React.useState(false);
 
   React.useEffect(() => {
     import("../../../example.json").then((mod) => setResults(mod as AwardFinderResults));
   }, []);
 
-  if (!results) {
-    return <div className="text-muted-foreground">Loading results...</div>;
+  React.useEffect(() => {
+    if (!reliableOnly) return;
+    setReliabilityLoading(true);
+    fetch('/api/reliability')
+      .then(res => res.json())
+      .then(data => {
+        const map = Object.fromEntries(data.map((r: { code: string, min_count: number }) => [r.code, r]));
+        setReliability(map);
+      })
+      .finally(() => setReliabilityLoading(false));
+  }, [reliableOnly]);
+
+  function filterReliable(results: AwardFinderResults): AwardFinderResults {
+    if (!reliableOnly || !Object.keys(reliability).length) return results;
+    const filteredFlights: typeof results.flights = {};
+    for (const [id, flight] of Object.entries(results.flights)) {
+      const code = flight.FlightNumbers.slice(0, 2);
+      const min = reliability[code]?.min_count ?? 1;
+      const newFlight = { ...flight };
+      if (newFlight.YCount < min) newFlight.YCount = 0;
+      if (newFlight.WCount < min) newFlight.WCount = 0;
+      if (newFlight.JCount < min) newFlight.JCount = 0;
+      if (newFlight.FCount < min) newFlight.FCount = 0;
+      if (newFlight.YCount || newFlight.WCount || newFlight.JCount || newFlight.FCount) {
+        filteredFlights[id] = newFlight;
+      }
+    }
+    const filteredItineraries: typeof results.itineraries = {};
+    for (const [route, dates] of Object.entries(results.itineraries)) {
+      filteredItineraries[route] = {};
+      for (const [date, itineraries] of Object.entries(dates)) {
+        filteredItineraries[route][date] = itineraries.filter(itin =>
+          itin.every(flightId => filteredFlights[flightId])
+        );
+      }
+    }
+    return { itineraries: filteredItineraries, flights: filteredFlights };
   }
 
-  let cards = flattenItineraries(results);
+  if (!results || (reliableOnly && reliabilityLoading)) {
+    return <div className="text-muted-foreground flex items-center gap-2"><span className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-primary"></span>Loading results...</div>;
+  }
+
+  const filteredResults = filterReliable(results);
+  let cards = flattenItineraries(filteredResults);
   cards = cards.sort((a, b) => {
-    const aVal = getSortValue(a, results, sortBy);
-    const bVal = getSortValue(b, results, sortBy);
+    const aVal = getSortValue(a, filteredResults, sortBy);
+    const bVal = getSortValue(b, filteredResults, sortBy);
     if (["arrival", "y", "w", "j", "f"].includes(sortBy)) {
-      // Descending for arrival/latest and class %
       return bVal - aVal;
     }
-    // Ascending for duration, departure
     return aVal - bVal;
   });
 
@@ -122,18 +163,29 @@ const AwardFinderResultsDemo: React.FC = () => {
 
   return (
     <div className="w-full flex flex-col items-center">
-      <div className="w-full max-w-4xl mx-auto flex flex-row items-center justify-end mb-4 gap-2">
-        <label htmlFor="sort" className="text-sm text-muted-foreground mr-2">Sort by:</label>
-        <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="w-56" id="sort">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {sortOptions.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="w-full max-w-4xl mx-auto flex flex-row items-center justify-between mb-4 gap-2">
+        <label className="flex items-center gap-1 text-sm">
+          <input
+            type="checkbox"
+            checked={reliableOnly}
+            onChange={e => setReliableOnly(e.target.checked)}
+            className="accent-primary"
+          />
+          Reliable results
+        </label>
+        <div className="flex items-center gap-2">
+          <label htmlFor="sort" className="text-sm text-muted-foreground mr-2">Sort by:</label>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-56" id="sort">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {sortOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       <AwardFinderResultsComponent
         results={{
@@ -143,7 +195,7 @@ const AwardFinderResultsDemo: React.FC = () => {
             acc[route][date].push(itinerary);
             return acc;
           }, {} as AwardFinderResults["itineraries"]),
-          flights: results.flights,
+          flights: filteredResults.flights,
         }}
       />
       <Pagination
