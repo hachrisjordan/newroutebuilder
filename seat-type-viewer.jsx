@@ -7,6 +7,7 @@ import utc from 'dayjs/plugin/utc';
 import seatAF from '../data/seat_AF.json';
 import { CLOUD_STORAGE_BASE_URL, API_BASE_URL, getSeatConfigUrl } from '../config/cloud';
 import { Checkbox } from './src/components/ui/checkbox';
+import { getAirlineLogoSrc } from './src/lib/utils';
 
 // Configure dayjs with UTC plugin
 dayjs.extend(utc);
@@ -1543,7 +1544,7 @@ const SeatTypeViewer = () => {
       label: (
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <img
-            src={`/${airlineCode}.png`}
+            src={getAirlineLogoSrc(airlineCode)}
             alt={airlineCode}
             style={{ 
               width: '24px', 
