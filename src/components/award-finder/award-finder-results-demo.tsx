@@ -2,7 +2,7 @@
 
 import React from "react";
 import type { AwardFinderResults, Flight } from "@/types/award-finder-results";
-import { AwardFinderResults as AwardFinderResultsComponent } from ".";
+import { AwardFinderResultsComponent } from ".";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { Pagination } from "@/components/ui/pagination";
