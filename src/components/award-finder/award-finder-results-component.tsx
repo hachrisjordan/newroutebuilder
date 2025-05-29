@@ -7,14 +7,21 @@ import { ChevronDown, ChevronUp, X, Check, AlertTriangle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useAirlineLogoSrc } from '@/lib/utils';
+import { useTheme } from 'next-themes';
+import { getAirlineLogoSrc } from '@/lib/utils';
+import { getTotalDuration, getClassPercentages } from '@/lib/utils';
 
 interface AwardFinderResultsProps {
   results: AwardFinderResults;
 }
 
+// Helper to parse ISO string as local time (ignore Z)
+function parseLocalTime(iso: string): Date {
+  return new Date(iso.replace(/Z$/, ''));
+}
+
 const formatTime = (iso: string) => {
-  const date = new Date(iso);
+  const date = parseLocalTime(iso);
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
@@ -31,59 +38,6 @@ const formatDuration = (minutes: number) => {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return `${h}h ${m}m`;
-};
-
-const getTotalDuration = (flights: Flight[]) => {
-  let total = 0;
-  for (let i = 0; i < flights.length; i++) {
-    total += flights[i].TotalDuration;
-    if (i > 0) {
-      const prevArrive = new Date(flights[i - 1].ArrivesAt).getTime();
-      const currDepart = new Date(flights[i].DepartsAt).getTime();
-      const layover = Math.max(0, Math.round((currDepart - prevArrive) / (1000 * 60)));
-      total += layover;
-    }
-  }
-  return total;
-};
-
-const getClassPercentages = (flights: Flight[]) => {
-  const totalDuration = flights.reduce((sum, f) => sum + f.TotalDuration, 0);
-  // Y: 100% if all flights have YCount > 0, else 0%
-  const y = flights.every(f => f.YCount > 0) ? 100 : 0;
-
-  // Helper to check if any flight has a higher class
-  const hasHigher = (classKey: 'WCount' | 'JCount' | 'FCount', higherKeys: string[]) =>
-    flights.some(f => higherKeys.some(hk => (f as any)[hk] > 0));
-
-  // W: at least 1 WCount > 0, and all flights have at most W (no J or F)
-  let w = 0;
-  if (
-    flights.some(f => f.WCount > 0) &&
-    !hasHigher('WCount', ['JCount', 'FCount'])
-  ) {
-    const wDuration = flights.filter(f => f.WCount > 0).reduce((sum, f) => sum + f.TotalDuration, 0);
-    w = Math.round((wDuration / totalDuration) * 100);
-  }
-
-  // J: at least 1 JCount > 0, and all flights have at most J (no F)
-  let j = 0;
-  if (
-    flights.some(f => f.JCount > 0) &&
-    !hasHigher('JCount', ['FCount'])
-  ) {
-    const jDuration = flights.filter(f => f.JCount > 0).reduce((sum, f) => sum + f.TotalDuration, 0);
-    j = Math.round((jDuration / totalDuration) * 100);
-  }
-
-  // F: at least 1 FCount > 0
-  let f = 0;
-  if (flights.some(f => f.FCount > 0)) {
-    const fDuration = flights.filter(f => f.FCount > 0).reduce((sum, f) => sum + f.TotalDuration, 0);
-    f = Math.round((fDuration / totalDuration) * 100);
-  }
-
-  return { y, w, j, f };
 };
 
 const getAirlineCode = (flightNumber: string) => flightNumber.slice(0, 2).toUpperCase();
@@ -127,12 +81,49 @@ const formatLayoverDuration = (minutes: number) => {
   return m === 0 ? `${h}h` : `${h}h ${m}m`;
 };
 
+function getLocalDayDiff(baseDate: string, iso: string): number {
+  // baseDate: 'YYYY-MM-DD', iso: 'YYYY-MM-DDTHH:mm:ssZ'
+  const base = new Date(baseDate);
+  const compare = parseLocalTime(iso);
+  // Use only the date part, ignore timezones
+  const baseYMD = `${base.getFullYear()}-${String(base.getMonth()+1).padStart(2,'0')}-${String(base.getDate()).padStart(2,'0')}`;
+  const compareYMD = `${compare.getFullYear()}-${String(compare.getMonth()+1).padStart(2,'0')}-${String(compare.getDate()).padStart(2,'0')}`;
+  const baseDateObj = new Date(baseYMD);
+  const compareDateObj = new Date(compareYMD);
+  return Math.floor((compareDateObj.getTime() - baseDateObj.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+// Helper to get local date string from ISO
+function getFlightLocalDate(iso: string): string {
+  return formatYMD(parseLocalTime(iso));
+}
+
+// Helper to format a Date as YYYY-MM-DD
+function formatYMD(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+}
+
+// Minimal, robust helpers for local date and day diff
+function parseLocalDateFromIso(iso: string): string {
+  // Remove Z, parse as local, and return YYYY-MM-DD
+  const d = new Date(iso.replace(/Z$/, ''));
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function getDayDiffFromItinerary(itineraryDate: string, iso: string): number {
+  const itinerary = new Date(itineraryDate);
+  const flightDate = new Date(parseLocalDateFromIso(iso));
+  return Math.floor((flightDate.getTime() - itinerary.getTime()) / (1000 * 60 * 60 * 24));
+}
+
 const AwardFinderResultsComponent: React.FC<AwardFinderResultsProps> = ({ results }) => {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [iataToCity, setIataToCity] = useState<Record<string, string>>({});
   const [isLoadingCities, setIsLoadingCities] = useState(false);
   const [cityError, setCityError] = useState<string | null>(null);
   const [reliability, setReliability] = useState<Record<string, number>>({});
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
 
   // Collect all unique IATA codes from all routes (not just layovers)
   useEffect(() => {
@@ -209,13 +200,15 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsProps> = ({ result
             const flights: Flight[] = itinerary.map(id => results.flights[id]);
             const firstFlight = flights[0];
             const lastFlight = flights[flights.length - 1];
-            const dayDiff = getDayDiff(date, lastFlight.ArrivesAt);
+            // Reference date is always the local date of the first flight's departure
+            const referenceDate = getFlightLocalDate(firstFlight.DepartsAt);
+            // For summary card: first flight departs, last flight arrives
+            const firstDepDiff = getDayDiffFromItinerary(date, firstFlight.DepartsAt);
+            const lastArriveDiff = getDayDiffFromItinerary(date, lastFlight.ArrivesAt);
             const totalDuration = getTotalDuration(flights);
             const { y, w, j, f } = getClassPercentages(flights);
             const cardKey = `${route}-${date}-${idx}`;
             const isOpen = expanded === cardKey;
-            // Airline logo helpers
-            const airlineLogoSrcs = flights.map(f => useAirlineLogoSrc(getAirlineCode(f.FlightNumbers)));
             return (
               <Card key={cardKey} className="rounded-xl border bg-card shadow transition-all cursor-pointer">
                 <div onClick={() => handleToggle(cardKey)} className="flex items-center justify-between">
@@ -228,11 +221,18 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsProps> = ({ result
                       <div className="flex items-center gap-6">
                         <span className="text-sm font-mono text-muted-foreground font-bold whitespace-nowrap">{formatDuration(totalDuration)}</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium">{formatTime(firstFlight.DepartsAt)}</span>
+                          <span className="text-sm font-medium">
+                            {formatTime(firstFlight.DepartsAt)}
+                            {firstDepDiff !== 0 ? (
+                              <span className="text-xs text-muted-foreground ml-1">{firstDepDiff > 0 ? `(+${firstDepDiff})` : `(${firstDepDiff})`}</span>
+                            ) : null}
+                          </span>
                           <span className="text-muted-foreground">→</span>
                           <span className="text-sm font-medium">
                             {formatTime(lastFlight.ArrivesAt)}
-                            {dayDiff > 0 && <span className="text-xs text-muted-foreground ml-1">(+{dayDiff})</span>}
+                            {lastArriveDiff !== 0 ? (
+                              <span className="text-xs text-muted-foreground ml-1">{lastArriveDiff > 0 ? `(+${lastArriveDiff})` : `(${lastArriveDiff})`}</span>
+                            ) : null}
                           </span>
                         </div>
                       </div>
@@ -244,7 +244,7 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsProps> = ({ result
                   <div className="flex flex-wrap gap-2 items-center">
                     {flights.map((f, i) => {
                       const code = getAirlineCode(f.FlightNumbers);
-                      const logoSrc = airlineLogoSrcs[i];
+                      const logoSrc = getAirlineLogoSrc(code, isDark);
                       return (
                         <span key={f.FlightNumbers + i} className="flex items-center gap-1">
                           <Image
@@ -316,6 +316,9 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsProps> = ({ result
                               );
                             }
                           }
+                          // For each flight, calculate day difference from reference date
+                          const depDiff = getDayDiffFromItinerary(date, f.DepartsAt);
+                          const arrDiff = getDayDiffFromItinerary(date, f.ArrivesAt);
                           return (
                             <React.Fragment key={f.FlightNumbers + i}>
                               {i > 0 && layover}
@@ -327,16 +330,26 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsProps> = ({ result
                                     <span className="text-sm font-mono text-muted-foreground font-bold">{formatDuration(f.TotalDuration)}</span>
                                   </div>
                                   <div className="flex items-center gap-2">
-                                    <span className="text-sm font-medium">{formatTime(f.DepartsAt)}</span>
+                                    <span className="text-sm font-medium">
+                                      {formatTime(f.DepartsAt)}
+                                      {depDiff !== 0 ? (
+                                        <span className="text-xs text-muted-foreground ml-1">{depDiff > 0 ? `(+${depDiff})` : `(${depDiff})`}</span>
+                                      ) : null}
+                                    </span>
                                     <span className="text-muted-foreground">→</span>
-                                    <span className="text-sm font-medium">{formatTime(f.ArrivesAt)}</span>
+                                    <span className="text-sm font-medium">
+                                      {formatTime(f.ArrivesAt)}
+                                      {arrDiff !== 0 ? (
+                                        <span className="text-xs text-muted-foreground ml-1">{arrDiff > 0 ? `(+${arrDiff})` : `(${arrDiff})`}</span>
+                                      ) : null}
+                                    </span>
                                   </div>
                                 </div>
                                 {/* Second line */}
                                 <div className="flex flex-row items-center justify-between w-full mt-1">
                                   <div className="flex items-center gap-2">
                                     <Image
-                                      src={airlineLogoSrcs[i]}
+                                      src={getAirlineLogoSrc(code, isDark)}
                                       alt={code}
                                       width={20}
                                       height={20}

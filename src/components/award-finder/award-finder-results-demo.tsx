@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { Pagination } from "@/components/ui/pagination";
 import { Checkbox } from '@/components/ui/checkbox';
+import { getTotalDuration, getClassPercentages } from '@/lib/utils';
 
 const PAGE_SIZE = 25;
 
@@ -26,50 +27,10 @@ const flattenItineraries = (results: AwardFinderResults) => {
   return cards;
 };
 
-// Copy of getClassPercentages from results component
-const getClassPercentages = (flights: Flight[]) => {
-  const totalDuration = flights.reduce((sum, f) => sum + f.TotalDuration, 0);
-  const y = flights.every(f => f.YCount > 0) ? 100 : 0;
-  const hasHigher = (classKey: 'WCount' | 'JCount' | 'FCount', higherKeys: string[]) =>
-    flights.some(f => higherKeys.some(hk => (f as any)[hk] > 0));
-  let w = 0;
-  if (
-    flights.some(f => f.WCount > 0) &&
-    !hasHigher('WCount', ['JCount', 'FCount'])
-  ) {
-    const wDuration = flights.filter(f => f.WCount > 0).reduce((sum, f) => sum + f.TotalDuration, 0);
-    w = Math.round((wDuration / totalDuration) * 100);
-  }
-  let j = 0;
-  if (
-    flights.some(f => f.JCount > 0) &&
-    !hasHigher('JCount', ['FCount'])
-  ) {
-    const jDuration = flights.filter(f => f.JCount > 0).reduce((sum, f) => sum + f.TotalDuration, 0);
-    j = Math.round((jDuration / totalDuration) * 100);
-  }
-  let f = 0;
-  if (flights.some(f => f.FCount > 0)) {
-    const fDuration = flights.filter(f => f.FCount > 0).reduce((sum, f) => sum + f.TotalDuration, 0);
-    f = Math.round((fDuration / totalDuration) * 100);
-  }
-  return { y, w, j, f };
-};
-
 const getSortValue = (card: any, results: AwardFinderResults, sortBy: string) => {
   const flights = card.itinerary.map((id: string) => results.flights[id]);
   if (sortBy === "duration") {
-    let total = 0;
-    for (let i = 0; i < flights.length; i++) {
-      total += flights[i].TotalDuration;
-      if (i > 0) {
-        const prevArrive = new Date(flights[i - 1].ArrivesAt).getTime();
-        const currDepart = new Date(flights[i].DepartsAt).getTime();
-        const layover = Math.max(0, Math.round((currDepart - prevArrive) / (1000 * 60)));
-        total += layover;
-      }
-    }
-    return total;
+    return getTotalDuration(flights);
   }
   if (sortBy === "departure") {
     return new Date(flights[0].DepartsAt).getTime();

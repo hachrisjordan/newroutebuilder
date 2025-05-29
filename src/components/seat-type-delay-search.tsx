@@ -7,7 +7,8 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { ChevronDown, ChevronUp, Loader2, X } from 'lucide-react';
 import { AirportSearch } from '@/components/airport-search';
-import { useAirlineLogoSrc } from '@/lib/utils';
+import { useTheme } from 'next-themes';
+import { getAirlineLogoSrc } from '@/lib/utils';
 
 interface Airline {
   code: string;
@@ -26,6 +27,8 @@ interface SeatTypeDelaySearchProps {
 }
 
 export function SeatTypeDelaySearch({ onSearch }: SeatTypeDelaySearchProps) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
   const [selectedAirline, setSelectedAirline] = useState<string | undefined>();
   const [flightNumber, setFlightNumber] = useState('');
   const [airlines, setAirlines] = useState<Airline[]>([]);
@@ -134,7 +137,7 @@ export function SeatTypeDelaySearch({ onSearch }: SeatTypeDelaySearchProps) {
                     onClick={() => setShowDropdown(true)}
                   >
                     <Image
-                      src={useAirlineLogoSrc(selectedAirline || '')}
+                      src={getAirlineLogoSrc(selectedAirline || '', isDark)}
                       alt={airlines.find(a => a.code === selectedAirline)?.name || ''}
                       width={20}
                       height={20}
@@ -191,7 +194,7 @@ export function SeatTypeDelaySearch({ onSearch }: SeatTypeDelaySearchProps) {
                         }}
                       >
                         <Image
-                          src={useAirlineLogoSrc(airline.code)}
+                          src={getAirlineLogoSrc(airline.code, isDark)}
                           alt={airline.name}
                           width={20}
                           height={20}
