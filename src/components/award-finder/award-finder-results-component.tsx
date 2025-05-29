@@ -114,7 +114,7 @@ const ClassBar: React.FC<ClassBarProps> = ({ label, percent }) => (
   </div>
 );
 
-const AwardFinderResults: React.FC<AwardFinderResultsProps> = ({ results }) => {
+const AwardFinderResultsComponent: React.FC<AwardFinderResultsProps> = ({ results }) => {
   return (
     <div className="flex flex-col gap-4 w-full max-w-4xl mx-auto">
       {Object.entries(results.itineraries).map(([route, dates]) =>
@@ -179,4 +179,4 @@ const AwardFinderResults: React.FC<AwardFinderResultsProps> = ({ results }) => {
   );
 };
 
-export default AwardFinderResults; 
+export default AwardFinderResultsComponent; 
