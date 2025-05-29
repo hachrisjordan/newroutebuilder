@@ -86,7 +86,7 @@ export function AwardFinderSearch() {
     !maxStopsError;
 
   return (
-    <form className="flex flex-col gap-6 w-fit mx-auto bg-card p-4 rounded-xl border shadow">
+    <form className="flex flex-col gap-6 w-full max-w-screen-lg mx-auto bg-card p-4 rounded-xl border shadow">
       <div className="flex flex-col gap-4 md:flex-row md:gap-6">
         <div className="flex flex-col gap-2 flex-1 min-w-[250px]">
           <label htmlFor="origin" className="block text-sm font-medium text-foreground mb-1">Origin</label>

@@ -323,13 +323,13 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsProps> = ({ result
                             <React.Fragment key={f.FlightNumbers + i}>
                               {i > 0 && layover}
                               <div className="flex flex-col gap-0.5 py-2">
-                                {/* First line */}
-                                <div className="flex flex-row items-center justify-between w-full">
+                                {/* Responsive: segment and times on separate lines for small screens */}
+                                <div className="flex flex-col md:flex-row md:items-center md:justify-between w-full gap-1 md:gap-0">
                                   <div className="flex items-center gap-6">
                                     <span className="font-semibold text-primary whitespace-nowrap">{segment}</span>
                                     <span className="text-sm font-mono text-muted-foreground font-bold">{formatDuration(f.TotalDuration)}</span>
                                   </div>
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-2 mt-1 md:mt-0">
                                     <span className="text-sm font-medium">
                                       {formatTime(f.DepartsAt)}
                                       {depDiff !== 0 ? (
