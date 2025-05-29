@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Select, Input, Button, Space, message, Typography, Modal, Checkbox, Row, Col, Tooltip } from 'antd';
+import { Select, Input, Button, Space, message, Typography, Modal, Row, Col, Tooltip } from 'antd';
 import { LeftOutlined, RightOutlined, FilterOutlined, BarChartOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
 import airlines from '../data/airlines_full';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import seatAF from '../data/seat_AF.json';
 import { CLOUD_STORAGE_BASE_URL, API_BASE_URL, getSeatConfigUrl } from '../config/cloud';
+import { Checkbox } from './src/components/ui/checkbox';
 
 // Configure dayjs with UTC plugin
 dayjs.extend(utc);
@@ -1768,29 +1769,28 @@ const SeatTypeViewer = () => {
         onCancel={() => setFilterModalVisible(false)}
         width={600}
       >
-        <Checkbox.Group 
-          style={{ width: '100%' }}
-          value={selectedVariants}
-          onChange={handleVariantChange}
-        >
-          <Row gutter={[16, 16]}>
-            {availableVariants.map(variant => {
-              console.log('Rendering variant checkbox:', variant);
-              return (
-                <Col span={24} key={variant.value}>
-                  <Checkbox value={variant.value}>
-                    <span style={{ fontWeight: 'bold' }}>
-                      {variant.aircraftType} ({variant.value})
-                    </span>
-                    <span style={{ fontStyle: 'italic', marginLeft: '10px' }}>
-                      - {variant.note}
-                    </span>
-                  </Checkbox>
-                </Col>
-              );
-            })}
-          </Row>
-        </Checkbox.Group>
+        <div style={{ width: '100%' }}>
+          {availableVariants.map(variant => (
+            <div key={variant.value} style={{ marginBottom: 8 }}>
+              <Checkbox
+                id={`variant-${variant.value}`}
+                checked={selectedVariants.includes(variant.value)}
+                onCheckedChange={checked => {
+                  if (checked) {
+                    setSelectedVariants([...selectedVariants, variant.value]);
+                  } else {
+                    setSelectedVariants(selectedVariants.filter(v => v !== variant.value));
+                  }
+                }}
+                className="mr-2"
+              />
+              <label htmlFor={`variant-${variant.value}`} style={{ fontWeight: 'bold' }}>
+                {variant.aircraftType} ({variant.value})
+              </label>
+              <span style={{ fontStyle: 'italic', marginLeft: '10px' }}>- {variant.note}</span>
+            </div>
+          ))}
+        </div>
         
         {selectedVariants.length > 0 && (
           <div style={{ marginTop: '20px', textAlign: 'right' }}>

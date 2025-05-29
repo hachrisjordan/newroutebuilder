@@ -6,6 +6,7 @@ import { AwardFinderResultsComponent } from ".";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { Pagination } from "@/components/ui/pagination";
+import { Checkbox } from '@/components/ui/checkbox';
 
 const PAGE_SIZE = 25;
 
@@ -165,13 +166,13 @@ const AwardFinderResultsDemo: React.FC = () => {
     <div className="w-full flex flex-col items-center">
       <div className="w-full max-w-4xl mx-auto flex flex-row items-center justify-between mb-4 gap-2">
         <label className="flex items-center gap-1 text-sm">
-          <input
-            type="checkbox"
+          <Checkbox
+            id="reliableOnly"
             checked={reliableOnly}
-            onChange={e => setReliableOnly(e.target.checked)}
-            className="accent-primary"
+            onCheckedChange={checked => setReliableOnly(!!checked)}
+            className="mr-2"
           />
-          Reliable results
+          <span>Reliable results</span>
         </label>
         <div className="flex items-center gap-2">
           <label htmlFor="sort" className="text-sm text-muted-foreground mr-2">Sort by:</label>

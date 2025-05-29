@@ -1,6 +1,9 @@
 import { getCurrentUser } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { Card } from '@/components/ui/card';
+import dynamic from 'next/dynamic';
+
+const ApiKeySettings = dynamic(() => import('@/components/settings/api-key-settings'), { ssr: false });
 
 export default async function SettingsPage() {
   const user = await getCurrentUser();
@@ -31,6 +34,7 @@ export default async function SettingsPage() {
             />
           </div>
         </div>
+        <ApiKeySettings />
       </Card>
     </main>
   );
