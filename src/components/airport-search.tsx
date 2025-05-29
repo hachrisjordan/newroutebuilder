@@ -3,11 +3,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Loader2, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface AirportSearchProps {
   value: string | undefined;
   onChange: (value: string) => void;
   placeholder: string;
+  className?: string;
 }
 
 interface AirportOption {
@@ -19,7 +21,7 @@ interface AirportOption {
   };
 }
 
-export function AirportSearch({ value, onChange, placeholder }: AirportSearchProps) {
+export function AirportSearch({ value, onChange, placeholder, className }: AirportSearchProps) {
   const [search, setSearch] = useState('');
   const [options, setOptions] = useState<AirportOption[]>([]);
   const [loading, setLoading] = useState(false);
@@ -139,7 +141,7 @@ export function AirportSearch({ value, onChange, placeholder }: AirportSearchPro
           value={search}
           onChange={(e) => handleSearch(e.target.value)}
           onFocus={handleFocus}
-          className="h-8 pr-8 dark:bg-background/80 dark:border-border/50"
+          className={cn("pr-8 dark:bg-background/80 dark:border-border/50", className)}
         />
         {search && (
           <button

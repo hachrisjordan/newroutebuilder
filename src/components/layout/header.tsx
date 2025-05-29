@@ -13,6 +13,7 @@ import HeaderUserMenu from '@/components/auth-wizard/header-user-menu';
 const navigation = [
   { name: 'Home', href: '/' },
   { name: 'Seat Type / Delay', href: '/seat-type-delay' },
+  { name: 'Award Finder', href: '/award-finder' },
 ];
 
 export function Header() {
