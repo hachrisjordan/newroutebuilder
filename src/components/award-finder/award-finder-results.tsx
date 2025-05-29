@@ -179,6 +179,4 @@ const AwardFinderResults: React.FC<AwardFinderResultsProps> = ({ results }) => {
   );
 };
 
-export { AwardFinderResults };
-
-export const __awardFinderResultsIsComponent = true; 
+export default AwardFinderResults; 
