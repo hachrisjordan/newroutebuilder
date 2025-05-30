@@ -25,4 +25,16 @@ export interface AwardFinderResults {
   flights: {
     [flightId: string]: Flight;
   };
+}
+
+export interface AwardFinderSearchParams {
+  origin: string;
+  destination: string;
+  maxStop: number;
+  startDate: string; // YYYY-MM-DD
+  endDate: string;   // YYYY-MM-DD
+}
+
+export interface AwardFinderSearchRequest extends AwardFinderSearchParams {
+  apiKey: string;
 } 

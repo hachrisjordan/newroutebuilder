@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import type { Flight } from '@/types/award-finder-results';
+import { z } from 'zod';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -102,3 +103,15 @@ export function getClassPercentages(flights: Flight[]) {
 
   return { y, w, j, f };
 }
+
+export const awardFinderSearchParamsSchema = z.object({
+  origin: z.string().min(3).max(3),
+  destination: z.string().min(3).max(3),
+  maxStop: z.number().int().min(0).max(4),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+export const awardFinderSearchRequestSchema = awardFinderSearchParamsSchema.extend({
+  apiKey: z.string().min(1),
+});

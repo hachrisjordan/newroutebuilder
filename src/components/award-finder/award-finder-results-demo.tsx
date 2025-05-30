@@ -63,7 +63,7 @@ const AwardFinderResultsDemo: React.FC = () => {
   const [reliabilityLoading, setReliabilityLoading] = React.useState(false);
 
   React.useEffect(() => {
-    import("../../../example.json").then((mod) => setResults(mod as AwardFinderResults));
+    // Remove the import statement and any related code that loads or uses it
   }, []);
 
   React.useEffect(() => {
