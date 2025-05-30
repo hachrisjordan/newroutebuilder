@@ -327,24 +327,28 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsProps> = ({ result
                               <div className="flex flex-col gap-0.5 py-2">
                                 {/* Responsive: segment and times on separate lines for small screens */}
                                 <div className="flex flex-col md:flex-row md:items-center md:justify-between w-full gap-1 md:gap-0">
-                                  <div className="flex items-center gap-6">
-                                    <span className="font-semibold text-primary whitespace-nowrap">{segment}</span>
-                                    <span className="text-sm font-mono text-muted-foreground font-bold">{formatDuration(f.TotalDuration)}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2 mt-1 md:mt-0">
-                                    <span className="text-sm font-medium">
-                                      {formatTime(f.DepartsAt)}
-                                      {depDiff !== 0 ? (
-                                        <span className="text-xs text-muted-foreground ml-1">{depDiff > 0 ? `(+${depDiff})` : `(${depDiff})`}</span>
-                                      ) : null}
-                                    </span>
-                                    <span className="text-muted-foreground">→</span>
-                                    <span className="text-sm font-medium">
-                                      {formatTime(f.ArrivesAt)}
-                                      {arrDiff !== 0 ? (
-                                        <span className="text-xs text-muted-foreground ml-1">{arrDiff > 0 ? `(+${arrDiff})` : `(${arrDiff})`}</span>
-                                      ) : null}
-                                    </span>
+                                  {/* Mobile: duration and times on same row; Desktop: segment and duration */}
+                                  <div className="flex flex-col w-full md:flex-row md:items-center md:gap-6">
+                                    <div className="flex items-center gap-2 w-full md:w-auto">
+                                      <span className="font-semibold text-primary whitespace-nowrap">{segment}</span>
+                                      <span className="hidden md:inline text-sm font-mono text-muted-foreground font-bold">{formatDuration(f.TotalDuration)}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 w-full md:w-auto mt-1 md:mt-0">
+                                      <span className="inline md:hidden text-sm font-mono text-muted-foreground font-bold">{formatDuration(f.TotalDuration)}</span>
+                                      <span className="text-sm font-medium">
+                                        {formatTime(f.DepartsAt)}
+                                        {depDiff !== 0 ? (
+                                          <span className="text-xs text-muted-foreground ml-1">{depDiff > 0 ? `(+${depDiff})` : `(${depDiff})`}</span>
+                                        ) : null}
+                                      </span>
+                                      <span className="text-muted-foreground">→</span>
+                                      <span className="text-sm font-medium">
+                                        {formatTime(f.ArrivesAt)}
+                                        {arrDiff !== 0 ? (
+                                          <span className="text-xs text-muted-foreground ml-1">{arrDiff > 0 ? `(+${arrDiff})` : `(${arrDiff})`}</span>
+                                        ) : null}
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
                                 {/* Second line */}

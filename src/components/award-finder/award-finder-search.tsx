@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { AirportSearch } from '@/components/airport-search';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { format, isValid } from 'date-fns';
+import { format, isValid, addYears } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -236,7 +236,7 @@ export function AwardFinderSearch() {
   // --- RENDER ---
   return (
     <>
-      <form className="inline-flex flex-col gap-6 w-auto bg-card p-4 rounded-xl border shadow" onSubmit={handleSubmit}>
+      <form className="flex flex-col gap-6 w-full px-2 sm:px-4 bg-card p-4 rounded-xl border shadow" onSubmit={handleSubmit}>
         <div className="flex flex-col gap-4 md:flex-row md:gap-6">
           <div className="flex flex-col gap-2 flex-1 min-w-[250px]">
             <label htmlFor="origin" className="block text-sm font-medium text-foreground mb-1">Origin</label>
@@ -272,6 +272,8 @@ export function AwardFinderSearch() {
                 <Calendar
                   mode="range"
                   selected={date}
+                  fromDate={new Date()}
+                  toDate={addYears(new Date(), 1)}
                   onSelect={(range, selectedDay) => {
                     // If both from and to are selected and user selects a new date, reset range
                     if (date?.from && date?.to && selectedDay) {
@@ -311,7 +313,7 @@ export function AwardFinderSearch() {
               <label htmlFor="api-key" className="block text-sm font-medium text-foreground mb-1">API Key</label>
               <Input
                 id="api-key"
-                type="text"
+                type="password"
                 value={apiKey}
                 onChange={e => setApiKey(e.target.value)}
                 placeholder="Enter your API key"

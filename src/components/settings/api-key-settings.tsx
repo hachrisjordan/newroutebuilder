@@ -93,7 +93,7 @@ const ApiKeySettings = () => {
       </label>
       <input
         id="api-key"
-        type="text"
+        type="password"
         className="w-full px-3 py-2 border rounded bg-background text-foreground"
         value={apiKey}
         onChange={(e) => setApiKey(e.target.value)}
