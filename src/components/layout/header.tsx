@@ -55,6 +55,7 @@ export function Header() {
           <Image src="/rblogo.png" alt="RouteBuilder Logo" height={32} width={32} className="h-8 w-auto" priority />
         </Link>
         <div className="flex items-center space-x-2">
+          <HeaderUserMenu />
           <ThemeToggle />
           <Dialog>
             <DialogTrigger asChild>
