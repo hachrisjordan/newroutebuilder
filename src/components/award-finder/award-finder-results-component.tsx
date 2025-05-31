@@ -192,7 +192,7 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsProps> = ({ result
   };
 
   return (
-    <div className="flex flex-col gap-4 w-full max-w-4xl mx-auto">
+    <div className="flex flex-col gap-4 w-full max-w-[1000px] mx-auto">
       <TooltipProvider>
       {Object.entries(results.itineraries).map(([route, dates]) =>
         Object.entries(dates).map(([date, itineraries]) =>

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Loader2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import airportsData from '@/data/airports.json';
 
 interface AirportSearchProps {
   value: string | undefined;
@@ -21,9 +22,54 @@ interface AirportOption {
   };
 }
 
+// Helper to parse search input (copied from seat-type-viewer.jsx)
+const parseSearchInput = (inputValue: any) => {
+  if (!inputValue) return '';
+  try {
+    if (typeof inputValue === 'object' && inputValue !== null) {
+      if (inputValue._searchText) {
+        return String(inputValue._searchText).toLowerCase();
+      } else if (inputValue.input) {
+        return String(inputValue.input).toLowerCase();
+      } else if (inputValue.searchText) {
+        return String(inputValue.searchText).toLowerCase();
+      } else if (inputValue.value) {
+        return String(inputValue.value).toLowerCase();
+      } else if (inputValue.searchValue) {
+        return String(inputValue.searchValue).toLowerCase();
+      } else {
+        const str = String(inputValue);
+        if (str.startsWith('{') && str.includes('searchValue')) {
+          try {
+            const parsed = JSON.parse(str);
+            if (parsed.searchValue) {
+              return String(parsed.searchValue).toLowerCase();
+            }
+          } catch (e) {}
+        }
+        return '';
+      }
+    } else {
+      return String(inputValue || '').toLowerCase();
+    }
+  } catch (error) {
+    return '';
+  }
+};
+
+// Build airport options from JSON
+const airportOptions: AirportOption[] = (airportsData as any[]).map((airport: any) => ({
+  value: airport.IATA,
+  label: `${airport.IATA} - ${airport.CityName} (${airport.Country})`,
+  data: {
+    city_name: airport.CityName,
+    country: airport.Country,
+  },
+}));
+
 export function AirportSearch({ value, onChange, placeholder, className }: AirportSearchProps) {
   const [search, setSearch] = useState('');
-  const [options, setOptions] = useState<AirportOption[]>([]);
+  const [options, setOptions] = useState<AirportOption[]>(airportOptions);
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [total, setTotal] = useState(0);
@@ -35,51 +81,51 @@ export function AirportSearch({ value, onChange, placeholder, className }: Airpo
   // Initialize search with value if it exists
   useEffect(() => {
     if (value) {
-      const option = options.find(opt => opt.value === value);
+      const option = airportOptions.find(opt => opt.value === value);
       if (option) {
         setSearch(option.label);
       }
     }
-  }, [value, options]);
+  }, [value]);
 
-  // Debounced search function
-  const debouncedSearch = useCallback(
-    async (searchValue: string, pageNum: number) => {
-      setLoading(true);
-      try {
-        const response = await fetch(
-          `/api/airports?search=${encodeURIComponent(searchValue)}&page=${pageNum}&pageSize=${pageSize}`
-        );
-        const data = await response.json();
-        setOptions(data.airports.map((airport: any) => ({
-          value: airport.iata,
-          label: `${airport.iata} - ${airport.city_name} (${airport.country})`,
-          data: {
-            city_name: airport.city_name,
-            country: airport.country
-          }
-        })));
-        setTotal(data.total);
-      } catch (error) {
-        console.error('Failed to fetch airports:', error);
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
-
-  // Load initial data
-  useEffect(() => {
-    debouncedSearch('', 1);
+  // Filtering and sorting logic (EXACT from seat-type-viewer.jsx)
+  const filterAndSortOptions = useCallback((input: string) => {
+    if (!input) return airportOptions;
+    const searchText = parseSearchInput(input);
+    return airportOptions
+      .filter(option => {
+        const iata = String(option.value || '').toLowerCase();
+        const label = String(option.label || '').toLowerCase();
+        return iata.includes(searchText) || label.includes(searchText);
+      })
+      .sort((a, b) => {
+        const input = searchText;
+        const iataA = String(a.value || '').toLowerCase();
+        const iataB = String(b.value || '').toLowerCase();
+        let scoreA = 0;
+        let scoreB = 0;
+        if (iataA === input) scoreA = 1000;
+        if (iataB === input) scoreB = 1000;
+        if (iataA.startsWith(input) && iataA !== input) scoreA = 500;
+        if (iataB.startsWith(input) && iataB !== input) scoreB = 500;
+        if (iataA.includes(input) && !iataA.startsWith(input)) scoreA = 200;
+        if (iataB.includes(input) && !iataB.startsWith(input)) scoreB = 200;
+        const labelA = String(a.label || '').toLowerCase();
+        const labelB = String(b.label || '').toLowerCase();
+        if (scoreA === 0 && labelA.includes(input)) scoreA = 10;
+        if (scoreB === 0 && labelB.includes(input)) scoreB = 10;
+        if (scoreA !== scoreB) {
+          return scoreB - scoreA;
+        }
+        return String(iataA).localeCompare(String(iataB));
+      });
   }, []);
 
   // Handle search input
   const handleSearch = (value: string) => {
     setSearch(value);
-    setPage(1);
     setShowDropdown(true);
-    debouncedSearch(value, 1);
+    setOptions(filterAndSortOptions(value));
   };
 
   // Handle scroll to load more
@@ -95,7 +141,7 @@ export function AirportSearch({ value, onChange, placeholder, className }: Airpo
       const nextPage = page + 1;
       if (nextPage * pageSize <= total) {
         setPage(nextPage);
-        debouncedSearch(search, nextPage);
+        setOptions(filterAndSortOptions(search));
       }
     }
   };
@@ -107,17 +153,16 @@ export function AirportSearch({ value, onChange, placeholder, className }: Airpo
         setShowDropdown(false);
         // Reset search to selected value if one exists
         if (value) {
-          const option = options.find(opt => opt.value === value);
+          const option = airportOptions.find(opt => opt.value === value);
           if (option) {
             setSearch(option.label);
           }
         }
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [value, options]);
+  }, [value]);
 
   // Handle option selection
   const handleSelect = (option: AirportOption) => {
@@ -129,6 +174,7 @@ export function AirportSearch({ value, onChange, placeholder, className }: Airpo
   // Handle input focus
   const handleFocus = () => {
     setShowDropdown(true);
+    setOptions(filterAndSortOptions(search));
   };
 
   return (
@@ -150,6 +196,7 @@ export function AirportSearch({ value, onChange, placeholder, className }: Airpo
             onClick={() => {
               setSearch('');
               onChange('');
+              setOptions(airportOptions);
             }}
           >
             <X className="h-3 w-3" />
