@@ -58,6 +58,7 @@ export default function AwardFinderPage() {
   const [reliableOnly, setReliableOnly] = useState(false);
   const [reliability, setReliability] = useState<Record<string, { min_count: number }>>({});
   const [reliabilityLoading, setReliabilityLoading] = useState(false);
+  const [minReliabilityPercent, setMinReliabilityPercent] = useState<number>(100);
 
   useEffect(() => {
     if (!reliableOnly) return;
@@ -71,32 +72,51 @@ export default function AwardFinderPage() {
       .finally(() => setReliabilityLoading(false));
   }, [reliableOnly]);
 
+  useEffect(() => {
+    fetch('/api/profile').then(res => res.json()).then(data => {
+      if (typeof data.min_reliability_percent === 'number') {
+        setMinReliabilityPercent(data.min_reliability_percent);
+      }
+    });
+  }, []);
+
   const filterReliable = useCallback((results: AwardFinderResults): AwardFinderResults => {
     if (!reliableOnly || !Object.keys(reliability).length) return results;
-    const filteredFlights: typeof results.flights = {};
-    for (const [id, flight] of Object.entries(results.flights)) {
-      const code = flight.FlightNumbers.slice(0, 2);
+    // Do not mutate flight counts; keep original for display
+    const filteredFlights: typeof results.flights = { ...results.flights };
+
+    // Helper to determine if a flight is unreliable (all classes < minCount)
+    const isUnreliable = (f: typeof results.flights[string]) => {
+      const code = f.FlightNumbers.slice(0, 2);
       const min = reliability[code]?.min_count ?? 1;
-      const newFlight = { ...flight };
-      if (newFlight.YCount < min) newFlight.YCount = 0;
-      if (newFlight.WCount < min) newFlight.WCount = 0;
-      if (newFlight.JCount < min) newFlight.JCount = 0;
-      if (newFlight.FCount < min) newFlight.FCount = 0;
-      if (newFlight.YCount || newFlight.WCount || newFlight.JCount || newFlight.FCount) {
-        filteredFlights[id] = newFlight;
-      }
-    }
+      return (
+        (f.YCount < min) &&
+        (f.WCount < min) &&
+        (f.JCount < min) &&
+        (f.FCount < min)
+      );
+    };
+
     const filteredItineraries: typeof results.itineraries = {};
     for (const [route, dates] of Object.entries(results.itineraries)) {
       filteredItineraries[route] = {};
       for (const [date, itineraries] of Object.entries(dates)) {
-        filteredItineraries[route][date] = itineraries.filter(itin =>
-          itin.every(flightId => filteredFlights[flightId])
-        );
+        filteredItineraries[route][date] = itineraries.filter(itin => {
+          if (!itin.every(flightId => filteredFlights[flightId])) return false;
+          const flights = itin.map(flightId => filteredFlights[flightId]);
+          const totalDuration = flights.reduce((sum, f) => sum + f.TotalDuration, 0);
+          const unreliableDuration = flights
+            .filter(isUnreliable)
+            .reduce((sum, f) => sum + f.TotalDuration, 0);
+          if (unreliableDuration === 0) return true;
+          if (totalDuration === 0) return false;
+          const unreliablePct = (unreliableDuration / totalDuration) * 100;
+          return unreliablePct <= (100 - minReliabilityPercent);
+        });
       }
     }
     return { itineraries: filteredItineraries, flights: filteredFlights };
-  }, [reliableOnly, reliability]);
+  }, [reliableOnly, reliability, minReliabilityPercent]);
 
   return (
     <main className="flex flex-col items-center bg-background min-h-screen pt-8 pb-12 px-2 sm:px-4">

@@ -83,15 +83,8 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
           const pagedCards = cards.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
           return <>
             <AwardFinderResultsComponent
-              results={{
-                itineraries: pagedCards.reduce((acc, { route, date, itinerary }) => {
-                  if (!acc[route]) acc[route] = {};
-                  if (!acc[route][date]) acc[route][date] = [];
-                  acc[route][date].push(itinerary);
-                  return acc;
-                }, {} as AwardFinderResults["itineraries"]),
-                flights: filteredResults.flights,
-              }}
+              cards={pagedCards}
+              flights={filteredResults.flights}
             />
             <Pagination
               currentPage={page}
