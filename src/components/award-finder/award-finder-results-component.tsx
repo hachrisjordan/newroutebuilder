@@ -217,7 +217,7 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsProps> = ({ result
                       <span className="font-semibold text-lg text-primary">{route}</span>
                       <span className="text-muted-foreground text-sm md:ml-4">{date}</span>
                     </div>
-                    <div className="flex flex-col md:flex-row md:items-center w-full md:w-auto gap-1 md:gap-6 mt-2 md:mt-0">
+                    <div className="flex flex-col md:flex-row md:items-center w-full md:w-auto gap-1 md:gap-6 mt-2 md:mt-0 ml-auto">
                       <div className="flex items-center gap-6">
                         <span className="text-sm font-mono text-muted-foreground font-bold whitespace-nowrap">{formatDuration(totalDuration)}</span>
                         <div className="flex items-center gap-2">
@@ -333,7 +333,7 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsProps> = ({ result
                                       <span className="font-semibold text-primary whitespace-nowrap">{segment}</span>
                                       <span className="hidden md:inline text-sm font-mono text-muted-foreground font-bold">{formatDuration(f.TotalDuration)}</span>
                                     </div>
-                                    <div className="flex items-center gap-2 w-full md:w-auto mt-1 md:mt-0">
+                                    <div className="flex items-center gap-2 w-full md:w-auto mt-1 md:mt-0 md:ml-auto justify-end">
                                       <span className="inline md:hidden text-sm font-mono text-muted-foreground font-bold">{formatDuration(f.TotalDuration)}</span>
                                       <span className="text-sm font-medium">
                                         {formatTime(f.DepartsAt)}
