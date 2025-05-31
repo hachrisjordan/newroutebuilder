@@ -17,9 +17,10 @@ interface AwardFinderResultsCardProps {
   reliabilityLoading: boolean;
   filterReliable: (results: AwardFinderResults) => AwardFinderResults;
   flattenItineraries: (results: AwardFinderResults) => Array<{ route: string; date: string; itinerary: string[] }>;
-  getSortValue: (card: any, results: AwardFinderResults, sortBy: string) => number;
+  getSortValue: (card: any, results: AwardFinderResults, sortBy: string, reliability: Record<string, { min_count: number }>, minReliabilityPercent: number) => number;
   PAGE_SIZE: number;
   sortOptions: { value: string; label: string }[];
+  minReliabilityPercent: number;
 }
 
 const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
@@ -37,6 +38,7 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
   getSortValue,
   PAGE_SIZE,
   sortOptions,
+  minReliabilityPercent,
 }) => {
   return (
     <div className="mt-8 w-full flex flex-col items-center">
@@ -72,8 +74,14 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
           const filteredResults = filterReliable(results);
           let cards = flattenItineraries(filteredResults);
           cards = cards.sort((a, b) => {
-            const aVal = getSortValue(a, filteredResults, sortBy);
-            const bVal = getSortValue(b, filteredResults, sortBy);
+            const aVal = getSortValue(a, filteredResults, sortBy, reliability, minReliabilityPercent);
+            const bVal = getSortValue(b, filteredResults, sortBy, reliability, minReliabilityPercent);
+            if (aVal === bVal) {
+              // Secondary sort by duration (shorter first)
+              const aDuration = getSortValue(a, filteredResults, 'duration', reliability, minReliabilityPercent);
+              const bDuration = getSortValue(b, filteredResults, 'duration', reliability, minReliabilityPercent);
+              return aDuration - bDuration;
+            }
             if (["arrival", "y", "w", "j", "f"].includes(sortBy)) {
               return bVal - aVal;
             }
@@ -85,6 +93,8 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
             <AwardFinderResultsComponent
               cards={pagedCards}
               flights={filteredResults.flights}
+              reliability={reliability}
+              minReliabilityPercent={minReliabilityPercent}
             />
             <Pagination
               currentPage={page}

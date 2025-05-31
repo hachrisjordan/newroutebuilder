@@ -72,35 +72,78 @@ export function getTotalDuration(flights: Flight[]): number {
 }
 
 /**
- * Returns the percentage of the itinerary spent in each class (Y, W, J, F).
+ * Returns the percentage of the itinerary spent in each class (Y, W, J, F),
+ * applying the minReliabilityPercent rule: for each segment, if its duration is > (100 - minReliabilityPercent)% of total duration
+ * and the class count < minCount, treat that class as 0 for that segment.
  * @param flights Array of Flight objects in the itinerary order
+ * @param reliability Record<string, { min_count: number }>
+ * @param minReliabilityPercent number (0-100)
  */
-export function getClassPercentages(flights: Flight[]) {
+export function getClassPercentages(
+  flights: Flight[],
+  reliability?: Record<string, { min_count: number }>,
+  minReliabilityPercent: number = 100
+) {
   const totalDuration = flights.reduce((sum, f) => sum + f.TotalDuration, 0);
-  // Y: 100% if all flights have YCount > 0, else 0%
-  const y = flights.every(f => f.YCount > 0) ? 100 : 0;
+  if (!reliability || minReliabilityPercent === 100) {
+    // fallback to original logic if no reliability or 100%
+    // Y: 100% if all flights have YCount > 0, else 0%
+    const y = flights.every(f => f.YCount > 0) ? 100 : 0;
 
-  // W: percentage of total duration where WCount > 0
+    // W: percentage of total duration where WCount > 0
+    let w = 0;
+    if (flights.some(f => f.WCount > 0)) {
+      const wDuration = flights.filter(f => f.WCount > 0).reduce((sum, f) => sum + f.TotalDuration, 0);
+      w = Math.round((wDuration / totalDuration) * 100);
+    }
+
+    // J: percentage of total duration where JCount > 0
+    let j = 0;
+    if (flights.some(f => f.JCount > 0)) {
+      const jDuration = flights.filter(f => f.JCount > 0).reduce((sum, f) => sum + f.TotalDuration, 0);
+      j = Math.round((jDuration / totalDuration) * 100);
+    }
+
+    // F: percentage of total duration where FCount > 0
+    let f = 0;
+    if (flights.some(f => f.FCount > 0)) {
+      const fDuration = flights.filter(f => f.FCount > 0).reduce((sum, f) => sum + f.TotalDuration, 0);
+      f = Math.round((fDuration / totalDuration) * 100);
+    }
+    return { y, w, j, f };
+  }
+  // Apply the combined rule
+  const threshold = (100 - minReliabilityPercent) / 100 * totalDuration;
+  // For each segment, adjust counts for each class as per the rule
+  const adjusted = flights.map(f => {
+    const code = f.FlightNumbers.slice(0, 2);
+    const min = reliability[code]?.min_count ?? 1;
+    const overThreshold = f.TotalDuration > threshold;
+    return {
+      YCount: overThreshold && f.YCount < min ? 0 : f.YCount,
+      WCount: overThreshold && f.WCount < min ? 0 : f.WCount,
+      JCount: overThreshold && f.JCount < min ? 0 : f.JCount,
+      FCount: overThreshold && f.FCount < min ? 0 : f.FCount,
+      TotalDuration: f.TotalDuration,
+    };
+  });
+  // Now apply the current rule to the adjusted data
+  const y = adjusted.every(f => f.YCount > 0) ? 100 : 0;
   let w = 0;
-  if (flights.some(f => f.WCount > 0)) {
-    const wDuration = flights.filter(f => f.WCount > 0).reduce((sum, f) => sum + f.TotalDuration, 0);
+  if (adjusted.some(f => f.WCount > 0)) {
+    const wDuration = adjusted.filter(f => f.WCount > 0).reduce((sum, f) => sum + f.TotalDuration, 0);
     w = Math.round((wDuration / totalDuration) * 100);
   }
-
-  // J: percentage of total duration where JCount > 0
   let j = 0;
-  if (flights.some(f => f.JCount > 0)) {
-    const jDuration = flights.filter(f => f.JCount > 0).reduce((sum, f) => sum + f.TotalDuration, 0);
+  if (adjusted.some(f => f.JCount > 0)) {
+    const jDuration = adjusted.filter(f => f.JCount > 0).reduce((sum, f) => sum + f.TotalDuration, 0);
     j = Math.round((jDuration / totalDuration) * 100);
   }
-
-  // F: percentage of total duration where FCount > 0
   let f = 0;
-  if (flights.some(f => f.FCount > 0)) {
-    const fDuration = flights.filter(f => f.FCount > 0).reduce((sum, f) => sum + f.TotalDuration, 0);
+  if (adjusted.some(flt => flt.FCount > 0)) {
+    const fDuration = adjusted.filter(flt => flt.FCount > 0).reduce((sum, flt) => sum + flt.TotalDuration, 0);
     f = Math.round((fDuration / totalDuration) * 100);
   }
-
   return { y, w, j, f };
 }
 

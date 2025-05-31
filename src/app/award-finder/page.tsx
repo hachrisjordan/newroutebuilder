@@ -24,7 +24,7 @@ const flattenItineraries = (results: AwardFinderResults) => {
   return cards;
 };
 
-const getSortValue = (card: any, results: AwardFinderResults, sortBy: string) => {
+const getSortValue = (card: any, results: AwardFinderResults, sortBy: string, reliability: Record<string, { min_count: number }>, minReliabilityPercent: number) => {
   const flights = card.itinerary.map((id: string) => results.flights[id]);
   if (sortBy === "duration") {
     return getTotalDuration(flights);
@@ -36,7 +36,7 @@ const getSortValue = (card: any, results: AwardFinderResults, sortBy: string) =>
     return new Date(flights[flights.length - 1].ArrivesAt).getTime();
   }
   if (["y", "w", "j", "f"].includes(sortBy)) {
-    return getClassPercentages(flights)[sortBy as "y" | "w" | "j" | "f"];
+    return getClassPercentages(flights, reliability, minReliabilityPercent)[sortBy as "y" | "w" | "j" | "f"];
   }
   return 0;
 };
@@ -140,6 +140,7 @@ export default function AwardFinderPage() {
           getSortValue={getSortValue}
           PAGE_SIZE={PAGE_SIZE}
           sortOptions={sortOptions}
+          minReliabilityPercent={minReliabilityPercent}
         />
       )}
     </main>

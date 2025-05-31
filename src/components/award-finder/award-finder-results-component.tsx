@@ -21,6 +21,8 @@ interface AwardFinderResultsFlatCard {
 interface AwardFinderResultsComponentProps {
   cards: Array<{ route: string; date: string; itinerary: string[] }>; // flat, ordered array
   flights: Record<string, Flight>;
+  reliability: Record<string, { min_count: number }>;
+  minReliabilityPercent: number;
 }
 
 // Helper to parse ISO string as local time (ignore Z)
@@ -124,12 +126,11 @@ function getDayDiffFromItinerary(itineraryDate: string, iso: string): number {
   return Math.floor((flightDate.getTime() - itinerary.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = ({ cards, flights }) => {
+const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = ({ cards, flights, reliability, minReliabilityPercent }) => {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [iataToCity, setIataToCity] = useState<Record<string, string>>({});
   const [isLoadingCities, setIsLoadingCities] = useState(false);
   const [cityError, setCityError] = useState<string | null>(null);
-  const [reliability, setReliability] = useState<Record<string, number>>({});
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
 
@@ -169,25 +170,6 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
     fetchCities();
   }, [cards]);
 
-  // Fetch reliability table (code, min_count)
-  useEffect(() => {
-    const fetchReliability = async () => {
-      try {
-        const supabase = createSupabaseBrowserClient();
-        const { data, error } = await supabase
-          .from('reliability')
-          .select('code, min_count');
-        if (error) return;
-        const map: Record<string, number> = {};
-        data?.forEach((row: { code: string; min_count: number }) => {
-          map[row.code] = row.min_count;
-        });
-        setReliability(map);
-      } catch {}
-    };
-    fetchReliability();
-  }, []);
-
   const handleToggle = (key: string) => {
     setExpanded(expanded === key ? null : key);
   };
@@ -200,7 +182,7 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
           const firstFlight = flightsArr[0];
           const lastFlight = flightsArr[flightsArr.length - 1];
           const totalDuration = getTotalDuration(flightsArr);
-          const { y, w, j, f } = getClassPercentages(flightsArr);
+          const { y, w, j, f } = getClassPercentages(flightsArr, reliability, minReliabilityPercent);
           const cardKey = `${route}-${date}-${idx}`;
           const isOpen = expanded === cardKey;
           return (
@@ -283,6 +265,9 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                           segment = `${fromCity} (${fromIata}) → ${toCity} (${toIata})`;
                         }
                         const code = getAirlineCode(f.FlightNumbers);
+                        // Map reliability to Record<string, number> for this segment
+                        const reliabilityMap: Record<string, number> = {};
+                        reliabilityMap[code] = reliability[code]?.min_count ?? 1;
                         // Layover calculation
                         let layover = null;
                         if (i > 0) {
@@ -319,7 +304,7 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                             code={code}
                             isDark={isDark}
                             iataToCity={iataToCity}
-                            reliability={reliability}
+                            reliability={reliabilityMap}
                             layover={layover}
                             cityError={cityError}
                             isLoadingCities={isLoadingCities}
