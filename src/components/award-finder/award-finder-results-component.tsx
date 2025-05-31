@@ -126,6 +126,12 @@ function getDayDiffFromItinerary(itineraryDate: string, iso: string): number {
   return Math.floor((flightDate.getTime() - itinerary.getTime()) / (1000 * 60 * 60 * 24));
 }
 
+function formatIsoTime(iso: string) {
+  // Returns 'HH:mm' from ISO string, without local time conversion
+  const [, time] = iso.split('T');
+  return time ? time.slice(0, 5) : '';
+}
+
 const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = ({ cards, flights, reliability, minReliabilityPercent }) => {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [iataToCity, setIataToCity] = useState<Record<string, string>>({});
@@ -198,11 +204,17 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                       <span className="text-sm font-mono text-muted-foreground font-bold whitespace-nowrap">{formatDuration(totalDuration)}</span>
                       <div className="flex items-center gap-2 whitespace-nowrap">
                         <span className="text-sm font-medium">
-                          {formatTime(firstFlight.DepartsAt)}
+                          {formatIsoTime(firstFlight.DepartsAt)}
                         </span>
                         <span className="text-muted-foreground">→</span>
                         <span className="text-sm font-medium">
-                          {formatTime(lastFlight.ArrivesAt)}
+                          {formatIsoTime(lastFlight.ArrivesAt)}
+                          {(() => {
+                            const arrDiff = getDayDiff(date, lastFlight.ArrivesAt);
+                            return arrDiff > 0 ? (
+                              <span className="text-xs text-muted-foreground ml-1">(+{arrDiff})</span>
+                            ) : null;
+                          })()}
                         </span>
                       </div>
                     </div>

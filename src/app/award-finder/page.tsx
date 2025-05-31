@@ -137,7 +137,7 @@ export default function AwardFinderPage() {
           reliabilityLoading={reliabilityLoading}
           filterReliable={filterReliable}
           flattenItineraries={flattenItineraries}
-          getSortValue={getSortValue}
+          getSortValue={(card, results, sortBy) => getSortValue(card, results, sortBy, reliability, minReliabilityPercent)}
           PAGE_SIZE={PAGE_SIZE}
           sortOptions={sortOptions}
           minReliabilityPercent={minReliabilityPercent}
