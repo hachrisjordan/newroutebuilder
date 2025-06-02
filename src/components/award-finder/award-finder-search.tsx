@@ -13,6 +13,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { awardFinderSearchRequestSchema } from '@/lib/utils';
 import type { AwardFinderResults, AwardFinderSearchRequest } from '@/types/award-finder-results';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 
 interface AwardFinderSearchProps {
   onSearch: (results: AwardFinderResults) => void;
@@ -91,14 +92,9 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
     return <span className="text-muted-foreground">Pick a date range</span>;
   };
 
-  const handleMaxStopsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (!/^[0-4]$/.test(value) && value !== '') {
-      setMaxStopsError('Max stops must be a number from 0 to 4');
-      return;
-    }
+  const handleMaxStopsChange = (value: string) => {
     setMaxStopsError(null);
-    setMaxStops(value === '' ? 0 : Number(value));
+    setMaxStops(Number(value));
   };
 
   const isSearchEnabled =
@@ -244,17 +240,16 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
           </div>
           <div className="flex flex-col gap-2">
             <label htmlFor="max-stops" className="block text-sm font-medium text-foreground mb-1">Max Stops</label>
-            <Input
-              id="max-stops"
-              type="number"
-              min={0}
-              max={4}
-              value={maxStops}
-              onChange={handleMaxStopsChange}
-              className="h-9"
-              inputMode="numeric"
-              pattern="[0-4]"
-            />
+            <Select value={String(maxStops)} onValueChange={handleMaxStopsChange}>
+              <SelectTrigger id="max-stops" className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[0,1,2,3,4].map(n => (
+                  <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {maxStopsError && <span className="text-xs text-red-600 mt-1">{maxStopsError}</span>}
           </div>
         </div>

@@ -216,7 +216,7 @@ export function AirportSearch({ value, onChange, placeholder, className }: Airpo
           {!loading && options.map((option) => (
             <div
               key={option.value}
-              className="px-3 py-2 hover:bg-accent/50 dark:hover:bg-accent/30 cursor-pointer transition-colors"
+              className="px-3 py-2 pointer-fine:hover:bg-accent/50 pointer-fine:dark:hover:bg-accent/30 cursor-pointer transition-colors touch-manipulation select-none"
               onClick={() => handleSelect(option)}
             >
               <div className="flex flex-col">

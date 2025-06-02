@@ -150,7 +150,7 @@ export function SeatTypeDelaySearch({ onSearch }: SeatTypeDelaySearchProps) {
                     </span>
                     <button
                       type="button"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-accent/50 dark:hover:bg-accent/30 rounded-sm"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 pointer-fine:hover:bg-accent/50 pointer-fine:dark:hover:bg-accent/30 rounded-sm touch-manipulation select-none"
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedAirline(undefined);
@@ -184,7 +184,7 @@ export function SeatTypeDelaySearch({ onSearch }: SeatTypeDelaySearchProps) {
                     filteredAirlines.map((airline) => (
                       <div
                         key={airline.code}
-                        className="flex items-center gap-2 px-2 py-1.5 hover:bg-accent/50 dark:hover:bg-accent/30 cursor-pointer transition-colors"
+                        className="flex items-center gap-2 px-2 py-1.5 pointer-fine:hover:bg-accent/50 pointer-fine:dark:hover:bg-accent/30 cursor-pointer transition-colors touch-manipulation select-none"
                         onClick={() => {
                           setSelectedAirline(airline.code);
                           const selectedAirlineName = airlines.find(a => a.code === airline.code)?.name || '';
