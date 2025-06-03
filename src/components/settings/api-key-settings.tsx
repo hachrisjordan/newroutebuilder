@@ -101,7 +101,7 @@ const ApiKeySettings = () => {
   return (
     <div className="space-y-2 mt-6">
       <label htmlFor="api-key" className="block text-sm font-medium">
-        API Key
+        seats.aero API Key
       </label>
       <input
         id="api-key"

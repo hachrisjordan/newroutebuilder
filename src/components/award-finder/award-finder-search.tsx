@@ -225,7 +225,7 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
       {showAdvanced && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-lg p-4">
           <div className="flex flex-col gap-2">
-            <label htmlFor="api-key" className="block text-sm font-medium text-foreground mb-1">API Key</label>
+            <label htmlFor="api-key" className="block text-sm font-medium text-foreground mb-1">seats.aero API Key</label>
             <Input
               id="api-key"
               type="password"
