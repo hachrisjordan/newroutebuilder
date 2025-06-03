@@ -75,6 +75,9 @@ function composeItineraries(
     }
     const [from, to] = segments[segIdx];
     const allowedAlliances = alliances[segIdx];
+    // Debug log: segment, allowed alliances, available alliances
+    console.log('[composeItineraries] Segment:', from, '->', to, 'Allowed alliances:', allowedAlliances);
+    console.log('[composeItineraries] Available alliances in segmentAvail:', segmentAvail[segIdx].map(g => g.alliance));
     for (const group of segmentAvail[segIdx]) {
       if (group.originAirport !== from || group.destinationAirport !== to) continue;
       // For the first segment, require group.date === date; for later segments, allow any date

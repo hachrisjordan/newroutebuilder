@@ -6,6 +6,8 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@
 import { Pagination } from '@/components/ui/pagination';
 import { Input } from '@/components/ui/input';
 import { getTotalDuration } from '@/lib/utils';
+import { Info } from 'lucide-react';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 
 interface AwardFinderResultsCardProps {
   results: AwardFinderResults;
@@ -45,99 +47,111 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
   const [searchQuery, setSearchQuery] = React.useState('');
 
   return (
-    <div className="mt-8 w-full flex flex-col items-center">
-      <div className="w-full max-w-4xl mx-auto flex flex-col gap-2 mb-4">
-        <div className="flex flex-row items-center justify-between gap-2 w-full">
-          <label className="flex items-center gap-1 text-sm">
-            <Checkbox
-              id="reliableOnly"
-              checked={reliableOnly}
-              onCheckedChange={onReliableOnlyChange}
-              className="mr-2"
-            />
-            <span>Reliable results</span>
-          </label>
-          <div className="flex flex-1 justify-end items-center gap-2">
-            <Input
-              type="text"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search path, date, or flight number..."
-              className="w-64 md:w-72 lg:w-80 max-w-full ml-auto"
-              aria-label="Search results"
-            />
+    <TooltipProvider>
+      <div className="mt-8 w-full flex flex-col items-center">
+        <div className="w-full max-w-4xl mx-auto flex flex-col gap-2 mb-4">
+          <div className="flex flex-row items-center justify-between gap-2 w-full">
+            <label className="flex items-center gap-1 text-sm">
+              <Checkbox
+                id="reliableOnly"
+                checked={reliableOnly}
+                onCheckedChange={onReliableOnlyChange}
+                className="mr-2"
+              />
+              <span>Reliable results</span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="ml-1 cursor-pointer text-muted-foreground"><Info className="w-4 h-4" /></span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs text-xs">
+                  Only shows itineraries with reliable award space, filtering out most flights with likely dynamic pricing that may not be bookable via partner programs.<br />
+                  <br />
+                  You can allow a certain maximum % of unreliable flight time in User → Settings (recommended for cash positioning flights).
+                </TooltipContent>
+              </Tooltip>
+            </label>
+            <div className="flex flex-1 justify-end items-center gap-2">
+              <Input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search path, date, or flight number..."
+                className="w-64 md:w-72 lg:w-80 max-w-full ml-auto"
+                aria-label="Search results"
+              />
+            </div>
+          </div>
+          <div className="flex items-center w-full justify-end gap-2">
+            <label htmlFor="sort" className="text-sm text-muted-foreground mr-2">Sort:</label>
+            <Select value={sortBy} onValueChange={onSortByChange}>
+              <SelectTrigger className="w-56" id="sort">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {sortOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
-        <div className="flex items-center w-full justify-end gap-2">
-          <label htmlFor="sort" className="text-sm text-muted-foreground mr-2">Sort:</label>
-          <Select value={sortBy} onValueChange={onSortByChange}>
-            <SelectTrigger className="w-56" id="sort">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {sortOptions.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      {/* Results Table with Pagination */}
-      {reliableOnly && reliabilityLoading ? (
-        <div className="text-muted-foreground flex items-center gap-2"><span className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-primary"></span>Loading results...</div>
-      ) : (
-        (() => {
-          const filteredResults = filterReliable(results);
-          let cards = flattenItineraries(filteredResults);
-          // Search filter logic
-          const query = searchQuery.trim().toLowerCase();
-          if (query) {
-            cards = cards.filter(card => {
-              // Check route and date
-              if (card.route.toLowerCase().includes(query) || card.date.toLowerCase().includes(query)) {
-                return true;
-              }
-              // Check all flight numbers in itinerary
-              return card.itinerary.some(fid => {
-                const flight = filteredResults.flights[fid];
-                return flight && flight.FlightNumbers.toLowerCase().includes(query);
+        {/* Results Table with Pagination */}
+        {reliableOnly && reliabilityLoading ? (
+          <div className="text-muted-foreground flex items-center gap-2"><span className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-primary"></span>Loading results...</div>
+        ) : (
+          (() => {
+            const filteredResults = filterReliable(results);
+            let cards = flattenItineraries(filteredResults);
+            // Search filter logic
+            const query = searchQuery.trim().toLowerCase();
+            if (query) {
+              cards = cards.filter(card => {
+                // Check route and date
+                if (card.route.toLowerCase().includes(query) || card.date.toLowerCase().includes(query)) {
+                  return true;
+                }
+                // Check all flight numbers in itinerary
+                return card.itinerary.some(fid => {
+                  const flight = filteredResults.flights[fid];
+                  return flight && flight.FlightNumbers.toLowerCase().includes(query);
+                });
               });
-            });
-          }
-          cards = cards.sort((a, b) => {
-            const aVal = getSortValue(a, filteredResults, sortBy);
-            const bVal = getSortValue(b, filteredResults, sortBy);
-            if (aVal !== bVal) {
-              if (["arrival", "y", "w", "j", "f"].includes(sortBy)) {
-                return bVal - aVal;
-              }
-              return aVal - bVal;
             }
-            // Secondary sort: duration (always shortest to longest)
-            const aFlights = a.itinerary.map(fid => filteredResults.flights[fid]);
-            const bFlights = b.itinerary.map(fid => filteredResults.flights[fid]);
-            const aDur = getTotalDuration(aFlights);
-            const bDur = getTotalDuration(bFlights);
-            return aDur - bDur;
-          });
-          const totalPages = Math.ceil(cards.length / PAGE_SIZE);
-          const pagedCards = cards.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-          return <>
-            <AwardFinderResultsComponent
-              cards={pagedCards}
-              flights={filteredResults.flights}
-              reliability={reliability}
-              minReliabilityPercent={minReliabilityPercent}
-            />
-            <Pagination
-              currentPage={page}
-              totalPages={totalPages}
-              onPageChange={onPageChange}
-            />
-          </>;
-        })()
-      )}
-    </div>
+            cards = cards.sort((a, b) => {
+              const aVal = getSortValue(a, filteredResults, sortBy);
+              const bVal = getSortValue(b, filteredResults, sortBy);
+              if (aVal !== bVal) {
+                if (["arrival", "y", "w", "j", "f"].includes(sortBy)) {
+                  return bVal - aVal;
+                }
+                return aVal - bVal;
+              }
+              // Secondary sort: duration (always shortest to longest)
+              const aFlights = a.itinerary.map(fid => filteredResults.flights[fid]);
+              const bFlights = b.itinerary.map(fid => filteredResults.flights[fid]);
+              const aDur = getTotalDuration(aFlights);
+              const bDur = getTotalDuration(bFlights);
+              return aDur - bDur;
+            });
+            const totalPages = Math.ceil(cards.length / PAGE_SIZE);
+            const pagedCards = cards.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+            return <>
+              <AwardFinderResultsComponent
+                cards={pagedCards}
+                flights={filteredResults.flights}
+                reliability={reliability}
+                minReliabilityPercent={minReliabilityPercent}
+              />
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={onPageChange}
+              />
+            </>;
+          })()
+        )}
+      </div>
+    </TooltipProvider>
   );
 };
 
