@@ -4,6 +4,7 @@ import { X, Check, AlertTriangle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { getAirlineLogoSrc } from '@/lib/utils';
 import type { Flight } from '@/types/award-finder-results';
+import PricingValue from './pricing-value';
 
 interface FlightCardProps {
   flight: Flight;
@@ -13,7 +14,7 @@ interface FlightCardProps {
   code: string;
   isDark: boolean;
   iataToCity: Record<string, string>;
-  reliability: Record<string, number>;
+  reliability: Record<string, { min_count: number; exemption?: string }>;
   layover?: React.ReactNode;
   aircraft?: string;
   cityError?: string | null;
@@ -46,6 +47,18 @@ const FlightCard: React.FC<FlightCardProps> = ({
   cityError,
   isLoadingCities,
 }) => {
+  // Helper to extract IATA codes from segment string
+  function extractIatas(segment: string): [string, string] {
+    // e.g., 'Bangkok (BKK) → Tokyo (NRT)'
+    const matches = [...segment.matchAll(/\(([A-Z0-9]{3})\)/g)];
+    if (matches.length >= 2) {
+      return [matches[0][1], matches[1][1]];
+    }
+    return ['', ''];
+  }
+  const [depIata, arrIata] = extractIatas(segment);
+  const program = 'AC';
+
   return (
     <>
       {layover}
@@ -53,7 +66,7 @@ const FlightCard: React.FC<FlightCardProps> = ({
         <div className="flex flex-col md:flex-row md:items-center md:justify-between w-full gap-1 md:gap-0">
           <div className="flex flex-col w-full md:flex-row md:items-center md:gap-6">
             <div className="flex items-center gap-2 w-full md:w-auto">
-              <span className="font-semibold text-primary whitespace-nowrap">{segment}</span>
+              <span className="font-semibold text-primary break-words whitespace-normal">{segment}</span>
             </div>
             <div className="flex items-center gap-2 w-full md:w-auto mt-1 md:mt-0 md:ml-auto justify-end">
               <div className="flex w-full md:w-auto">
@@ -113,7 +126,10 @@ const FlightCard: React.FC<FlightCardProps> = ({
                 cls === 'W' ? f.WCount :
                 cls === 'J' ? f.JCount :
                 f.FCount;
-              const minCount = reliability[code] ?? 1;
+              const rel = reliability[code];
+              const min = rel?.min_count ?? 1;
+              const exemption = rel?.exemption || '';
+              const minCount = exemption.includes(cls) ? 1 : min;
               let icon = null;
               if (!count) {
                 icon = <X className="text-red-400 h-4 w-4" />;
@@ -139,6 +155,22 @@ const FlightCard: React.FC<FlightCardProps> = ({
             })}
           </div>
         </div>
+        {/* PricingValue component */}
+        <PricingValue
+          flight={f}
+          depIata={depIata}
+          arrIata={arrIata}
+          airline={code}
+          distance={undefined}
+          program={program}
+          className="mt-2"
+          classAvailability={{
+            Y: !!f.YCount,
+            W: !!f.WCount,
+            J: !!f.JCount,
+            F: !!f.FCount,
+          }}
+        />
       </div>
     </>
   );

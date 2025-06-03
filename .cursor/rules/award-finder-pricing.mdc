@@ -1,0 +1,22 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Award Finder Pricing Logic
+
+- To determine the region for an airport:
+  1. Get the `country_code` from the `airports` table ([airports](mdc:src/components/award-finder/airports)).
+  2. Use the `country_code` to look up the `region` in the `ac` table ([ac](mdc:src/components/award-finder/ac)).
+
+- For award pricing:
+  - Use the `ac_pricing` table ([ac_pricing](mdc:src/components/award-finder/ac_pricing)) to find pricing rules.
+  - Filter by:
+    - `airlines` (must contain the airline code)
+    - `dep_region` and `arr_region` (from the region lookup above)
+    - `min_dist` <= distance <= `max_dist`
+    - `priority` (try 1 first, then 2)
+    - `type_single` (e.g., `dist-region`)
+  - If no match, show "N/A".
+
+- The logic for region and pricing is implemented in the award finder UI components ([flight-card.tsx](mdc:src/components/award-finder/flight-card.tsx), [award-finder-results-component.tsx](mdc:src/components/award-finder/award-finder-results-component.tsx)).

@@ -24,7 +24,7 @@ const flattenItineraries = (results: AwardFinderResults) => {
   return cards;
 };
 
-const getSortValue = (card: any, results: AwardFinderResults, sortBy: string, reliability: Record<string, { min_count: number }>, minReliabilityPercent: number) => {
+const getSortValue = (card: any, results: AwardFinderResults, sortBy: string, reliability: Record<string, { min_count: number; exemption?: string }>, minReliabilityPercent: number) => {
   const flights = card.itinerary.map((id: string) => results.flights[id]);
   if (sortBy === "duration") {
     return getTotalDuration(flights);
@@ -56,7 +56,7 @@ export default function AwardFinderPage() {
   const [sortBy, setSortBy] = useState<string>('duration');
   const [page, setPage] = useState(0);
   const [reliableOnly, setReliableOnly] = useState(false);
-  const [reliability, setReliability] = useState<Record<string, { min_count: number }>>({});
+  const [reliability, setReliability] = useState<Record<string, { min_count: number; exemption?: string }>>({});
   const [reliabilityLoading, setReliabilityLoading] = useState(false);
   const [minReliabilityPercent, setMinReliabilityPercent] = useState<number>(100);
 
@@ -66,7 +66,7 @@ export default function AwardFinderPage() {
     fetch('/api/reliability')
       .then(res => res.json())
       .then(data => {
-        const map = Object.fromEntries(data.map((r: { code: string, min_count: number }) => [r.code, r]));
+        const map = Object.fromEntries(data.map((r: { code: string, min_count: number, exemption?: string }) => [r.code, r]));
         setReliability(map);
       })
       .finally(() => setReliabilityLoading(false));
@@ -85,15 +85,21 @@ export default function AwardFinderPage() {
     // Do not mutate flight counts; keep original for display
     const filteredFlights: typeof results.flights = { ...results.flights };
 
-    // Helper to determine if a flight is unreliable (all classes < minCount)
+    // Helper to determine if a flight is unreliable (all classes < minCount, with exemption support)
     const isUnreliable = (f: typeof results.flights[string]) => {
       const code = f.FlightNumbers.slice(0, 2);
-      const min = reliability[code]?.min_count ?? 1;
+      const rel = reliability[code];
+      const min = rel?.min_count ?? 1;
+      const exemption = rel?.exemption || '';
+      const minY = exemption.includes('Y') ? 1 : min;
+      const minW = exemption.includes('W') ? 1 : min;
+      const minJ = exemption.includes('J') ? 1 : min;
+      const minF = exemption.includes('F') ? 1 : min;
       return (
-        (f.YCount < min) &&
-        (f.WCount < min) &&
-        (f.JCount < min) &&
-        (f.FCount < min)
+        (f.YCount < minY) &&
+        (f.WCount < minW) &&
+        (f.JCount < minJ) &&
+        (f.FCount < minF)
       );
     };
 

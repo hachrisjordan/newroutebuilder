@@ -11,7 +11,7 @@ export async function GET() {
   try {
     const { data, error } = await supabase
       .from('reliability')
-      .select('code, min_count');
+      .select('code, min_count, exemption');
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }

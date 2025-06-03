@@ -154,8 +154,8 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
 
   return (
     <form className="w-full max-w-[1000px] mx-auto bg-card p-4 rounded-xl border shadow flex flex-col gap-6" onSubmit={handleSubmit}>
-      <div className="flex flex-col gap-4 md:flex-row md:gap-6">
-        <div className="flex flex-col gap-2 flex-1 min-w-[250px]">
+      <div className="flex flex-col gap-4 md:flex-row md:gap-6 relative md:justify-end">
+        <div className="flex flex-col gap-2 flex-1 min-w-[200px]">
           <label htmlFor="origin" className="block text-sm font-medium text-foreground mb-1">Origin</label>
           <AirportSearch
             value={origin}
@@ -164,7 +164,7 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
             className="h-9"
           />
         </div>
-        <div className="flex flex-col gap-2 flex-1 min-w-[250px]">
+        <div className="flex flex-col gap-2 flex-1 min-w-[200px]">
           <label htmlFor="destination" className="block text-sm font-medium text-foreground mb-1">Destination</label>
           <AirportSearch
             value={destination}
@@ -223,7 +223,9 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
         </div>
       </div>
       {showAdvanced && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-lg p-4">
+        <div
+          className="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-lg p-4"
+        >
           <div className="flex flex-col gap-2">
             <label htmlFor="api-key" className="block text-sm font-medium text-foreground mb-1">seats.aero API Key</label>
             <Input

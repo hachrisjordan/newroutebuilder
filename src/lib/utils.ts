@@ -76,12 +76,12 @@ export function getTotalDuration(flights: Flight[]): number {
  * applying the minReliabilityPercent rule: for each segment, if its duration is > (100 - minReliabilityPercent)% of total duration
  * and the class count < minCount, treat that class as 0 for that segment.
  * @param flights Array of Flight objects in the itinerary order
- * @param reliability Record<string, { min_count: number }>
+ * @param reliability Record<string, { min_count: number; exemption?: string }>
  * @param minReliabilityPercent number (0-100)
  */
 export function getClassPercentages(
   flights: Flight[],
-  reliability?: Record<string, { min_count: number }>,
+  reliability?: Record<string, { min_count: number; exemption?: string }>,
   minReliabilityPercent: number = 100
 ) {
   const totalDuration = flights.reduce((sum, f) => sum + f.TotalDuration, 0);
@@ -117,13 +117,19 @@ export function getClassPercentages(
   // For each segment, adjust counts for each class as per the rule
   const adjusted = flights.map(f => {
     const code = f.FlightNumbers.slice(0, 2);
-    const min = reliability[code]?.min_count ?? 1;
+    const rel = reliability[code];
+    const min = rel?.min_count ?? 1;
+    const exemption = rel?.exemption || '';
+    const minY = exemption.includes('Y') ? 1 : min;
+    const minW = exemption.includes('W') ? 1 : min;
+    const minJ = exemption.includes('J') ? 1 : min;
+    const minF = exemption.includes('F') ? 1 : min;
     const overThreshold = f.TotalDuration > threshold;
     return {
-      YCount: overThreshold && f.YCount < min ? 0 : f.YCount,
-      WCount: overThreshold && f.WCount < min ? 0 : f.WCount,
-      JCount: overThreshold && f.JCount < min ? 0 : f.JCount,
-      FCount: overThreshold && f.FCount < min ? 0 : f.FCount,
+      YCount: overThreshold && f.YCount < minY ? 0 : f.YCount,
+      WCount: overThreshold && f.WCount < minW ? 0 : f.WCount,
+      JCount: overThreshold && f.JCount < minJ ? 0 : f.JCount,
+      FCount: overThreshold && f.FCount < minF ? 0 : f.FCount,
       TotalDuration: f.TotalDuration,
     };
   });

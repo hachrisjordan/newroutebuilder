@@ -17,7 +17,7 @@ interface AwardFinderResultsCardProps {
   onPageChange: (page: number) => void;
   reliableOnly: boolean;
   onReliableOnlyChange: (checked: boolean) => void;
-  reliability: Record<string, { min_count: number }>;
+  reliability: Record<string, { min_count: number; exemption?: string }>;
   reliabilityLoading: boolean;
   filterReliable: (results: AwardFinderResults) => AwardFinderResults;
   flattenItineraries: (results: AwardFinderResults) => Array<{ route: string; date: string; itinerary: string[] }>;

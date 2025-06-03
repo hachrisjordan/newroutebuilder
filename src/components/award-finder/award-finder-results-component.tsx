@@ -21,7 +21,7 @@ interface AwardFinderResultsFlatCard {
 interface AwardFinderResultsComponentProps {
   cards: Array<{ route: string; date: string; itinerary: string[] }>; // flat, ordered array
   flights: Record<string, Flight>;
-  reliability: Record<string, { min_count: number }>;
+  reliability: Record<string, { min_count: number; exemption?: string }>;
   minReliabilityPercent: number;
 }
 
@@ -277,9 +277,9 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                           segment = `${fromCity} (${fromIata}) → ${toCity} (${toIata})`;
                         }
                         const code = getAirlineCode(f.FlightNumbers);
-                        // Map reliability to Record<string, number> for this segment
-                        const reliabilityMap: Record<string, number> = {};
-                        reliabilityMap[code] = reliability[code]?.min_count ?? 1;
+                        // Map reliability to Record<string, { min_count: number; exemption?: string }> for this segment
+                        const reliabilityMap: Record<string, { min_count: number; exemption?: string }> = {};
+                        reliabilityMap[code] = reliability[code] ?? { min_count: 1 };
                         // Layover calculation
                         let layover = null;
                         if (i > 0) {
