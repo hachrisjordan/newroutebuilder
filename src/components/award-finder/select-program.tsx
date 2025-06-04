@@ -32,6 +32,22 @@ const SelectProgram: React.FC<{
     fetchPrograms();
   }, [airline]);
 
+  // Close dropdown on click/touch outside
+  useEffect(() => {
+    if (!showDropdown) return;
+    function handleClickOutside(event: MouseEvent | TouchEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [showDropdown]);
+
   const filteredPrograms = programs.filter((program) => {
     if (!searchTerm) return true;
     return (
@@ -61,18 +77,6 @@ const SelectProgram: React.FC<{
             <span className="hidden sm:block dark:text-foreground/90">
               {programs.find(p => p.code === selectedProgram)?.name} {programs.find(p => p.code === selectedProgram)?.ffp ? (programs.find(p => p.code === selectedProgram)?.ffp) : ''} - <span className="font-bold">{selectedProgram}</span>
             </span>
-            <button
-              type="button"
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 pointer-fine:hover:bg-accent/50 pointer-fine:dark:hover:bg-accent/30 rounded-sm touch-manipulation select-none"
-              onClick={e => {
-                e.stopPropagation();
-                setSelectedProgram(undefined);
-                setDisplayValue('');
-                setSearchTerm('');
-              }}
-            >
-              <X className="h-3 w-3" />
-            </button>
           </div>
         ) : (
           <Input
