@@ -92,7 +92,7 @@ const SelectProgram: React.FC<{
         )}
       </div>
       {showDropdown && !isLoading && (
-        <div className="absolute z-10 mt-1 max-h-60 w-[300px] overflow-auto rounded-md bg-popover/95 dark:bg-popover/90 py-1 shadow-lg border dark:border-border/50">
+        <div className="absolute z-10 mt-1 max-h-60 w-fit overflow-auto rounded-md bg-popover/95 dark:bg-popover/90 py-1 shadow-lg border dark:border-border/50">
           {filteredPrograms.length > 0 ? (
             filteredPrograms.map((program) => (
               <div
