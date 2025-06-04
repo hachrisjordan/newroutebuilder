@@ -79,6 +79,30 @@ const PricingValue: React.FC<PricingValueProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [computedDistance, setComputedDistance] = useState<number | null>(null);
   const [showNAFlash, setShowNAFlash] = useState(false);
+  const [userProfile, setUserProfile] = useState<{ sa?: string; ow?: string; st?: string } | null>(null);
+
+  // Fetch user profile for default program selection
+  useEffect(() => {
+    async function fetchUserProfile() {
+      const supabase = createSupabaseBrowserClient();
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) {
+        setUserProfile(null);
+        return;
+      }
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('sa, ow, st')
+        .eq('id', userData.user.id)
+        .single();
+      if (profileError || !profile) {
+        setUserProfile(null);
+      } else {
+        setUserProfile(profile);
+      }
+    }
+    fetchUserProfile();
+  }, []);
 
   const setSelectedProgram = (code: string | undefined) => {
     setSelectedProgramState(code && allowedPrograms.includes(code) ? code : allowedPrograms[0] || '');
@@ -94,11 +118,17 @@ const PricingValue: React.FC<PricingValueProps> = ({
       }
       const allPrograms = await getAllProgramsFromDb();
       const filtered = allPrograms.filter(p => p.alliance === alliance).map(p => p.code);
+      let defaultProgram = '';
+      if (userProfile) {
+        if (alliance === 'SA' && userProfile.sa) defaultProgram = userProfile.sa;
+        if (alliance === 'OW' && userProfile.ow) defaultProgram = userProfile.ow;
+        if (alliance === 'ST' && userProfile.st) defaultProgram = userProfile.st;
+      }
       setAllowedPrograms(filtered);
-      setSelectedProgramState(filtered[0] || '');
+      setSelectedProgramState(filtered.includes(defaultProgram) ? defaultProgram : filtered[0] || '');
     }
     fetchPrograms();
-  }, [airline]);
+  }, [airline, userProfile]);
 
   useEffect(() => {
     const fetchRegionsAndPricing = async () => {
@@ -142,42 +172,8 @@ const PricingValue: React.FC<PricingValueProps> = ({
             depRegion = acs?.find((a: any) => a.country_code === depCountry)?.region ?? null;
             arrRegion = acs?.find((a: any) => a.country_code === arrCountry)?.region ?? null;
           }
-        } else {
-          // fallback: use profiles table and alliance column
-          const alliance = getAirlineAlliance(airline);
-          let col: 'sa' | 'ow' | 'st' | undefined;
-          if (alliance === 'SA') col = 'sa';
-          else if (alliance === 'OW') col = 'ow';
-          else if (alliance === 'ST') col = 'st';
-          if (!col) throw new Error('Unknown alliance for fallback region lookup');
-          let profiles, profilesErr;
-          try {
-            const result = await supabase
-              .from('profiles')
-              .select('country_code, sa, ow, st')
-              .in('country_code', [depCountry, arrCountry]);
-            profiles = result.data;
-            profilesErr = result.error;
-          } catch (e: any) {
-            profilesErr = e;
-          }
-          // If error is missing column, treat as null
-          if (profilesErr && String(profilesErr.message || profilesErr).includes('does not exist')) {
-            depRegion = null;
-            arrRegion = null;
-          } else {
-            if (profilesErr) throw profilesErr;
-            type ProfileRow = { country_code: string; sa?: string; ow?: string; st?: string };
-            const depProfile = (profiles as ProfileRow[] | undefined)?.find((a) => a.country_code === depCountry);
-            const arrProfile = (profiles as ProfileRow[] | undefined)?.find((a) => a.country_code === arrCountry);
-            depRegion = depProfile && col in depProfile ? depProfile[col] ?? null : null;
-            arrRegion = arrProfile && col in arrProfile ? arrProfile[col] ?? null : null;
-          }
         }
-        if (!depRegion || !arrRegion) {
-          // If pricing type is 'dist', region is not required
-          // We'll check this after fetching pricing rows
-        }
+        // No fallback to profiles for region lookup
         setRegions({ dep: depRegion, arr: arrRegion });
         // 3. Calculate distance if not provided
         let dist = distance;
@@ -281,28 +277,35 @@ const PricingValue: React.FC<PricingValueProps> = ({
       let display: React.ReactNode;
       if (isDynamicOut) {
         display = 'Dynamic';
-      } else if (value != null) {
+      } else if (value != null && value !== 0) {
         display = value.toLocaleString();
       } else {
         display = 'N/A';
       }
-      if (display === 'N/A') return null;
+      // Always render the badge, even if display is 'N/A'
       return (
         <div key={key} className="flex items-center gap-1 text-sm">
           <span className="font-bold">{label}</span>
           <span
-            className="rounded px-2 py-0.5 font-mono font-bold text-sm"
-            style={{
-              background: classBarColors[label] || undefined,
-              color: getContrastTextColor(classBarColors[label] || '#E8E1F2'),
-            }}
+            className={
+              display === 'N/A'
+                ? 'rounded px-2 py-0.5 font-mono font-bold text-sm bg-muted text-muted-foreground'
+                : 'rounded px-2 py-0.5 font-mono font-bold text-sm'
+            }
+            style={
+              display === 'N/A'
+                ? undefined
+                : {
+                    background: classBarColors[label] || undefined,
+                    color: getContrastTextColor(classBarColors[label] || '#E8E1F2'),
+                  }
+            }
           >
             {display}
           </span>
         </div>
       );
-    })
-    .filter(Boolean);
+    });
 
   return (
     <div className={className + ' flex flex-row items-center justify-between w-full gap-2'}>
