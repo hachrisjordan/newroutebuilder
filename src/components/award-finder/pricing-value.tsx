@@ -16,6 +16,7 @@ import { getAirlineAlliance, isStarAllianceAirline, getAllProgramsFromDb } from 
  * @property program - Program code
  * @property className - Optional className
  * @property classAvailability - Object with Y, W, J, F boolean values for available classes
+ * @property classReliability - Object with Y, W, J, F boolean values for class reliability
  */
 export interface PricingValueProps {
   flight: any;
@@ -26,6 +27,7 @@ export interface PricingValueProps {
   program?: string;
   className?: string;
   classAvailability?: Record<'Y' | 'W' | 'J' | 'F', boolean>;
+  classReliability: Record<'Y' | 'W' | 'J' | 'F', boolean>;
 }
 
 const CLASS_LABELS = [
@@ -69,7 +71,11 @@ const PricingValue: React.FC<PricingValueProps> = ({
   program,
   className = '',
   classAvailability = { Y: true, W: true, J: true, F: true },
+  classReliability,
 }) => {
+  if (!classReliability) {
+    throw new Error('classReliability prop is required for PricingValue');
+  }
   // All hooks must be at the top, before any early return
   const [allowedPrograms, setAllowedPrograms] = useState<string[]>([]);
   const [selectedProgram, setSelectedProgramState] = useState<string>('');
@@ -194,7 +200,7 @@ const PricingValue: React.FC<PricingValueProps> = ({
           .overlaps('airlines', [airline])
           .order('priority', { ascending: true });
         if (pricingErr) throw pricingErr;
-        let matchedRule = null;
+        let matchedRules = [];
         if (allRules && allRules.length > 0) {
           for (const rule of allRules) {
             if (rule.type_single === 'dist-region') {
@@ -205,8 +211,7 @@ const PricingValue: React.FC<PricingValueProps> = ({
                 rule.arr_region.trim() === arrRegion.trim() &&
                 dist >= rule.min_dist && dist <= rule.max_dist
               ) {
-                matchedRule = rule;
-                break;
+                matchedRules.push(rule);
               }
             } else if (rule.type_single === 'region') {
               if (
@@ -215,23 +220,22 @@ const PricingValue: React.FC<PricingValueProps> = ({
                 rule.dep_region.trim() === depRegion.trim() &&
                 rule.arr_region.trim() === arrRegion.trim()
               ) {
-                matchedRule = rule;
-                break;
+                matchedRules.push(rule);
               }
             } else if (rule.type_single === 'dist') {
               if (
                 dist >= rule.min_dist && dist <= rule.max_dist
               ) {
-                matchedRule = rule;
-                break;
+                matchedRules.push(rule);
               }
             }
           }
         }
-        if (!matchedRule) {
+        if (!matchedRules.length) {
           throw new Error('No matching pricing rule');
         }
-        setPricing(matchedRule);
+        // Store all matched rules for per-class selection
+        setPricing({ ...matchedRules[0], allRules: matchedRules });
       } catch (err: any) {
         console.error('[PricingValue] error:', err);
         setError(err.message || 'Failed to load pricing');
@@ -270,17 +274,60 @@ const PricingValue: React.FC<PricingValueProps> = ({
   // Prepare badge data
   const badges = CLASS_LABELS.filter(({ label }) => classAvailability[label as keyof typeof classAvailability])
     .map(({ key, label }) => {
-      const value = pricing[key];
-      // Support per-class dynamic_in/dynamic_out (object) or global (boolean)
-      const isDynamicIn = typeof pricing.dynamic_in === 'object' ? pricing.dynamic_in[label] : pricing.dynamic_in;
-      const isDynamicOut = typeof pricing.dynamic_out === 'object' ? pricing.dynamic_out[label] : pricing.dynamic_out;
-      let display: React.ReactNode;
-      if (isDynamicOut) {
-        display = 'Dynamic';
-      } else if (value != null && value !== 0) {
-        display = value.toLocaleString();
-      } else {
-        display = 'N/A';
+      // Use only the classReliability prop to determine reliability
+      const isReliable = classReliability[label as keyof typeof classReliability];
+      // Find the matching rule for this class
+      let matchedRule = null;
+      if (pricing && Array.isArray(pricing.allRules)) {
+        for (const rule of pricing.allRules) {
+          if (isReliable && rule.dynamic_in === false) {
+            matchedRule = rule;
+            break;
+          }
+          if (!isReliable && rule.dynamic_in === true) {
+            matchedRule = rule;
+            break;
+          }
+        }
+        // If class is unreliable and no rule with dynamic_in: true for this airline, show N/A
+        if (!matchedRule && !isReliable) {
+          const hasDynamicInRule = pricing.allRules.some((rule: any) => rule.dynamic_in === true);
+          if (!hasDynamicInRule) {
+            if (typeof window !== 'undefined') {
+              console.log('[PricingValue DEBUG] N/A fallback for unreliable class', { class: label, isReliable, allRules: pricing.allRules });
+            }
+            return (
+              <div key={key} className="flex items-center gap-1 text-sm">
+                <span className="font-bold">{label}</span>
+                <span className="rounded px-2 py-0.5 font-mono font-bold text-sm bg-muted text-muted-foreground">N/A</span>
+              </div>
+            );
+          }
+        }
+      } else if (isReliable) {
+        if (typeof window !== 'undefined') {
+          console.log('[PricingValue DEBUG] fallback to matchedRule = pricing', { class: label, isReliable, pricing });
+        }
+        matchedRule = pricing;
+      }
+      if (typeof window !== 'undefined') {
+        console.log('[PricingValue DEBUG]', {
+          class: label,
+          isReliable,
+          matchedRule_dynamic_in: matchedRule?.dynamic_in,
+          matchedRule_dynamic_out: matchedRule?.dynamic_out,
+          classValue: matchedRule?.[key],
+        });
+      }
+      let display: React.ReactNode = 'N/A';
+      if (matchedRule) {
+        const isDynamicOut = typeof matchedRule.dynamic_out === 'object' ? matchedRule.dynamic_out[label] : matchedRule.dynamic_out;
+        const classValue = matchedRule[key];
+        if (isDynamicOut) {
+          display = 'Dynamic';
+        } else if (classValue != null && classValue !== 0) {
+          display = classValue.toLocaleString();
+        }
       }
       // Always render the badge, even if display is 'N/A'
       return (

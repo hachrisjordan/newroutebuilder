@@ -168,6 +168,40 @@ const FlightCard: React.FC<FlightCardProps> = ({
             J: !!f.JCount,
             F: !!f.FCount,
           }}
+          classReliability={{
+            Y: (() => {
+              const count = f.YCount;
+              const rel = reliability[code];
+              const min = rel?.min_count ?? 1;
+              const exemption = rel?.exemption || '';
+              const minCount = exemption.includes('Y') ? 1 : min;
+              return count >= minCount;
+            })(),
+            W: (() => {
+              const count = f.WCount;
+              const rel = reliability[code];
+              const min = rel?.min_count ?? 1;
+              const exemption = rel?.exemption || '';
+              const minCount = exemption.includes('W') ? 1 : min;
+              return count >= minCount;
+            })(),
+            J: (() => {
+              const count = f.JCount;
+              const rel = reliability[code];
+              const min = rel?.min_count ?? 1;
+              const exemption = rel?.exemption || '';
+              const minCount = exemption.includes('J') ? 1 : min;
+              return count >= minCount;
+            })(),
+            F: (() => {
+              const count = f.FCount;
+              const rel = reliability[code];
+              const min = rel?.min_count ?? 1;
+              const exemption = rel?.exemption || '';
+              const minCount = exemption.includes('F') ? 1 : min;
+              return count >= minCount;
+            })(),
+          }}
         />
       </div>
     </>
