@@ -3,13 +3,15 @@ import Image from 'next/image';
 import { X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
+import { getAirlineAlliance, isStarAllianceAirline, getAllProgramsFromDb } from '@/lib/alliance';
 
-const getProgramLogoSrc = (code: string) => `/AC.png`;
+const getProgramLogoSrc = (code: string) => `/${code.toUpperCase()}.png`;
 
 const SelectProgram: React.FC<{
+  airline: string;
   selectedProgram?: string;
   setSelectedProgram: (code: string | undefined) => void;
-}> = ({ selectedProgram, setSelectedProgram }) => {
+}> = ({ airline, selectedProgram, setSelectedProgram }) => {
   const [displayValue, setDisplayValue] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
@@ -18,20 +20,17 @@ const SelectProgram: React.FC<{
   const isLoading = false;
 
   useEffect(() => {
-    const fetchPrograms = async () => {
-      const supabase = createSupabaseBrowserClient();
-      const { data, error } = await supabase
-        .from('airlines')
-        .select('code, name, ffp')
-        .eq('code', 'AC');
-      if (data && data.length > 0) {
-        setPrograms(data);
-      } else {
-        setPrograms([{ code: 'AC', name: 'Air Canada', ffp: 'Aeroplan' }]);
+    async function fetchPrograms() {
+      const alliance = getAirlineAlliance(airline);
+      if (!alliance) {
+        setPrograms([]);
+        return;
       }
-    };
+      const allPrograms = await getAllProgramsFromDb();
+      setPrograms(allPrograms.filter(p => p.alliance === alliance));
+    }
     fetchPrograms();
-  }, []);
+  }, [airline]);
 
   const filteredPrograms = programs.filter((program) => {
     if (!searchTerm) return true;

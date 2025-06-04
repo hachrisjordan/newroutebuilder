@@ -57,7 +57,6 @@ const FlightCard: React.FC<FlightCardProps> = ({
     return ['', ''];
   }
   const [depIata, arrIata] = extractIatas(segment);
-  const program = 'AC';
 
   return (
     <>
@@ -162,7 +161,6 @@ const FlightCard: React.FC<FlightCardProps> = ({
           arrIata={arrIata}
           airline={code}
           distance={undefined}
-          program={program}
           className="mt-2"
           classAvailability={{
             Y: !!f.YCount,

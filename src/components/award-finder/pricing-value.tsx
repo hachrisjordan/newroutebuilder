@@ -4,6 +4,7 @@ import { AlertTriangle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { getHaversineDistance } from '@/lib/route-helpers';
 import SelectProgram from './select-program';
+import { getAirlineAlliance, isStarAllianceAirline, getAllProgramsFromDb } from '@/lib/alliance';
 
 /**
  * Props for PricingValue component.
@@ -56,11 +57,6 @@ function getContrastTextColor(bgColor: string): string {
   return luminance > 0.6 ? '#222' : '#fff';
 }
 
-// Star Alliance airline codes
-const STAR_ALLIANCE = [
-  'A3','AC','CA','AI','NZ','NH','OZ','OS','AV','SN','CM','OU','MS','ET','BR','LO','LH','CL','ZH','SQ','SA','LX','TP','TG','TK','UA'
-];
-
 /**
  * Renders pricing values for available classes, aligned with SelectProgram.
  */
@@ -70,26 +66,41 @@ const PricingValue: React.FC<PricingValueProps> = ({
   arrIata,
   airline,
   distance,
-  program = 'AC',
+  program,
   className = '',
   classAvailability = { Y: true, W: true, J: true, F: true },
 }) => {
-  // Only enable pricing for Star Alliance airlines
-  if (!STAR_ALLIANCE.includes(airline)) return null;
-
+  // All hooks must be at the top, before any early return
+  const [allowedPrograms, setAllowedPrograms] = useState<string[]>([]);
+  const [selectedProgram, setSelectedProgramState] = useState<string>('');
   const [regions, setRegions] = useState<{ dep: string | null; arr: string | null }>({ dep: null, arr: null });
   const [pricing, setPricing] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [computedDistance, setComputedDistance] = useState<number | null>(null);
-  const [selectedProgram, setSelectedProgramState] = useState<string>('AC');
+  const [showNAFlash, setShowNAFlash] = useState(false);
 
   const setSelectedProgram = (code: string | undefined) => {
-    setSelectedProgramState(code ?? 'AC');
+    setSelectedProgramState(code && allowedPrograms.includes(code) ? code : allowedPrograms[0] || '');
   };
 
   useEffect(() => {
-    if (selectedProgram !== 'AC') return;
+    async function fetchPrograms() {
+      const alliance = getAirlineAlliance(airline);
+      if (!alliance) {
+        setAllowedPrograms([]);
+        setSelectedProgramState('');
+        return;
+      }
+      const allPrograms = await getAllProgramsFromDb();
+      const filtered = allPrograms.filter(p => p.alliance === alliance).map(p => p.code);
+      setAllowedPrograms(filtered);
+      setSelectedProgramState(filtered[0] || '');
+    }
+    fetchPrograms();
+  }, [airline]);
+
+  useEffect(() => {
     const fetchRegionsAndPricing = async () => {
       setLoading(true);
       setError(null);
@@ -107,15 +118,66 @@ const PricingValue: React.FC<PricingValueProps> = ({
         const depCountry = dep.country_code;
         const arrCountry = arr.country_code;
         // 2. Get dep/arr region
-        const regionTable = program.toLowerCase();
-        const { data: acs, error: acErr } = await supabase
-          .from(regionTable)
-          .select('country_code, region')
-          .in('country_code', [depCountry, arrCountry]);
-        if (acErr) throw acErr;
-        const depRegion = acs?.find((a: any) => a.country_code === depCountry)?.region;
-        const arrRegion = acs?.find((a: any) => a.country_code === arrCountry)?.region;
-        if (!depRegion || !arrRegion) throw new Error('Missing region');
+        let depRegion: string | null = null;
+        let arrRegion: string | null = null;
+        if (selectedProgram) {
+          const regionTable = selectedProgram.toLowerCase();
+          let acs, acErr;
+          try {
+            const result = await supabase
+              .from(regionTable)
+              .select('country_code, region')
+              .in('country_code', [depCountry, arrCountry]);
+            acs = result.data;
+            acErr = result.error;
+          } catch (e: any) {
+            acErr = e;
+          }
+          // If error is missing column, treat as null
+          if (acErr && String(acErr.message || acErr).includes('does not exist')) {
+            depRegion = null;
+            arrRegion = null;
+          } else {
+            if (acErr) throw acErr;
+            depRegion = acs?.find((a: any) => a.country_code === depCountry)?.region ?? null;
+            arrRegion = acs?.find((a: any) => a.country_code === arrCountry)?.region ?? null;
+          }
+        } else {
+          // fallback: use profiles table and alliance column
+          const alliance = getAirlineAlliance(airline);
+          let col: 'sa' | 'ow' | 'st' | undefined;
+          if (alliance === 'SA') col = 'sa';
+          else if (alliance === 'OW') col = 'ow';
+          else if (alliance === 'ST') col = 'st';
+          if (!col) throw new Error('Unknown alliance for fallback region lookup');
+          let profiles, profilesErr;
+          try {
+            const result = await supabase
+              .from('profiles')
+              .select('country_code, sa, ow, st')
+              .in('country_code', [depCountry, arrCountry]);
+            profiles = result.data;
+            profilesErr = result.error;
+          } catch (e: any) {
+            profilesErr = e;
+          }
+          // If error is missing column, treat as null
+          if (profilesErr && String(profilesErr.message || profilesErr).includes('does not exist')) {
+            depRegion = null;
+            arrRegion = null;
+          } else {
+            if (profilesErr) throw profilesErr;
+            type ProfileRow = { country_code: string; sa?: string; ow?: string; st?: string };
+            const depProfile = (profiles as ProfileRow[] | undefined)?.find((a) => a.country_code === depCountry);
+            const arrProfile = (profiles as ProfileRow[] | undefined)?.find((a) => a.country_code === arrCountry);
+            depRegion = depProfile && col in depProfile ? depProfile[col] ?? null : null;
+            arrRegion = arrProfile && col in arrProfile ? arrProfile[col] ?? null : null;
+          }
+        }
+        if (!depRegion || !arrRegion) {
+          // If pricing type is 'dist', region is not required
+          // We'll check this after fetching pricing rows
+        }
         setRegions({ dep: depRegion, arr: arrRegion });
         // 3. Calculate distance if not provided
         let dist = distance;
@@ -127,35 +189,53 @@ const PricingValue: React.FC<PricingValueProps> = ({
             throw new Error('Missing lat/lon for distance calculation');
           }
         }
-        // 4. Query <program>_pricing (region+distance rules first)
-        const pricingTable = `${program.toLowerCase()}_pricing`;
-        let { data: pricings, error: pricingErr } = await supabase
+        // 4. Query all pricing rules for this airline, ordered by priority
+        if (!selectedProgram || !allowedPrograms.includes(selectedProgram)) return null;
+        const pricingTable = `${selectedProgram.toLowerCase()}_pricing`;
+        let { data: allRules, error: pricingErr } = await supabase
           .from(pricingTable)
           .select('*')
           .overlaps('airlines', [airline])
-          .eq('dep_region', depRegion.trim())
-          .eq('arr_region', arrRegion.trim())
-          .lte('min_dist', dist)
-          .gte('max_dist', dist)
           .order('priority', { ascending: true });
         if (pricingErr) throw pricingErr;
-        // 5. If no match, try distance-only rules (type_single: 'dist', dep_region/arr_region: null)
-        if (!pricings || pricings.length === 0) {
-          const { data: distPricings, error: distErr } = await supabase
-            .from(pricingTable)
-            .select('*')
-            .overlaps('airlines', [airline])
-            .is('dep_region', null)
-            .is('arr_region', null)
-            .eq('type_single', 'dist')
-            .lte('min_dist', dist)
-            .gte('max_dist', dist)
-            .order('priority', { ascending: true });
-          if (distErr) throw distErr;
-          pricings = distPricings;
+        let matchedRule = null;
+        if (allRules && allRules.length > 0) {
+          for (const rule of allRules) {
+            if (rule.type_single === 'dist-region') {
+              if (
+                rule.dep_region && rule.arr_region &&
+                depRegion && arrRegion &&
+                rule.dep_region.trim() === depRegion.trim() &&
+                rule.arr_region.trim() === arrRegion.trim() &&
+                dist >= rule.min_dist && dist <= rule.max_dist
+              ) {
+                matchedRule = rule;
+                break;
+              }
+            } else if (rule.type_single === 'region') {
+              if (
+                rule.dep_region && rule.arr_region &&
+                depRegion && arrRegion &&
+                rule.dep_region.trim() === depRegion.trim() &&
+                rule.arr_region.trim() === arrRegion.trim()
+              ) {
+                matchedRule = rule;
+                break;
+              }
+            } else if (rule.type_single === 'dist') {
+              if (
+                dist >= rule.min_dist && dist <= rule.max_dist
+              ) {
+                matchedRule = rule;
+                break;
+              }
+            }
+          }
         }
-        setPricing(pricings && pricings.length > 0 ? pricings[0] : null);
-        console.log('Pricing row:', pricings && pricings.length > 0 ? pricings[0] : null);
+        if (!matchedRule) {
+          throw new Error('No matching pricing rule');
+        }
+        setPricing(matchedRule);
       } catch (err: any) {
         console.error('[PricingValue] error:', err);
         setError(err.message || 'Failed to load pricing');
@@ -166,9 +246,29 @@ const PricingValue: React.FC<PricingValueProps> = ({
     fetchRegionsAndPricing();
   }, [depIata, arrIata, airline, distance, selectedProgram]);
 
-  if (selectedProgram !== 'AC') return null;
-  if (loading) return <div className={className}>Loading pricing…</div>;
+  useEffect(() => {
+    if (!loading && !error && !pricing) {
+      setShowNAFlash(true);
+      const timeout = setTimeout(() => setShowNAFlash(false), 1000);
+      return () => clearTimeout(timeout);
+    } else {
+      setShowNAFlash(false);
+    }
+  }, [loading, error, pricing]);
+
+  // Only after all hooks and effects:
+  if (!allowedPrograms.includes(selectedProgram)) return null;
+
+  if (loading) {
+    return (
+      <div className={className + ' animate-pulse text-muted-foreground'}>
+        <span className="inline-block w-24 h-5 bg-gray-200 dark:bg-gray-700 rounded" />
+        <span className="ml-2">Loading pricing…</span>
+      </div>
+    );
+  }
   if (error) return <div className={className + ' text-red-500'}>Pricing error: {error}</div>;
+  if (showNAFlash) return <div className={className + ' animate-pulse text-muted-foreground'}>N/A</div>;
   if (!pricing) return <div className={className}>N/A</div>;
 
   // Prepare badge data
@@ -187,7 +287,6 @@ const PricingValue: React.FC<PricingValueProps> = ({
         display = 'N/A';
       }
       if (display === 'N/A') return null;
-      console.log('Pricing used for badges:', pricing);
       return (
         <div key={key} className="flex items-center gap-1 text-sm">
           <span className="font-bold">{label}</span>
@@ -208,7 +307,7 @@ const PricingValue: React.FC<PricingValueProps> = ({
   return (
     <div className={className + ' flex flex-row items-center justify-between w-full gap-2'}>
       <div className="w-fit min-w-0">
-        <SelectProgram selectedProgram={selectedProgram} setSelectedProgram={setSelectedProgram} />
+        <SelectProgram airline={airline} selectedProgram={selectedProgram} setSelectedProgram={setSelectedProgram} />
       </div>
       <div className="flex flex-row flex-wrap min-w-0 gap-2 items-center justify-end">
         {badges.length > 0 ? badges : <span className="text-muted-foreground text-sm">N/A</span>}
