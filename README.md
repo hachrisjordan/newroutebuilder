@@ -1,36 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# bbairtools
+
+**bbairtools** is a modern Next.js web application designed to help users build, analyze, and manage flight routes efficiently. It provides advanced tools for route planning, award search, seat type delay analysis, and integrates comprehensive airport and airline data. The project leverages TypeScript, React Server Components, Tailwind CSS, and Shadcn UI for a robust, performant, and user-friendly experience.
+
+---
+
+## Features
+
+### 1. Route Planning
+- Intuitive interface for planning flight routes.
+- Visualizes and manages complex itineraries.
+- Integrates with a global airport and airline database.
+
+### 2. Award Finder
+- Search for award flight availability across multiple airlines.
+- Filter and sort results by duration, departure, arrival, and cabin class (Economy, Premium Economy, Business, First).
+- Reliability filtering: Exclude unreliable flights based on custom reliability metrics.
+- Paginated, interactive results with detailed itinerary breakdowns.
+
+### 3. Seat Type Delay Analysis
+- Analyze delays by seat type across different routes and airlines.
+- Visualize historical delay data to optimize travel planning.
+
+### 4. Comprehensive Data
+- Access to a global database of airports and airlines.
+- Fast search and filtering for airports and airlines.
+- Data validation and transformation using Zod and utility libraries.
+
+### 5. User Profile & Settings
+- User preferences for reliability thresholds and other settings.
+- Secure authentication and profile management.
+
+### 6. Modern UI/UX
+- Responsive, mobile-first design using Tailwind CSS and Shadcn UI.
+- Dark/light theme toggle.
+- Optimized images and assets.
+
+---
+
+## Project Structure
+
+- `src/app/` – Next.js pages and API routes (e.g., `/award-finder`, `/seat-type-delay`, `/settings`, `/dashboard`, `/auth`)
+- `src/components/` – Reusable UI components (search, results cards, analysis tools, etc.)
+- `src/lib/` – Utility functions and shared logic (data transformation, helpers)
+- `src/types/` – TypeScript type definitions for strong type safety
+- `src/data/` – Static data (e.g., airports database)
+- `src/providers/` – React context providers (e.g., theme)
+- `public/` – Static assets
+
+---
 
 ## Getting Started
 
-First, run the development server:
+1. **Install dependencies:**
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+2. **Run the development server:**
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. **Open your browser:**
+   Visit [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Technologies Used
 
-## Learn More
+- **Next.js** (App Router, SSR, RSC)
+- **TypeScript** (strict typing)
+- **React** (functional components, hooks)
+- **Tailwind CSS** & **Shadcn UI** (modern, responsive UI)
+- **Zod** (schema validation)
+- **Jest** & **React Testing Library** (unit testing)
+- **Supabase** (optional, for authentication and data)
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Contributing
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Follow the code style and structure guidelines in the repo.
+- Write unit tests for new components and features.
+- Document complex logic with JSDoc comments.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## License
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT

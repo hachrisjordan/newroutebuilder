@@ -21,13 +21,17 @@ const AirlineSchema = z.object({
   name: z.string(),
 });
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const { data, error } = await supabase
-      .from('airlines')
-      .select('code, name')
-      .in('code', ALLOWED_AIRLINES)
-      .order('name', { ascending: true });
+    const url = new URL(req.url);
+    const codesParam = url.searchParams.get('codes');
+    let query = supabase.from('airlines').select('code, name');
+    if (codesParam) {
+      const codes = codesParam.split(',').map(c => c.trim().toUpperCase());
+      query = query.in('code', codes);
+    }
+    query = query.order('name', { ascending: true });
+    const { data, error } = await query;
     if (error) throw error;
     if (!data) return NextResponse.json([]);
 

@@ -11,6 +11,7 @@ alwaysApply: true
 - Handle errors gracefully
 - Cache data appropriately
 - Use proper data validation
+- Do not hardcode data unless user told otherwise
 
 ## State Management
 - Use React hooks for local state

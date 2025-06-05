@@ -5,9 +5,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Pagination } from '@/components/ui/pagination';
 import { Input } from '@/components/ui/input';
-import { getTotalDuration } from '@/lib/utils';
+import { getTotalDuration, getClassPercentages } from '@/lib/utils';
 import { Info } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import Filters from './filters';
 
 interface AwardFinderResultsCardProps {
   results: AwardFinderResults;
@@ -59,15 +60,97 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [processedCards, setProcessedCards] = React.useState<Array<{ route: string; date: string; itinerary: string[] }>>([]);
   const [totalPages, setTotalPages] = React.useState(0);
+  const [selectedStops, setSelectedStops] = React.useState<number[]>([]);
+  const [selectedIncludeAirlines, setSelectedIncludeAirlines] = React.useState<string[]>([]);
+  const [selectedExcludeAirlines, setSelectedExcludeAirlines] = React.useState<string[]>([]);
+  const [airlineMeta, setAirlineMeta] = React.useState<{ code: string; name: string }[]>([]);
+  const visibleAirlineCodes = React.useMemo(() => Array.from(new Set(Object.values(results.flights).map(f => f.FlightNumbers.slice(0, 2).toUpperCase()))), [results.flights]);
+  const [yPercent, setYPercent] = React.useState(0);
+  const [wPercent, setWPercent] = React.useState(0);
+  const [jPercent, setJPercent] = React.useState(0);
+  const [fPercent, setFPercent] = React.useState(0);
+  // Duration filter state
+  const allDurations = React.useMemo(() => {
+    const cards = flattenItineraries(results);
+    return cards.map(card => {
+      const flightsArr = card.itinerary.map(fid => results.flights[fid]).filter(Boolean);
+      return getTotalDuration(flightsArr);
+    }).filter(Boolean);
+  }, [results, flattenItineraries]);
+  const minDuration = allDurations.length ? Math.min(...allDurations) : 0;
+  const maxDuration = allDurations.length ? Math.max(...allDurations) : 1440;
+  const [duration, setDuration] = React.useState(maxDuration);
+  // Keep duration in sync with maxDuration
+  React.useEffect(() => {
+    setDuration(maxDuration);
+  }, [maxDuration]);
+
+  // Helper to get unique stop counts from results
+  const getStopCounts = React.useCallback(() => {
+    const stopSet = new Set<number>();
+    Object.keys(results.itineraries).forEach(route => {
+      const stops = route.split('-').length - 2;
+      stopSet.add(stops);
+    });
+    return Array.from(stopSet).sort((a, b) => a - b);
+  }, [results]);
+
+  // Default: all stops selected
+  React.useEffect(() => {
+    const allStops = getStopCounts();
+    setSelectedStops(allStops);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [results]);
 
   // Data processing effect
   React.useEffect(() => {
     let cancelled = false;
     setIsProcessing(true);
-    // Use setTimeout to yield to the browser for large data
     setTimeout(() => {
       let filteredResults = reliableOnly ? filterReliable(results) : results;
       let cards = flattenItineraries(filteredResults);
+      // Filter by number of stops if selected
+      if (selectedStops.length > 0) {
+        cards = cards.filter(card => selectedStops.includes(card.route.split('-').length - 2));
+      }
+      // Filter by airlines (include/exclude)
+      if (selectedIncludeAirlines.length > 0) {
+        cards = cards.filter(card => {
+          // Get all airline codes in this itinerary
+          const airlineCodes = card.itinerary.map(fid => filteredResults.flights[fid]?.FlightNumbers.slice(0, 2).toUpperCase());
+          // Include if any segment matches any selected include airline
+          return airlineCodes.some(code => selectedIncludeAirlines.includes(code));
+        });
+      }
+      if (selectedExcludeAirlines.length > 0) {
+        cards = cards.filter(card => {
+          const airlineCodes = card.itinerary.map(fid => filteredResults.flights[fid]?.FlightNumbers.slice(0, 2).toUpperCase());
+          // Exclude if any segment matches any selected exclude airline
+          return !airlineCodes.some(code => selectedExcludeAirlines.includes(code));
+        });
+      }
+      // Filter by duration
+      if (duration < maxDuration) {
+        cards = cards.filter(card => {
+          const flightsArr = card.itinerary.map(fid => filteredResults.flights[fid]).filter(Boolean);
+          const total = getTotalDuration(flightsArr);
+          return total <= duration;
+        });
+      }
+      // Filter by Y, W, J, F percent
+      if (yPercent > 0 || wPercent > 0 || jPercent > 0 || fPercent > 0) {
+        cards = cards.filter(card => {
+          const flightsArr = card.itinerary.map(fid => filteredResults.flights[fid]).filter(Boolean);
+          if (flightsArr.length === 0) return false;
+          const { y, w, j, f } = getClassPercentages(flightsArr, reliability, minReliabilityPercent);
+          return (
+            y >= yPercent &&
+            w >= wPercent &&
+            j >= jPercent &&
+            f >= fPercent
+          );
+        });
+      }
       const query = debouncedSearchQuery.trim().toLowerCase();
       if (query) {
         cards = cards.filter(card => {
@@ -107,11 +190,51 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [results, sortBy, page, reliableOnly, debouncedSearchQuery, filterReliable, flattenItineraries, getSortValue, PAGE_SIZE]);
+  }, [results, sortBy, page, reliableOnly, debouncedSearchQuery, filterReliable, flattenItineraries, getSortValue, PAGE_SIZE, selectedStops, selectedIncludeAirlines, selectedExcludeAirlines, yPercent, wPercent, jPercent, fPercent, duration]);
+
+  React.useEffect(() => {
+    // Extract unique airline codes from results.flights
+    const codes = Array.from(new Set(Object.values(results.flights).map(f => f.FlightNumbers.slice(0, 2).toUpperCase())));
+    if (codes.length === 0) {
+      setAirlineMeta([]);
+      return;
+    }
+    // Fetch only metadata for these codes
+    fetch(`/api/airlines?codes=${codes.join(',')}`)
+      .then(res => res.json())
+      .then(data => setAirlineMeta(Array.isArray(data) ? data : []))
+      .catch(() => setAirlineMeta([]));
+  }, [results.flights]);
 
   return (
     <TooltipProvider>
       <div className="mt-8 w-full flex flex-col items-center">
+        {/* Filters at the very top, separated from controls */}
+        <div className="w-full max-w-[1000px] mb-4 ml-auto mr-auto">
+          <Filters
+            stopCounts={getStopCounts()}
+            selectedStops={selectedStops}
+            onChangeStops={setSelectedStops}
+            airlineMeta={airlineMeta || []}
+            visibleAirlineCodes={visibleAirlineCodes}
+            selectedIncludeAirlines={selectedIncludeAirlines}
+            selectedExcludeAirlines={selectedExcludeAirlines}
+            onChangeIncludeAirlines={setSelectedIncludeAirlines}
+            onChangeExcludeAirlines={setSelectedExcludeAirlines}
+            yPercent={yPercent}
+            wPercent={wPercent}
+            jPercent={jPercent}
+            fPercent={fPercent}
+            onYPercentChange={setYPercent}
+            onWPercentChange={setWPercent}
+            onJPercentChange={setJPercent}
+            onFPercentChange={setFPercent}
+            minDuration={minDuration}
+            maxDuration={maxDuration}
+            duration={duration}
+            onDurationChange={setDuration}
+          />
+        </div>
         <div className="w-full max-w-4xl mx-auto flex flex-col gap-2 mb-4">
           <div className="flex flex-row items-center justify-between gap-2 w-full">
             <label className="flex items-center gap-1 text-sm">
