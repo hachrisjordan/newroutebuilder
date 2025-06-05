@@ -189,6 +189,15 @@ export function AirportMultiSearch({ value, onChange, placeholder, className }: 
           onFocus={handleFocus}
           className="flex-1 min-w-[60px] bg-transparent outline-none border-none focus:ring-0 p-0 m-0 text-sm w-full max-w-full"
           style={{ minWidth: '60px' }}
+          onKeyDown={e => {
+            if ((e.key === 'Enter' || e.key === 'Tab') && showDropdown && options.length > 0) {
+              e.preventDefault();
+              handleSelect(options[0]);
+            } else if (e.key === 'Backspace' && !search && value.length > 0) {
+              e.preventDefault();
+              handleRemove(value[value.length - 1]);
+            }
+          }}
         />
       </div>
       {showDropdown && (search || options.length > 0) && (
