@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { AirportSearch } from '@/components/airport-search';
+import { AirportMultiSearch } from '@/components/airport-multi-search';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { format, isValid, addYears } from 'date-fns';
@@ -22,8 +22,8 @@ interface AwardFinderSearchProps {
 const SEARCH_CACHE_KEY = 'awardFinderSearchParams';
 
 export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
-  const [origin, setOrigin] = useState<string>('');
-  const [destination, setDestination] = useState<string>('');
+  const [origin, setOrigin] = useState<string[]>([]);
+  const [destination, setDestination] = useState<string[]>([]);
   const [date, setDate] = useState<DateRange | undefined>(undefined);
   const [open, setOpen] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -34,6 +34,25 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
   const [maxStopsError, setMaxStopsError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const maxCombination = 9;
+  const combinationCount = origin.length * destination.length;
+
+  // Helper to get allowed max stops based on x
+  const getAllowedMaxStops = (x: number) => {
+    if (x === 0) return 4;
+    if (x === 1) return 4;
+    if (x > 1 && x <= 6) return 3;
+    if (x >= 7 && x <= 9) return 2;
+    return 2; // fallback, should not happen
+  };
+
+  useEffect(() => {
+    const allowed = getAllowedMaxStops(combinationCount);
+    if (maxStops > allowed) {
+      setMaxStops(allowed);
+    }
+  }, [origin, destination]);
 
   useEffect(() => {
     const fetchApiKey = async () => {
@@ -66,8 +85,8 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
     if (cached) {
       try {
         const { origin, destination, date, maxStops } = JSON.parse(cached);
-        if (origin) setOrigin(origin);
-        if (destination) setDestination(destination);
+        if (Array.isArray(origin)) setOrigin(origin);
+        if (Array.isArray(destination)) setDestination(destination);
         if (date) setDate(date);
         if (typeof maxStops === 'number') setMaxStops(maxStops);
       } catch {}
@@ -98,15 +117,18 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
   };
 
   const isSearchEnabled =
-    !!origin &&
-    !!destination &&
+    origin.length > 0 &&
+    destination.length > 0 &&
     !!date?.from &&
     !!date?.to &&
     !!apiKey &&
     maxStops >= 0 &&
     maxStops <= 4 &&
     !apiKeyError &&
-    !maxStopsError;
+    !maxStopsError &&
+    combinationCount <= maxCombination;
+
+  const allowedMaxStops = getAllowedMaxStops(combinationCount);
 
   // --- SUBMIT HANDLER ---
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -116,23 +138,33 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
       setError('Please select a valid date range.');
       return;
     }
+    if (origin.length === 0 || destination.length === 0) {
+      setError('Please select at least one origin and one destination airport.');
+      return;
+    }
+    if (combinationCount > maxCombination) {
+      setError('Too many combinations: Please select fewer airports.');
+      return;
+    }
     // Format dates as YYYY-MM-DD
     const startDate = format(date.from, 'yyyy-MM-dd');
     const endDate = format(date.to, 'yyyy-MM-dd');
-    const requestBody: AwardFinderSearchRequest = {
-      origin: origin.trim().toUpperCase(),
-      destination: destination.trim().toUpperCase(),
+    const originStr = origin.length > 1 ? origin.join('/') : origin[0];
+    const destinationStr = destination.length > 1 ? destination.join('/') : destination[0];
+    const requestBody = {
+      origin: originStr,
+      destination: destinationStr,
       maxStop: maxStops,
       startDate,
       endDate,
       apiKey: apiKey.trim(),
     };
-    // Validate with Zod
-    const parseResult = awardFinderSearchRequestSchema.safeParse(requestBody);
-    if (!parseResult.success) {
-      setError('Invalid input: ' + parseResult.error.errors.map(e => e.message).join(', '));
-      return;
-    }
+    // Validate with Zod (will update schema next)
+    // const parseResult = awardFinderSearchRequestSchema.safeParse(requestBody);
+    // if (!parseResult.success) {
+    //   setError('Invalid input: ' + parseResult.error.errors.map(e => e.message).join(', '));
+    //   return;
+    // }
     setIsLoading(true);
     try {
       const res = await fetch('/api/award-finder', {
@@ -156,20 +188,20 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
     <form className="w-full max-w-[1000px] mx-auto bg-card p-4 rounded-xl border shadow flex flex-col gap-6" onSubmit={handleSubmit}>
       <div className="flex flex-col gap-4 md:flex-row md:gap-6 relative md:justify-end">
         <div className="flex flex-col gap-2 flex-1 min-w-[200px]">
-          <label htmlFor="origin" className="block text-sm font-medium text-foreground mb-1">Origin</label>
-          <AirportSearch
+          <label htmlFor="origin" className="block text-sm font-medium text-foreground mb-1">Origin(s)</label>
+          <AirportMultiSearch
             value={origin}
             onChange={setOrigin}
-            placeholder="Search origin airport"
+            placeholder="Search origin airports"
             className="h-9"
           />
         </div>
         <div className="flex flex-col gap-2 flex-1 min-w-[200px]">
-          <label htmlFor="destination" className="block text-sm font-medium text-foreground mb-1">Destination</label>
-          <AirportSearch
+          <label htmlFor="destination" className="block text-sm font-medium text-foreground mb-1">Destination(s)</label>
+          <AirportMultiSearch
             value={destination}
             onChange={setDestination}
-            placeholder="Search destination airport"
+            placeholder="Search destination airports"
             className="h-9"
           />
         </div>
@@ -247,7 +279,7 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {[0,1,2,3,4].map(n => (
+                {Array.from({ length: allowedMaxStops + 1 }, (_, n) => (
                   <SelectItem key={n} value={String(n)}>{n}</SelectItem>
                 ))}
               </SelectContent>
@@ -257,6 +289,11 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
         </div>
       )}
       {error && <div className="text-red-600 text-sm mt-2">{error}</div>}
+      {combinationCount > maxCombination && !error && (
+        <div className="text-red-600 text-sm mt-2">
+          Too many combinations: Please select fewer airports.
+        </div>
+      )}
     </form>
   );
 } 

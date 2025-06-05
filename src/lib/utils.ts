@@ -154,8 +154,8 @@ export function getClassPercentages(
 }
 
 export const awardFinderSearchParamsSchema = z.object({
-  origin: z.string().min(3).max(3),
-  destination: z.string().min(3).max(3),
+  origin: z.string().min(3).max(255),
+  destination: z.string().min(3).max(255),
   maxStop: z.number().int().min(0).max(4),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
