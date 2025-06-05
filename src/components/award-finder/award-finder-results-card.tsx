@@ -27,6 +27,16 @@ interface AwardFinderResultsCardProps {
   minReliabilityPercent: number;
 }
 
+// Debounce hook
+function useDebouncedValue<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = React.useState(value);
+  React.useEffect(() => {
+    const handler = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debounced;
+}
+
 const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
   results,
   sortBy,
@@ -45,6 +55,59 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
   minReliabilityPercent,
 }) => {
   const [searchQuery, setSearchQuery] = React.useState('');
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
+  const [isProcessing, setIsProcessing] = React.useState(false);
+  const [processedCards, setProcessedCards] = React.useState<Array<{ route: string; date: string; itinerary: string[] }>>([]);
+  const [totalPages, setTotalPages] = React.useState(0);
+
+  // Data processing effect
+  React.useEffect(() => {
+    let cancelled = false;
+    setIsProcessing(true);
+    // Use setTimeout to yield to the browser for large data
+    setTimeout(() => {
+      let filteredResults = reliableOnly ? filterReliable(results) : results;
+      let cards = flattenItineraries(filteredResults);
+      const query = debouncedSearchQuery.trim().toLowerCase();
+      if (query) {
+        cards = cards.filter(card => {
+          if (card.route.toLowerCase().includes(query) || card.date.toLowerCase().includes(query)) {
+            return true;
+          }
+          return card.itinerary.some(fid => {
+            const flight = filteredResults.flights[fid];
+            return flight && flight.FlightNumbers.toLowerCase().includes(query);
+          });
+        });
+      }
+      cards = cards.sort((a, b) => {
+        const aVal = getSortValue(a, filteredResults, sortBy);
+        const bVal = getSortValue(b, filteredResults, sortBy);
+        if (aVal !== bVal) {
+          if (["arrival", "y", "w", "j", "f"].includes(sortBy)) {
+            return bVal - aVal;
+          }
+          return aVal - bVal;
+        }
+        const aFlights = a.itinerary.map(fid => filteredResults.flights[fid]);
+        const bFlights = b.itinerary.map(fid => filteredResults.flights[fid]);
+        const aDur = getTotalDuration(aFlights);
+        const bDur = getTotalDuration(bFlights);
+        return aDur - bDur;
+      });
+      const total = Math.ceil(cards.length / PAGE_SIZE);
+      const pagedCards = cards.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+      if (!cancelled) {
+        setProcessedCards(pagedCards);
+        setTotalPages(total);
+        setIsProcessing(false);
+      }
+    }, 0);
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [results, sortBy, page, reliableOnly, debouncedSearchQuery, filterReliable, flattenItineraries, getSortValue, PAGE_SIZE]);
 
   return (
     <TooltipProvider>
@@ -98,70 +161,33 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
         {/* Results Table with Pagination */}
         {reliableOnly && reliabilityLoading ? (
           <div className="text-muted-foreground flex items-center gap-2"><span className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-primary"></span>Loading results...</div>
+        ) : isProcessing ? (
+          <div className="text-muted-foreground flex items-center gap-2"><span className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-primary"></span>Processing results...</div>
         ) : (
-          (() => {
-            const filteredResults = filterReliable(results);
-            let cards = flattenItineraries(filteredResults);
-            // Search filter logic
-            const query = searchQuery.trim().toLowerCase();
-            if (query) {
-              cards = cards.filter(card => {
-                // Check route and date
-                if (card.route.toLowerCase().includes(query) || card.date.toLowerCase().includes(query)) {
-                  return true;
-                }
-                // Check all flight numbers in itinerary
-                return card.itinerary.some(fid => {
-                  const flight = filteredResults.flights[fid];
-                  return flight && flight.FlightNumbers.toLowerCase().includes(query);
-                });
-              });
-            }
-            cards = cards.sort((a, b) => {
-              const aVal = getSortValue(a, filteredResults, sortBy);
-              const bVal = getSortValue(b, filteredResults, sortBy);
-              if (aVal !== bVal) {
-                if (["arrival", "y", "w", "j", "f"].includes(sortBy)) {
-                  return bVal - aVal;
-                }
-                return aVal - bVal;
-              }
-              // Secondary sort: duration (always shortest to longest)
-              const aFlights = a.itinerary.map(fid => filteredResults.flights[fid]);
-              const bFlights = b.itinerary.map(fid => filteredResults.flights[fid]);
-              const aDur = getTotalDuration(aFlights);
-              const bDur = getTotalDuration(bFlights);
-              return aDur - bDur;
-            });
-            const totalPages = Math.ceil(cards.length / PAGE_SIZE);
-            const pagedCards = cards.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-            return (
-              <>
-                <AwardFinderResultsComponent
-                  cards={pagedCards}
-                  flights={filteredResults.flights}
-                  reliability={reliability}
-                  minReliabilityPercent={minReliabilityPercent}
-                />
-                <Pagination
-                  currentPage={page}
-                  totalPages={totalPages}
-                  onPageChange={onPageChange}
-                />
-                {/* API call info line */}
-                {typeof results.totalSeatsAeroHttpRequests === 'number' && typeof results.minRateLimitRemaining === 'number' && typeof results.minRateLimitReset === 'number' && (
-                  <div className="w-full text-center text-xs text-muted-foreground mt-2 mx-auto">
-                    {(() => {
-                      const resetSec = results.minRateLimitReset || 0;
-                      const h = Math.floor(resetSec / 3600);
-                      const m = Math.floor((resetSec % 3600) / 60);
-                      return `seats.aero API call: ${results.totalSeatsAeroHttpRequests} (${results.minRateLimitRemaining} remaining, reset in ${h}h ${m}m)`;
-                    })()}
-                  </div>
-                )}
-              </>
-            );
-          })()
+          <>
+            <AwardFinderResultsComponent
+              cards={processedCards}
+              flights={(reliableOnly ? filterReliable(results) : results).flights}
+              reliability={reliability}
+              minReliabilityPercent={minReliabilityPercent}
+            />
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={onPageChange}
+            />
+            {/* API call info line */}
+            {typeof results.totalSeatsAeroHttpRequests === 'number' && typeof results.minRateLimitRemaining === 'number' && typeof results.minRateLimitReset === 'number' && (
+              <div className="w-full text-center text-xs text-muted-foreground mt-2 mx-auto">
+                {(() => {
+                  const resetSec = results.minRateLimitReset || 0;
+                  const h = Math.floor(resetSec / 3600);
+                  const m = Math.floor((resetSec % 3600) / 60);
+                  return `seats.aero API call: ${results.totalSeatsAeroHttpRequests} (${results.minRateLimitRemaining} remaining, reset in ${h}h ${m}m)`;
+                })()}
+              </div>
+            )}
+          </>
         )}
       </div>
     </TooltipProvider>
