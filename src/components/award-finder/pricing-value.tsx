@@ -293,9 +293,6 @@ const PricingValue: React.FC<PricingValueProps> = ({
         if (!matchedRule && !isReliable) {
           const hasDynamicInRule = pricing.allRules.some((rule: any) => rule.dynamic_in === true);
           if (!hasDynamicInRule) {
-            if (typeof window !== 'undefined') {
-              console.log('[PricingValue DEBUG] N/A fallback for unreliable class', { class: label, isReliable, allRules: pricing.allRules });
-            }
             return (
               <div key={key} className="flex items-center gap-1 text-sm">
                 <span className="font-bold">{label}</span>
@@ -305,19 +302,7 @@ const PricingValue: React.FC<PricingValueProps> = ({
           }
         }
       } else if (isReliable) {
-        if (typeof window !== 'undefined') {
-          console.log('[PricingValue DEBUG] fallback to matchedRule = pricing', { class: label, isReliable, pricing });
-        }
         matchedRule = pricing;
-      }
-      if (typeof window !== 'undefined') {
-        console.log('[PricingValue DEBUG]', {
-          class: label,
-          isReliable,
-          matchedRule_dynamic_in: matchedRule?.dynamic_in,
-          matchedRule_dynamic_out: matchedRule?.dynamic_out,
-          classValue: matchedRule?.[key],
-        });
       }
       let display: React.ReactNode = 'N/A';
       if (matchedRule) {
