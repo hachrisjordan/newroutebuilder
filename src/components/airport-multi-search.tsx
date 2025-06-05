@@ -133,7 +133,7 @@ export function AirportMultiSearch({ value, onChange, placeholder, className }: 
       onChange([...value, option.value]);
     }
     setSearch('');
-    setShowDropdown(true);
+    setShowDropdown(false);
   };
 
   // Remove selected airport

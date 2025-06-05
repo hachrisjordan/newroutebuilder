@@ -9,11 +9,12 @@ import { format, isValid, addYears } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { awardFinderSearchRequestSchema } from '@/lib/utils';
 import type { AwardFinderResults, AwardFinderSearchRequest } from '@/types/award-finder-results';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 
 interface AwardFinderSearchProps {
   onSearch: (results: AwardFinderResults) => void;
@@ -87,7 +88,12 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
         const { origin, destination, date, maxStops } = JSON.parse(cached);
         if (Array.isArray(origin)) setOrigin(origin);
         if (Array.isArray(destination)) setDestination(destination);
-        if (date) setDate(date);
+        if (date) {
+          setDate({
+            from: date.from ? new Date(date.from) : undefined,
+            to: date.to ? new Date(date.to) : undefined,
+          });
+        }
         if (typeof maxStops === 'number') setMaxStops(maxStops);
       } catch {}
     }
@@ -129,6 +135,16 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
     combinationCount <= maxCombination;
 
   const allowedMaxStops = getAllowedMaxStops(combinationCount);
+
+  const getDateRangeDays = () => {
+    if (date?.from && date?.to) {
+      const diff = Math.ceil((date.to.getTime() - date.from.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      return diff;
+    }
+    return 0;
+  };
+  const dateRangeDays = getDateRangeDays();
+  const showDateRangeWarning = dateRangeDays > 7;
 
   // --- SUBMIT HANDLER ---
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -206,7 +222,34 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
           />
         </div>
         <div className="flex flex-col gap-2 flex-1 min-w-[250px]">
-          <label htmlFor="date" className="block text-sm font-medium text-foreground mb-1">Date</label>
+          <label htmlFor="date" className="block text-sm font-medium text-foreground mb-1 flex items-center gap-1">
+            Date
+            {showDateRangeWarning && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      tabIndex={0}
+                      aria-label="Wide date range warning"
+                      className="ml-1 align-middle p-1 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                      style={{ touchAction: 'manipulation' }}
+                    >
+                      <AlertTriangle className="text-yellow-500 h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    <div>
+                      Searching across a wide date range may result in large datasets, longer wait times, increased usage of the seats.aero API, and slower processing.
+                    </div>
+                    <div className="mt-2 font-medium">
+                      For best results, we recommend searching within a 4–7 day range.
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </label>
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <Button

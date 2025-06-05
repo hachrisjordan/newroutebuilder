@@ -136,10 +136,23 @@ const FlightCard: React.FC<FlightCardProps> = ({
                 icon = (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span><AlertTriangle className="text-yellow-500 h-4 w-4" /></span>
+                      <button
+                        type="button"
+                        tabIndex={0}
+                        aria-label="Unreliable availability warning"
+                        className="p-1 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                        style={{ touchAction: 'manipulation' }}
+                      >
+                        <AlertTriangle className="text-yellow-500 h-4 w-4" />
+                      </button>
                     </TooltipTrigger>
                     <TooltipContent side="top" className="max-w-xs text-xs">
-                      This flight likely has dynamic pricing and may not be available on partner programs.
+                      <div>
+                        This flight likely has dynamic pricing and may not be available on partner programs.
+                      </div>
+                      <div className="mt-2 font-medium">
+                        For best results, look for flights with a green check.
+                      </div>
                     </TooltipContent>
                   </Tooltip>
                 );
