@@ -135,19 +135,32 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
             });
             const totalPages = Math.ceil(cards.length / PAGE_SIZE);
             const pagedCards = cards.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-            return <>
-              <AwardFinderResultsComponent
-                cards={pagedCards}
-                flights={filteredResults.flights}
-                reliability={reliability}
-                minReliabilityPercent={minReliabilityPercent}
-              />
-              <Pagination
-                currentPage={page}
-                totalPages={totalPages}
-                onPageChange={onPageChange}
-              />
-            </>;
+            return (
+              <>
+                <AwardFinderResultsComponent
+                  cards={pagedCards}
+                  flights={filteredResults.flights}
+                  reliability={reliability}
+                  minReliabilityPercent={minReliabilityPercent}
+                />
+                <Pagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onPageChange={onPageChange}
+                />
+                {/* API call info line */}
+                {typeof results.totalSeatsAeroHttpRequests === 'number' && typeof results.minRateLimitRemaining === 'number' && typeof results.minRateLimitReset === 'number' && (
+                  <div className="w-full text-center text-xs text-muted-foreground mt-2 mx-auto">
+                    {(() => {
+                      const resetSec = results.minRateLimitReset || 0;
+                      const h = Math.floor(resetSec / 3600);
+                      const m = Math.floor((resetSec % 3600) / 60);
+                      return `seats.aero API call: ${results.totalSeatsAeroHttpRequests} (${results.minRateLimitRemaining} remaining, reset in ${h}h ${m}m)`;
+                    })()}
+                  </div>
+                )}
+              </>
+            );
           })()
         )}
       </div>

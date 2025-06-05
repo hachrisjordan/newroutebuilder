@@ -42,8 +42,8 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
   const getAllowedMaxStops = (x: number) => {
     if (x === 0) return 4;
     if (x === 1) return 4;
-    if (x > 1 && x <= 6) return 3;
-    if (x >= 7 && x <= 9) return 2;
+    if (x > 1 && x <= 5) return 3;
+    if (x >= 6 && x <= 9) return 2;
     return 2; // fallback, should not happen
   };
 

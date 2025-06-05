@@ -25,6 +25,9 @@ export interface AwardFinderResults {
   flights: {
     [flightId: string]: Flight;
   };
+  minRateLimitRemaining?: number;
+  minRateLimitReset?: number;
+  totalSeatsAeroHttpRequests?: number;
 }
 
 export interface AwardFinderSearchParams {
