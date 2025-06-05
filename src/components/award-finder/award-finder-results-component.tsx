@@ -185,6 +185,7 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
       <TooltipProvider>
         {cards.map(({ route, date, itinerary }, idx) => {
           const flightsArr: Flight[] = itinerary.map(id => flights[id]).filter(Boolean);
+          if (flightsArr.length === 0) return null;
           const firstFlight = flightsArr[0];
           const lastFlight = flightsArr[flightsArr.length - 1];
           const totalDuration = getTotalDuration(flightsArr);
