@@ -55,15 +55,17 @@ export function useAirlineLogoSrc(code: string): string {
 
 /**
  * Returns the total duration of an itinerary, including layovers.
- * @param flights Array of Flight objects in the itinerary order
+ * @param flights Array of Flight objects in the itinerary order (may include undefined)
  */
-export function getTotalDuration(flights: Flight[]): number {
+export function getTotalDuration(flights: (Flight | undefined)[]): number {
   let total = 0;
   for (let i = 0; i < flights.length; i++) {
-    total += flights[i].TotalDuration;
-    if (i > 0) {
-      const prevArrive = new Date(flights[i - 1].ArrivesAt).getTime();
-      const currDepart = new Date(flights[i].DepartsAt).getTime();
+    const flight = flights[i];
+    if (!flight) continue; // skip undefined
+    total += flight.TotalDuration;
+    if (i > 0 && flights[i - 1]) {
+      const prevArrive = new Date(flights[i - 1]!.ArrivesAt).getTime();
+      const currDepart = new Date(flight.DepartsAt).getTime();
       const layover = Math.max(0, Math.round((currDepart - prevArrive) / (1000 * 60)));
       total += layover;
     }

@@ -89,8 +89,8 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
           }
           return aVal - bVal;
         }
-        const aFlights = a.itinerary.map(fid => filteredResults.flights[fid]);
-        const bFlights = b.itinerary.map(fid => filteredResults.flights[fid]);
+        const aFlights = a.itinerary.map(fid => filteredResults.flights[fid]).filter(Boolean);
+        const bFlights = b.itinerary.map(fid => filteredResults.flights[fid]).filter(Boolean);
         const aDur = getTotalDuration(aFlights);
         const bDur = getTotalDuration(bFlights);
         return aDur - bDur;
