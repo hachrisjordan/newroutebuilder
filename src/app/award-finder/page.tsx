@@ -59,6 +59,7 @@ export default function AwardFinderPage() {
   const [reliability, setReliability] = useState<Record<string, { min_count: number; exemption?: string }>>({});
   const [reliabilityLoading, setReliabilityLoading] = useState(false);
   const [minReliabilityPercent, setMinReliabilityPercent] = useState<number>(100);
+  const [resetFiltersSignal, setResetFiltersSignal] = useState(0);
 
   useEffect(() => {
     if (!reliableOnly) return;
@@ -129,6 +130,7 @@ export default function AwardFinderPage() {
       <AwardFinderSearch onSearch={data => {
         setResults(data);
         setPage(0);
+        setResetFiltersSignal(s => s + 1);
       }} />
       {results && (
         <AwardFinderResultsCard
@@ -147,6 +149,7 @@ export default function AwardFinderPage() {
           PAGE_SIZE={PAGE_SIZE}
           sortOptions={sortOptions}
           minReliabilityPercent={minReliabilityPercent}
+          resetFiltersSignal={resetFiltersSignal}
         />
       )}
     </main>

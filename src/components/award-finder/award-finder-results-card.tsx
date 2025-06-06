@@ -26,6 +26,7 @@ interface AwardFinderResultsCardProps {
   PAGE_SIZE: number;
   sortOptions: { value: string; label: string }[];
   minReliabilityPercent: number;
+  resetFiltersSignal?: number | string;
 }
 
 // Debounce hook
@@ -54,6 +55,7 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
   PAGE_SIZE,
   sortOptions,
   minReliabilityPercent,
+  resetFiltersSignal,
 }) => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
@@ -84,6 +86,45 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
   React.useEffect(() => {
     setDuration(maxDuration);
   }, [maxDuration]);
+
+  // --- Pagination reset wrappers ---
+  const handleChangeStops = (stops: number[]) => {
+    setSelectedStops(stops);
+    onPageChange(0);
+  };
+  const handleChangeIncludeAirlines = (codes: string[]) => {
+    setSelectedIncludeAirlines(codes);
+    onPageChange(0);
+  };
+  const handleChangeExcludeAirlines = (codes: string[]) => {
+    setSelectedExcludeAirlines(codes);
+    onPageChange(0);
+  };
+  const handleYPercentChange = (value: number) => {
+    setYPercent(value);
+    onPageChange(0);
+  };
+  const handleWPercentChange = (value: number) => {
+    setWPercent(value);
+    onPageChange(0);
+  };
+  const handleJPercentChange = (value: number) => {
+    setJPercent(value);
+    onPageChange(0);
+  };
+  const handleFPercentChange = (value: number) => {
+    setFPercent(value);
+    onPageChange(0);
+  };
+  const handleDurationChange = (value: number) => {
+    setDuration(value);
+    onPageChange(0);
+  };
+  const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    onPageChange(0);
+  };
+  // --- End wrappers ---
 
   // Helper to get unique stop counts from results
   const getStopCounts = React.useCallback(() => {
@@ -206,16 +247,50 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
       .catch(() => setAirlineMeta([]));
   }, [results.flights]);
 
-  const handleResetStops = () => setSelectedStops(getStopCounts());
+  const handleResetStops = () => {
+    setSelectedStops(getStopCounts());
+    onPageChange(0);
+  };
   const handleResetAirlines = () => {
     setSelectedIncludeAirlines([]);
     setSelectedExcludeAirlines([]);
+    onPageChange(0);
   };
-  const handleResetY = () => setYPercent(0);
-  const handleResetW = () => setWPercent(0);
-  const handleResetJ = () => setJPercent(0);
-  const handleResetF = () => setFPercent(0);
-  const handleResetDuration = () => setDuration(maxDuration);
+  const handleResetY = () => {
+    setYPercent(0);
+    onPageChange(0);
+  };
+  const handleResetW = () => {
+    setWPercent(0);
+    onPageChange(0);
+  };
+  const handleResetJ = () => {
+    setJPercent(0);
+    onPageChange(0);
+  };
+  const handleResetF = () => {
+    setFPercent(0);
+    onPageChange(0);
+  };
+  const handleResetDuration = () => {
+    setDuration(maxDuration);
+    onPageChange(0);
+  };
+
+  // Reset all filters/search when resetFiltersSignal changes
+  React.useEffect(() => {
+    // Reset all filter/search state to initial values
+    setSearchQuery('');
+    setSelectedIncludeAirlines([]);
+    setSelectedExcludeAirlines([]);
+    setYPercent(0);
+    setWPercent(0);
+    setJPercent(0);
+    setFPercent(0);
+    setDuration(maxDuration);
+    setSelectedStops(getStopCounts());
+    // Optionally, reset other local state if needed
+  }, [resetFiltersSignal, maxDuration, getStopCounts]);
 
   return (
     <TooltipProvider>
@@ -225,25 +300,25 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
           <Filters
             stopCounts={getStopCounts()}
             selectedStops={selectedStops}
-            onChangeStops={setSelectedStops}
+            onChangeStops={handleChangeStops}
             airlineMeta={airlineMeta || []}
             visibleAirlineCodes={visibleAirlineCodes}
             selectedIncludeAirlines={selectedIncludeAirlines}
             selectedExcludeAirlines={selectedExcludeAirlines}
-            onChangeIncludeAirlines={setSelectedIncludeAirlines}
-            onChangeExcludeAirlines={setSelectedExcludeAirlines}
+            onChangeIncludeAirlines={handleChangeIncludeAirlines}
+            onChangeExcludeAirlines={handleChangeExcludeAirlines}
             yPercent={yPercent}
             wPercent={wPercent}
             jPercent={jPercent}
             fPercent={fPercent}
-            onYPercentChange={setYPercent}
-            onWPercentChange={setWPercent}
-            onJPercentChange={setJPercent}
-            onFPercentChange={setFPercent}
+            onYPercentChange={handleYPercentChange}
+            onWPercentChange={handleWPercentChange}
+            onJPercentChange={handleJPercentChange}
+            onFPercentChange={handleFPercentChange}
             minDuration={minDuration}
             maxDuration={maxDuration}
             duration={duration}
-            onDurationChange={setDuration}
+            onDurationChange={handleDurationChange}
             onResetStops={handleResetStops}
             onResetAirlines={handleResetAirlines}
             onResetY={handleResetY}
@@ -278,7 +353,7 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
               <Input
                 type="text"
                 value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
+                onChange={handleSearchQueryChange}
                 placeholder="Search path, date, or flight number..."
                 className="w-64 md:w-72 lg:w-80 max-w-full ml-auto"
                 aria-label="Search results"
