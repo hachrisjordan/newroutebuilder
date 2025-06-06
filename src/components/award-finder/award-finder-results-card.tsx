@@ -206,6 +206,17 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
       .catch(() => setAirlineMeta([]));
   }, [results.flights]);
 
+  const handleResetStops = () => setSelectedStops(getStopCounts());
+  const handleResetAirlines = () => {
+    setSelectedIncludeAirlines([]);
+    setSelectedExcludeAirlines([]);
+  };
+  const handleResetY = () => setYPercent(0);
+  const handleResetW = () => setWPercent(0);
+  const handleResetJ = () => setJPercent(0);
+  const handleResetF = () => setFPercent(0);
+  const handleResetDuration = () => setDuration(maxDuration);
+
   return (
     <TooltipProvider>
       <div className="mt-8 w-full flex flex-col items-center">
@@ -233,6 +244,13 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
             maxDuration={maxDuration}
             duration={duration}
             onDurationChange={setDuration}
+            onResetStops={handleResetStops}
+            onResetAirlines={handleResetAirlines}
+            onResetY={handleResetY}
+            onResetW={handleResetW}
+            onResetJ={handleResetJ}
+            onResetF={handleResetF}
+            onResetDuration={handleResetDuration}
           />
         </div>
         <div className="w-full max-w-4xl mx-auto flex flex-col gap-2 mb-4">

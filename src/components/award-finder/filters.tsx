@@ -17,6 +17,7 @@ import Image from 'next/image';
 import { getAirlineLogoSrc } from '@/lib/utils';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
+import { X, RotateCw } from 'lucide-react';
 
 export function extractAirlineCodes(flights: Record<string, Flight>): string[] {
   const codes = new Set<string>();
@@ -42,12 +43,14 @@ interface FiltersProps {
   stopCounts: number[];
   selectedStops: number[];
   onChangeStops: (stops: number[]) => void;
+  onResetStops: () => void;
   airlineMeta: AirlineMeta[];
   visibleAirlineCodes: string[];
   selectedIncludeAirlines: string[];
   selectedExcludeAirlines: string[];
   onChangeIncludeAirlines: (codes: string[]) => void;
   onChangeExcludeAirlines: (codes: string[]) => void;
+  onResetAirlines: () => void;
   yPercent: number;
   wPercent: number;
   jPercent: number;
@@ -56,22 +59,29 @@ interface FiltersProps {
   onWPercentChange: (value: number) => void;
   onJPercentChange: (value: number) => void;
   onFPercentChange: (value: number) => void;
+  onResetY: () => void;
+  onResetW: () => void;
+  onResetJ: () => void;
+  onResetF: () => void;
   minDuration: number;
   maxDuration: number;
   duration: number;
   onDurationChange: (value: number) => void;
+  onResetDuration: () => void;
 }
 
 const Filters: React.FC<FiltersProps> = ({
   stopCounts,
   selectedStops,
   onChangeStops,
+  onResetStops,
   airlineMeta,
   visibleAirlineCodes,
   selectedIncludeAirlines,
   selectedExcludeAirlines,
   onChangeIncludeAirlines,
   onChangeExcludeAirlines,
+  onResetAirlines,
   yPercent,
   wPercent,
   jPercent,
@@ -80,10 +90,15 @@ const Filters: React.FC<FiltersProps> = ({
   onWPercentChange,
   onJPercentChange,
   onFPercentChange,
+  onResetY,
+  onResetW,
+  onResetJ,
+  onResetF,
   minDuration,
   maxDuration,
   duration,
   onDurationChange,
+  onResetDuration,
 }) => {
   const allStopsSelected = selectedStops.length === stopCounts.length && stopCounts.length > 0;
 
@@ -136,7 +151,12 @@ const Filters: React.FC<FiltersProps> = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-fit">
-          <DropdownMenuLabel>Number of stops</DropdownMenuLabel>
+          <div className="flex items-center justify-between pr-2">
+            <DropdownMenuLabel>Number of stops</DropdownMenuLabel>
+            <button type="button" aria-label="Reset stops" onClick={onResetStops} className="ml-2 p-1 rounded hover:bg-accent">
+              <RotateCw className="w-4 h-4" />
+            </button>
+          </div>
           <DropdownMenuSeparator />
           {stopCounts.map((stop) => (
             <DropdownMenuCheckboxItem
@@ -158,7 +178,12 @@ const Filters: React.FC<FiltersProps> = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-fit">
-          <DropdownMenuLabel>Airlines</DropdownMenuLabel>
+          <div className="flex items-center justify-between pr-2">
+            <DropdownMenuLabel>Airlines</DropdownMenuLabel>
+            <button type="button" aria-label="Reset airlines" onClick={onResetAirlines} className="ml-2 p-1 rounded hover:bg-accent">
+              <RotateCw className="w-4 h-4" />
+            </button>
+          </div>
           <DropdownMenuSeparator />
           <Tabs value={airlineTab} onValueChange={v => setAirlineTab(v as 'include' | 'exclude')} className="w-full">
             <TabsList className="w-full flex mb-2">
@@ -166,48 +191,52 @@ const Filters: React.FC<FiltersProps> = ({
               <TabsTrigger value="exclude" className="flex-1">Exclude</TabsTrigger>
             </TabsList>
             <TabsContent value="include">
-              {filteredAirlineMeta.map(({ code, name }) => (
-                <DropdownMenuCheckboxItem
-                  key={code}
-                  checked={selectedIncludeAirlines.includes(code)}
-                  onCheckedChange={checked => handleToggleAirline(code, checked as boolean, 'include')}
-                  onSelect={e => e.preventDefault()}
-                >
-                  <span className="flex items-center gap-2">
-                    <Image
-                      src={getAirlineLogoSrc(code)}
-                      alt={code}
-                      width={24}
-                      height={24}
-                      className="rounded-md object-contain"
-                      unoptimized
-                    />
-                    <span>{name} <span className="font-bold">- {code}</span></span>
-                  </span>
-                </DropdownMenuCheckboxItem>
-              ))}
+              <div className="max-h-72 overflow-y-auto">
+                {filteredAirlineMeta.map(({ code, name }) => (
+                  <DropdownMenuCheckboxItem
+                    key={code}
+                    checked={selectedIncludeAirlines.includes(code)}
+                    onCheckedChange={checked => handleToggleAirline(code, checked as boolean, 'include')}
+                    onSelect={e => e.preventDefault()}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Image
+                        src={getAirlineLogoSrc(code)}
+                        alt={code}
+                        width={24}
+                        height={24}
+                        className="rounded-md object-contain"
+                        unoptimized
+                      />
+                      <span>{name} <span className="font-bold">- {code}</span></span>
+                    </span>
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </div>
             </TabsContent>
             <TabsContent value="exclude">
-              {filteredAirlineMeta.map(({ code, name }) => (
-                <DropdownMenuCheckboxItem
-                  key={code}
-                  checked={selectedExcludeAirlines.includes(code)}
-                  onCheckedChange={checked => handleToggleAirline(code, checked as boolean, 'exclude')}
-                  onSelect={e => e.preventDefault()}
-                >
-                  <span className="flex items-center gap-2">
-                    <Image
-                      src={getAirlineLogoSrc(code)}
-                      alt={code}
-                      width={24}
-                      height={24}
-                      className="rounded-md object-contain"
-                      unoptimized
-                    />
-                    <span>{name} <span className="font-bold">- {code}</span></span>
-                  </span>
-                </DropdownMenuCheckboxItem>
-              ))}
+              <div className="max-h-72 overflow-y-auto">
+                {filteredAirlineMeta.map(({ code, name }) => (
+                  <DropdownMenuCheckboxItem
+                    key={code}
+                    checked={selectedExcludeAirlines.includes(code)}
+                    onCheckedChange={checked => handleToggleAirline(code, checked as boolean, 'exclude')}
+                    onSelect={e => e.preventDefault()}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Image
+                        src={getAirlineLogoSrc(code)}
+                        alt={code}
+                        width={24}
+                        height={24}
+                        className="rounded-md object-contain"
+                        unoptimized
+                      />
+                      <span>{name} <span className="font-bold">- {code}</span></span>
+                    </span>
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </div>
             </TabsContent>
           </Tabs>
         </DropdownMenuContent>
@@ -220,7 +249,12 @@ const Filters: React.FC<FiltersProps> = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-fit">
-          <DropdownMenuLabel>Max Duration</DropdownMenuLabel>
+          <div className="flex items-center justify-between pr-2">
+            <DropdownMenuLabel>Max Duration</DropdownMenuLabel>
+            <button type="button" aria-label="Reset duration" onClick={onResetDuration} className="ml-2 p-1 rounded hover:bg-accent">
+              <RotateCw className="w-4 h-4" />
+            </button>
+          </div>
           <DropdownMenuSeparator />
           <div className="px-2 py-2 w-56 flex flex-col gap-2">
             <Slider min={minDuration} max={maxDuration} step={5} value={[duration]} onValueChange={([v]) => onDurationChange(v)} />
@@ -236,7 +270,12 @@ const Filters: React.FC<FiltersProps> = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-fit">
-          <DropdownMenuLabel>Y % minimum</DropdownMenuLabel>
+          <div className="flex items-center justify-between pr-2">
+            <DropdownMenuLabel>Y % minimum</DropdownMenuLabel>
+            <button type="button" aria-label="Reset Y" onClick={onResetY} className="ml-2 p-1 rounded hover:bg-accent">
+              <RotateCw className="w-4 h-4" />
+            </button>
+          </div>
           <DropdownMenuSeparator />
           <div className="px-2 py-2 w-52 flex flex-col gap-2">
             <div className="flex items-center gap-2">
@@ -265,7 +304,12 @@ const Filters: React.FC<FiltersProps> = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-fit">
-          <DropdownMenuLabel>W % minimum</DropdownMenuLabel>
+          <div className="flex items-center justify-between pr-2">
+            <DropdownMenuLabel>W % minimum</DropdownMenuLabel>
+            <button type="button" aria-label="Reset W" onClick={onResetW} className="ml-2 p-1 rounded hover:bg-accent">
+              <RotateCw className="w-4 h-4" />
+            </button>
+          </div>
           <DropdownMenuSeparator />
           <div className="px-2 py-2 w-52 flex flex-col gap-2">
             <div className="flex items-center gap-2">
@@ -294,7 +338,12 @@ const Filters: React.FC<FiltersProps> = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-fit">
-          <DropdownMenuLabel>J % minimum</DropdownMenuLabel>
+          <div className="flex items-center justify-between pr-2">
+            <DropdownMenuLabel>J % minimum</DropdownMenuLabel>
+            <button type="button" aria-label="Reset J" onClick={onResetJ} className="ml-2 p-1 rounded hover:bg-accent">
+              <RotateCw className="w-4 h-4" />
+            </button>
+          </div>
           <DropdownMenuSeparator />
           <div className="px-2 py-2 w-52 flex flex-col gap-2">
             <div className="flex items-center gap-2">
@@ -323,7 +372,12 @@ const Filters: React.FC<FiltersProps> = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-fit">
-          <DropdownMenuLabel>F % minimum</DropdownMenuLabel>
+          <div className="flex items-center justify-between pr-2">
+            <DropdownMenuLabel>F % minimum</DropdownMenuLabel>
+            <button type="button" aria-label="Reset F" onClick={onResetF} className="ml-2 p-1 rounded hover:bg-accent">
+              <RotateCw className="w-4 h-4" />
+            </button>
+          </div>
           <DropdownMenuSeparator />
           <div className="px-2 py-2 w-52 flex flex-col gap-2">
             <div className="flex items-center gap-2">
