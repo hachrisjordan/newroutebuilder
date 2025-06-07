@@ -10,7 +10,7 @@ export default async function DashboardPage() {
     redirect('/auth');
   }
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen bg-muted">
+    <main className="flex flex-1 flex-col items-center justify-center bg-muted">
       <h1 className="text-3xl font-bold mb-4">Welcome to your dashboard</h1>
       <UserMenu />
     </main>

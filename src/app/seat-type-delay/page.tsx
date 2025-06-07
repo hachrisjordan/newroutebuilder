@@ -56,7 +56,7 @@ export default function SeatTypeDelayPage() {
   }, [airline]);
 
   return (
-    <div className="w-full min-h-screen flex flex-col items-center pt-8 px-4">
+    <div className="w-full flex-1 flex flex-col items-center pt-8 px-4">
       <div className="flex flex-col gap-6 items-center w-full mb-8">
         <SeatTypeDelaySearch onSearch={handleSearch} />
         {flightData.length > 0 && (

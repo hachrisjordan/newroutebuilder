@@ -25,7 +25,7 @@ const AuthForm = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted px-4">
+    <div className="flex flex-1 items-center justify-center bg-muted px-4">
       <Card className="w-full max-w-sm p-6 space-y-6 shadow-lg">
         <h1 className="text-2xl font-bold text-center">Sign in or Sign up</h1>
         <Button

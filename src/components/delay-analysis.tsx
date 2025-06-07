@@ -158,8 +158,8 @@ const DelayAnalysis: React.FC<DelayAnalysisProps> = ({ flightData }) => {
                   />
                   <div className="relative z-10 flex flex-col items-center justify-center h-full w-full">
                     <div className="text-xs mb-1 text-center">{period.label}</div>
-                    <div className="font-bold text-xs text-center" style={{ color }}>
-                      {period.avgDelay} ({period.onTimePct.toFixed(1)}%, {period.onTime}/{period.total})
+                    <div className="font-bold text-lg text-center" style={{ color }}>
+                      {period.avgDelay} ({period.onTimePct.toFixed(1)}%)
                     </div>
                   </div>
                 </div>

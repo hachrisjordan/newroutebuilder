@@ -11,7 +11,7 @@ export default async function SettingsPage() {
     redirect('/auth');
   }
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen bg-muted">
+    <main className="flex flex-1 flex-col items-center justify-center bg-muted">
       <Card className="w-full max-w-md p-8 space-y-6 shadow-lg">
         <h1 className="text-2xl font-bold mb-4">Settings</h1>
         <div className="space-y-4">

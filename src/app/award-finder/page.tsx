@@ -126,7 +126,7 @@ export default function AwardFinderPage() {
   }, [reliableOnly, reliability, minReliabilityPercent]);
 
   return (
-    <main className="flex flex-col items-center bg-background min-h-screen pt-8 pb-12 px-2 sm:px-4">
+    <main className="flex flex-1 flex-col items-center bg-background pt-8 pb-12 px-2 sm:px-4">
       <AwardFinderSearch onSearch={data => {
         setResults(data);
         setPage(0);
