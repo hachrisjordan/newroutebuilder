@@ -26,6 +26,16 @@ interface SeatTypeDelaySearchProps {
   }) => void;
 }
 
+const ALLOWED_AIRLINE_CODES = [
+  'EI', 'LX', 'UX', 'WS', 'VJ', 'DE', '4Y', 'WK', 'EW', 'FI', 'AZ', 'HO', 'VA',
+  'EN', 'CZ', 'DL', 'HA', 'B6', 'AA', 'UA', 'NK', 'F9', 'G4', 'AS', 'A3', 'NZ',
+  'OZ', 'MS', 'SA', 'TP', 'SN', 'AV', 'OU', 'MX', 'ME', 'KQ', 'MF', 'RO', 'AR',
+  'AM', 'SK', 'ZH', 'LA', 'AY', 'JX', 'FJ', 'KL', 'RJ', 'UL', 'AT', 'AC', 'LO',
+  'IB', 'CA', 'MU', 'TK', 'GA', 'MH', 'JL', 'NH', 'QR', 'AF', 'LH', 'BA', 'SQ',
+  'EK', 'KE', 'AI', 'EY', 'TG', 'QF', 'CX', 'VN', 'CI', 'BR', 'VS', 'SV', 'CM',
+  'ET', 'PR', 'OS'
+];
+
 export function SeatTypeDelaySearch({ onSearch }: SeatTypeDelaySearchProps) {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
@@ -53,7 +63,7 @@ export function SeatTypeDelaySearch({ onSearch }: SeatTypeDelaySearchProps) {
           airlinesRes.json()
         ]);
         
-        setAirlines(airlinesData);
+        setAirlines(airlinesData.filter((airline: Airline) => ALLOWED_AIRLINE_CODES.includes(airline.code)));
       } catch (error) {
         console.error('Failed to fetch data:', error);
       } finally {
