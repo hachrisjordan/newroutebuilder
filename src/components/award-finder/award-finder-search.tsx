@@ -183,7 +183,7 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
     // }
     setIsLoading(true);
     try {
-      const res = await fetch('/api/award-finder', {
+      const res = await fetch('http://api.bbairtools.com:8080/api/build-itineraries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody),
