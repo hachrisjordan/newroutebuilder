@@ -234,7 +234,7 @@ const EtihadItineraryCard: React.FC<EtihadItineraryCardProps> = ({ itinerary, se
                         <div className="flex items-center gap-2 w-full md:w-auto">
                           <span className="font-semibold text-primary break-words whitespace-normal">{segmentPath}</span>
                         </div>
-                        <div className="flex flex-row justify-between items-center w-full md:w-auto mt-1 md:mt-0 md:ml-auto">
+                        <div className="flex flex-row justify-between items-center w-full md:w-auto mt-1 md:mt-0 md:ml-auto md:gap-6">
                           <span className="text-sm font-mono text-muted-foreground font-bold">{formatDuration(seg.duration)}</span>
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-medium">
