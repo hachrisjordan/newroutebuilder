@@ -7,7 +7,6 @@ import FlightCard from './flight-card';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { getAirlineLogoSrc, getTotalDuration } from '@/lib/utils';
 import { useTheme } from 'next-themes';
-import ProgramLogo from '@/components/ui/program-logo';
 
 /**
  * Props for LiveSearchResultsCards
@@ -190,10 +189,13 @@ const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itinera
               {/* Mobile: logo top right, absolute */}
               {program && (
                 <div className={"absolute top-6 right-2 block md:hidden rounded" + (isDark ? " bg-white" : "")} style={isDark ? { padding: '4px', width: '75px', height: '30px' } : { width: '75px', height: '30px' }}>
-                  <ProgramLogo
-                    program={program}
+                  <Image
+                    src={`/${program}_P.png`}
+                    alt={`${program} logo`}
                     width={75}
                     height={30}
+                    style={{ objectFit: 'contain' }}
+                    unoptimized
                   />
                 </div>
               )}
@@ -211,10 +213,13 @@ const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itinera
                           }
                           style={isDark ? { padding: '4px', width: '75px', height: '30px' } : { width: '75px', height: '30px' }}
                         >
-                          <ProgramLogo
-                            program={program}
+                          <Image
+                            src={`/${program}_P.png`}
+                            alt={`${program} logo`}
                             width={75}
                             height={30}
+                            style={{ objectFit: 'contain' }}
+                            unoptimized
                           />
                         </span>
                       )}
