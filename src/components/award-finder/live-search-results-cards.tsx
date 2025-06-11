@@ -7,6 +7,7 @@ import FlightCard from './flight-card';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { getAirlineLogoSrc, getTotalDuration } from '@/lib/utils';
 import { useTheme } from 'next-themes';
+import LiveSearchFlightCard from './live-search-flight-card';
 
 /**
  * Props for LiveSearchResultsCards
@@ -399,38 +400,24 @@ const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itinera
                         // Day difference from itinerary start
                         const depDiff = getDayDiffFromItinerary(itin.depart, seg.depart);
                         const arrDiff = getDayDiffFromItinerary(itin.depart, seg.arrive);
-                        // Fake reliability: always reliable
-                        const reliabilityMap = { [seg.flightnumber.slice(0, 2).toUpperCase()]: { min_count: 1 } };
-                        // Get aircraft name for this segment
+                        const code = seg.flightnumber.slice(0, 2).toUpperCase();
                         let aircraftName = aircraftMap[seg.aircraft] || seg.aircraft;
                         if (typeof aircraftName === 'string') aircraftName = aircraftName.trimEnd();
-                        // Fake flight object for FlightCard
-                        const flight = {
-                          FlightNumbers: seg.flightnumber,
-                          TotalDuration: seg.duration,
-                          Aircraft: aircraftName,
-                          DepartsAt: seg.depart,
-                          ArrivesAt: seg.arrive,
-                          YCount: 1,
-                          WCount: 1,
-                          JCount: 1,
-                          FCount: 1,
-                        };
                         return (
-                          <FlightCard
-                            key={seg.flightnumber + i}
-                            flight={flight}
-                            segment={segment}
-                            depDiff={depDiff}
-                            arrDiff={arrDiff}
-                            code={seg.flightnumber.slice(0, 2).toUpperCase()}
-                            isDark={isDark}
-                            iataToCity={iataToCity}
-                            reliability={reliabilityMap}
-                            layover={layover}
-                            cityError={cityError}
-                            isLoadingCities={isLoadingCities}
-                          />
+                          <React.Fragment key={seg.flightnumber + i}>
+                            {layover}
+                            <LiveSearchFlightCard
+                              segment={segment}
+                              depTime={seg.depart}
+                              arrTime={seg.arrive}
+                              depDiff={depDiff}
+                              arrDiff={arrDiff}
+                              code={code}
+                              flightNumber={seg.flightnumber}
+                              aircraft={aircraftName}
+                              isDark={isDark}
+                            />
+                          </React.Fragment>
                         );
                       })}
                     </div>
