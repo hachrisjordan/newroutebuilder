@@ -9,6 +9,7 @@ import { format, addYears } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import type { AwardFinderResults } from "@/types/award-finder-results";
 import { Input } from "@/components/ui/input";
+import { Progress } from '@/components/ui/progress';
 
 type LiveSearchResult = {
   program: string;
@@ -24,7 +25,7 @@ interface LiveSearchFormProps {
 }
 
 const maxCombination = 9;
-const PROGRAMS = ["b6"];
+const PROGRAMS = ["b6",'as'];
 
 const getDateLabel = (date: DateRange | undefined) => {
   if (date?.from && date?.to) {
@@ -55,6 +56,7 @@ const LiveSearchForm = ({ onSearch }: LiveSearchFormProps) => {
   const [error, setError] = useState<string | null>(null);
   const [seats, setSeats] = useState<number>(1);
   const [progress, setProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
+  const [partialResults, setPartialResults] = useState<LiveSearchResult[]>([]);
 
   const combinationCount = origin.length * destination.length;
 
@@ -90,30 +92,67 @@ const LiveSearchForm = ({ onSearch }: LiveSearchFormProps) => {
     const total = PROGRAMS.length * origin.length * destination.length * dates.length;
     setIsLoading(true);
     setProgress({ done: 0, total });
-    const allResults: any[] = [];
+    setPartialResults([]);
+    const allResults: LiveSearchResult[] = [];
     let done = 0;
     const requests: Promise<void>[] = [];
     for (const program of PROGRAMS) {
       for (const from of origin) {
         for (const to of destination) {
           for (const depart of dates) {
-            const req = fetch(`https://api.bbairtools.com/api/live-search-${program}`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ from, to, depart, ADT: seats }),
-            })
-              .then(async (res) => {
-                if (!res.ok) throw new Error(`${program.toUpperCase()} ${from}-${to} ${depart}: ${res.status}`);
-                const data = await res.json();
-                allResults.push({ program, from, to, depart, data });
-              })
-              .catch((err) => {
-                allResults.push({ program, from, to, depart, error: err.message });
-              })
-              .finally(() => {
-                done++;
-                setProgress((p) => ({ ...p, done: done }));
-              });
+            const req = new Promise<void>((resolve) => {
+              const controller = new AbortController();
+              const timeout = setTimeout(() => {
+                controller.abort();
+              }, 60000); // 60s timeout
+              let attempts = 0;
+              const maxAttempts = program === 'b6' ? 3 : 1;
+              const doFetch = async () => {
+                attempts++;
+                try {
+                  const res = await fetch(`https://api.bbairtools.com/api/live-search-${program}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ from, to, depart, ADT: seats }),
+                    signal: controller.signal,
+                  });
+                  clearTimeout(timeout);
+                  if (res.status === 500 && attempts < maxAttempts) {
+                    // Retry for b6
+                    doFetch();
+                    return;
+                  }
+                  if (!res.ok) throw new Error(`${program.toUpperCase()} ${from}-${to} ${depart}: ${res.status}`);
+                  const data = await res.json();
+                  const result = { program, from, to, depart, data };
+                  allResults.push(result);
+                  setPartialResults(prev => {
+                    const next = [...prev, result];
+                    onSearch(next);
+                    return next;
+                  });
+                } catch (err: any) {
+                  clearTimeout(timeout);
+                  const isTimeout = err.name === 'AbortError';
+                  if (program === 'b6' && attempts < maxAttempts && String(err).includes('500')) {
+                    doFetch();
+                    return;
+                  }
+                  const result = { program, from, to, depart, error: isTimeout ? 'Timeout (60s)' : err.message };
+                  allResults.push(result);
+                  setPartialResults(prev => {
+                    const next = [...prev, result];
+                    onSearch(next);
+                    return next;
+                  });
+                } finally {
+                  done++;
+                  setProgress((p) => ({ ...p, done: done }));
+                  resolve();
+                }
+              };
+              doFetch();
+            });
             requests.push(req);
           }
         }
@@ -125,7 +164,6 @@ const LiveSearchForm = ({ onSearch }: LiveSearchFormProps) => {
       setError("No results found or all requests failed.");
       return;
     }
-    onSearch(allResults);
   };
 
   return (
@@ -207,7 +245,12 @@ const LiveSearchForm = ({ onSearch }: LiveSearchFormProps) => {
         </div>
       )}
       {isLoading && (
-        <div className="text-sm text-muted-foreground mt-2">Searching... {progress.done} / {progress.total}</div>
+        <div className="mt-4 w-full">
+          <Progress value={progress.total > 0 ? (progress.done / progress.total) * 100 : 0} className="h-2" barClassName="bg-primary" />
+          <div className="text-xs text-muted-foreground mt-1 text-center">
+            Searching... {progress.done} / {progress.total}
+          </div>
+        </div>
       )}
     </form>
   );

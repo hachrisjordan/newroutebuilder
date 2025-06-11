@@ -4,7 +4,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import Image from 'next/image';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import FlightCard from './flight-card';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { getAirlineLogoSrc, getTotalDuration } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 
@@ -35,6 +35,7 @@ interface LiveSearchResultsCardsProps {
       duration: number;
       layover?: number;
       distance: number;
+      bundleClasses?: Array<Record<string, string>>;
     }>;
   }>;
 }
@@ -130,11 +131,14 @@ const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itinera
     return time ? time.slice(0, 5) : '';
   }
 
-  // Helper: get day diff from itinerary start
+  // Helper: get day diff from itinerary start (calendar day, local time, no timezone conversion)
   function getDayDiffFromItinerary(itinDepart: string, iso: string) {
-    const itinerary = new Date(itinDepart);
-    const flightDate = new Date(iso);
-    return Math.floor((flightDate.getTime() - itinerary.getTime()) / (1000 * 60 * 60 * 24));
+    // Extract YYYY-MM-DD from both
+    const itinDate = itinDepart.slice(0, 10);
+    const segDate = iso.slice(0, 10);
+    const itin = new Date(itinDate);
+    const seg = new Date(segDate);
+    return Math.floor((seg.getTime() - itin.getTime()) / (1000 * 60 * 60 * 24));
   }
 
   // Helper: build route string
@@ -159,6 +163,13 @@ const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itinera
     F: '#D88A3F', // orange
   };
 
+  const classNames: Record<string, string> = {
+    Y: 'Economy',
+    W: 'Premium Economy',
+    J: 'Business',
+    F: 'First',
+  };
+
   return (
     <div className="flex flex-col gap-4 w-full max-w-[1000px] mx-auto">
       <TooltipProvider>
@@ -169,13 +180,50 @@ const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itinera
           const isOpen = expanded === idx;
           const firstSeg = itin.segments[0];
           const lastSeg = itin.segments[itin.segments.length - 1];
+          // Get program code if present
+          const program = (itin as any).__program;
+          // Detect dark mode
+          const isDark = typeof window !== 'undefined' && document.documentElement.classList.contains('dark');
           return (
-            <Card key={cardKey} className="rounded-xl border bg-card shadow transition-all cursor-pointer">
+            <Card key={cardKey} className="rounded-xl border bg-card shadow transition-all cursor-pointer relative">
+              {/* Mobile: logo top right, absolute */}
+              {program && (
+                <div className={"absolute top-6 right-2 block md:hidden rounded" + (isDark ? " bg-white" : "")} style={isDark ? { padding: '4px', width: '75px', height: '30px' } : { width: '75px', height: '30px' }}>
+                  <Image
+                    src={`/${program}_P.png`}
+                    alt={`${program} logo`}
+                    width={75}
+                    height={30}
+                    style={{ objectFit: 'contain' }}
+                  />
+                </div>
+              )}
               <div onClick={() => handleToggle(idx)} className="flex items-center justify-between">
                 <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between py-4 gap-2 p-4 w-full">
+                  {/* Path/date/logo row: mobile = col, desktop = row */}
                   <div className="flex flex-col md:flex-row md:items-center gap-2 w-full">
-                    <span className="font-semibold text-lg text-primary">{route}</span>
-                    <span className="text-muted-foreground text-sm md:ml-4">{itin.depart.slice(0, 10)}</span>
+                    <div className="flex flex-col md:flex-row md:items-center gap-0 md:gap-2 w-full">
+                      {/* Desktop: logo left of path/date */}
+                      {program && (
+                        <span
+                          className={
+                            'hidden md:flex items-center justify-center mr-4 rounded' +
+                            (isDark ? ' bg-white' : '')
+                          }
+                          style={isDark ? { padding: '4px', width: '75px', height: '30px' } : { width: '75px', height: '30px' }}
+                        >
+                          <Image
+                            src={`/${program}_P.png`}
+                            alt={`${program} logo`}
+                            width={75}
+                            height={30}
+                            style={{ objectFit: 'contain' }}
+                          />
+                        </span>
+                      )}
+                      <span className="font-semibold text-lg text-primary">{route}</span>
+                      <span className="text-muted-foreground text-sm md:ml-4">{itin.depart.slice(0, 10)}</span>
+                    </div>
                   </div>
                   <div className="flex flex-col md:flex-row md:items-center w-full md:w-auto gap-1 md:gap-6 mt-2 md:mt-0 ml-auto">
                     <div className="flex items-center gap-6">
@@ -187,7 +235,7 @@ const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itinera
                         {(() => {
                           const arrDiff = getDayDiffFromItinerary(itin.depart, lastSeg.arrive);
                           return arrDiff > 0 ? (
-                            <span className="text-xs text-muted-foreground ml-1">(+{arrDiff})</span>
+                            <span className="text-xs text-muted-foreground">(+{arrDiff})</span>
                           ) : null;
                         })()}
                       </div>
@@ -204,7 +252,8 @@ const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itinera
                     const code = seg.flightnumber.slice(0, 2).toUpperCase();
                     const logoSrc = getAirlineLogoSrc(code, isDark);
                     // For each segment, get aircraft name
-                    const aircraftName = aircraftMap[seg.aircraft] || seg.aircraft;
+                    let aircraftName = aircraftMap[seg.aircraft] || seg.aircraft;
+                    if (typeof aircraftName === 'string') aircraftName = aircraftName.trimEnd();
                     return (
                       <span key={seg.flightnumber + i} className="flex items-center gap-1">
                         <Image
@@ -222,23 +271,92 @@ const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itinera
                   })}
                 </div>
                 <div className="flex flex-wrap gap-2 items-center">
-                  {itin.bundles.map((b, i) => {
-                    const bg = classBarColors[b.class] || '#E8E1F2';
-                    const color = getContrastTextColor(bg);
-                    return (
-                      <span
-                        key={b.class + i}
-                        className={
-                          'inline-flex items-center px-2 py-0.5 rounded font-mono text-sm font-bold'
-                        }
-                        style={{ background: bg, color }}
-                      >
-                        <span className="mr-1">{b.class}:</span>
-                        <span className="tabular-nums mr-1">{Number(b.points).toLocaleString()}</span>
-                        <span className="ml-1 text-xs font-normal opacity-80">+${Number(b.fareTax).toFixed(2)}</span>
-                      </span>
-                    );
-                  })}
+                  {itin.bundles
+                    .slice()
+                    .sort((a, b) => {
+                      const order = ['Y', 'W', 'J', 'F'];
+                      return order.indexOf(a.class) - order.indexOf(b.class);
+                    })
+                    .map((b, i) => {
+                      const bg = classBarColors[b.class] || '#E8E1F2';
+                      const color = getContrastTextColor(bg);
+                      return (
+                        <div key={b.class + i} className="flex flex-col items-center">
+                          <span
+                            className={
+                              'inline-flex items-center px-2 py-0.5 rounded font-mono text-sm font-bold'
+                            }
+                            style={{ background: bg, color }}
+                          >
+                            <span className="mr-1">{b.class}:</span>
+                            <span className="tabular-nums mr-1">{Number(b.points).toLocaleString()}</span>
+                            <span className="ml-1 text-xs font-normal opacity-80">+${Number(b.fareTax).toFixed(2)}</span>
+                          </span>
+                          {/* Mixed-cabin bar logic */}
+                          {(() => {
+                            // Gather segment class for this bundle
+                            const segments = itin.segments;
+                            const totalDistance = segments.reduce((sum, seg) => sum + (seg.distance || 0), 0) || 1;
+                            // For each segment, get the class for this bundle
+                            const segClasses = segments.map((seg) => {
+                              let segClass = b.class;
+                              if (Array.isArray(seg.bundleClasses) && seg.bundleClasses.length > 0) {
+                                // Look for a key matching the bundle, e.g., 'WClass' for W
+                                const key = b.class + 'Class';
+                                const entry = seg.bundleClasses.find((obj: Record<string, string>) => key in obj);
+                                if (entry && typeof entry[key] === 'string' && ['Y','W','J','F'].includes(entry[key])) {
+                                  segClass = entry[key];
+                                }
+                              }
+                              return { segClass, distance: seg.distance || 0 };
+                            });
+                            // Only render split bar if there are multiple unique classes
+                            const uniqueClasses = Array.from(new Set(segClasses.map(sc => sc.segClass)));
+                            const isMixed = uniqueClasses.length > 1;
+                            if (!isMixed) {
+                              return (
+                                <div
+                                  className="w-full h-1 rounded-full mt-0.5"
+                                  style={{ background: bg }}
+                                />
+                              );
+                            }
+                            // Otherwise, render a flex row of colored segments
+                            return (
+                              <div className="w-full flex flex-row h-1 rounded-full mt-0.5 overflow-hidden">
+                                {segClasses.map((sc, idx) => {
+                                  const segWidth = `${(sc.distance / totalDistance) * 100}%`;
+                                  const segColor = classBarColors[sc.segClass] || '#E8E1F2';
+                                  // Get segment path for tooltip
+                                  const seg = segments[idx];
+                                  const segPath = `${seg.from}-${seg.to}`;
+                                  const classLabel = classNames[sc.segClass] || sc.segClass;
+                                  return (
+                                    <Tooltip key={idx}>
+                                      <TooltipTrigger asChild>
+                                        <div
+                                          style={{
+                                            width: segWidth,
+                                            background: segColor,
+                                            borderRadius: '9999px',
+                                            marginLeft: idx > 0 ? '1px' : 0,
+                                            marginRight: idx < segClasses.length - 1 ? '1px' : 0,
+                                            cursor: 'pointer',
+                                          }}
+                                        />
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top" className="text-xs font-mono">
+                                        {segPath}: {classLabel}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      );
+                    })}
                 </div>
               </div>
               {isOpen && (
@@ -282,7 +400,8 @@ const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itinera
                         // Fake reliability: always reliable
                         const reliabilityMap = { [seg.flightnumber.slice(0, 2).toUpperCase()]: { min_count: 1 } };
                         // Get aircraft name for this segment
-                        const aircraftName = aircraftMap[seg.aircraft] || seg.aircraft;
+                        let aircraftName = aircraftMap[seg.aircraft] || seg.aircraft;
+                        if (typeof aircraftName === 'string') aircraftName = aircraftName.trimEnd();
                         // Fake flight object for FlightCard
                         const flight = {
                           FlightNumbers: seg.flightnumber,
