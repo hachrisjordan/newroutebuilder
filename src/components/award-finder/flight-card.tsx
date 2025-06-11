@@ -77,7 +77,7 @@ const FlightCard: React.FC<FlightCardProps> = ({
                       <span className="text-xs text-muted-foreground ml-1">{depDiff > 0 ? `(+${depDiff})` : `(${depDiff})`}</span>
                     ) : null}
                   </span>
-                  <span className="text-muted-foreground">→</span>
+                  <span className="text-muted-foreground"> → </span>
                   <span className="text-sm font-medium">
                     {formatIsoTime(f.ArrivesAt)}
                     {arrDiff !== 0 ? (
@@ -94,7 +94,7 @@ const FlightCard: React.FC<FlightCardProps> = ({
                     <span className="text-xs text-muted-foreground ml-1">{depDiff > 0 ? `(+${depDiff})` : `(${depDiff})`}</span>
                   ) : null}
                 </span>
-                <span className="text-muted-foreground">→</span>
+                <span className="text-muted-foreground"> → </span>
                 <span className="text-sm font-medium">
                   {formatIsoTime(f.ArrivesAt)}
                   {arrDiff !== 0 ? (
@@ -118,104 +118,7 @@ const FlightCard: React.FC<FlightCardProps> = ({
             <span className="font-mono text-sm">{f.FlightNumbers}</span>
             <span className="text-xs text-muted-foreground ml-1">({f.Aircraft})</span>
           </div>
-          <div className="flex items-center gap-2">
-            {(['Y', 'W', 'J', 'F'] as const).map((cls, idx) => {
-              const count =
-                cls === 'Y' ? f.YCount :
-                cls === 'W' ? f.WCount :
-                cls === 'J' ? f.JCount :
-                f.FCount;
-              const rel = reliability[code];
-              const min = rel?.min_count ?? 1;
-              const exemption = rel?.exemption || '';
-              const minCount = exemption.includes(cls) ? 1 : min;
-              let icon = null;
-              if (!count) {
-                icon = <X className="text-red-400 h-4 w-4" />;
-              } else if (count < minCount) {
-                icon = (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        tabIndex={0}
-                        aria-label="Unreliable availability warning"
-                        className="p-1 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                        style={{ touchAction: 'manipulation' }}
-                      >
-                        <AlertTriangle className="text-yellow-500 h-4 w-4" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-xs text-xs">
-                      <div>
-                        This flight likely has dynamic pricing and may not be available on partner programs.
-                      </div>
-                      <div className="mt-2 font-medium">
-                        For best results, look for flights with a green check.
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              } else {
-                icon = <Check className="text-green-600 h-4 w-4" />;
-              }
-              return (
-                <span key={cls} className="flex items-center gap-1 text-xs">
-                  {cls} {icon}
-                </span>
-              );
-            })}
-          </div>
         </div>
-        {/* PricingValue component */}
-        <PricingValue
-          flight={f}
-          depIata={depIata}
-          arrIata={arrIata}
-          airline={code}
-          distance={undefined}
-          className="mt-2"
-          classAvailability={{
-            Y: !!f.YCount,
-            W: !!f.WCount,
-            J: !!f.JCount,
-            F: !!f.FCount,
-          }}
-          classReliability={{
-            Y: (() => {
-              const count = f.YCount;
-              const rel = reliability[code];
-              const min = rel?.min_count ?? 1;
-              const exemption = rel?.exemption || '';
-              const minCount = exemption.includes('Y') ? 1 : min;
-              return count >= minCount;
-            })(),
-            W: (() => {
-              const count = f.WCount;
-              const rel = reliability[code];
-              const min = rel?.min_count ?? 1;
-              const exemption = rel?.exemption || '';
-              const minCount = exemption.includes('W') ? 1 : min;
-              return count >= minCount;
-            })(),
-            J: (() => {
-              const count = f.JCount;
-              const rel = reliability[code];
-              const min = rel?.min_count ?? 1;
-              const exemption = rel?.exemption || '';
-              const minCount = exemption.includes('J') ? 1 : min;
-              return count >= minCount;
-            })(),
-            F: (() => {
-              const count = f.FCount;
-              const rel = reliability[code];
-              const min = rel?.min_count ?? 1;
-              const exemption = rel?.exemption || '';
-              const minCount = exemption.includes('F') ? 1 : min;
-              return count >= minCount;
-            })(),
-          }}
-        />
       </div>
     </>
   );
