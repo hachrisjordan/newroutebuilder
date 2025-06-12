@@ -55,7 +55,7 @@ export default function AwardFinderPage() {
   const [results, setResults] = useState<AwardFinderResults | null>(null);
   const [sortBy, setSortBy] = useState<string>('duration');
   const [page, setPage] = useState(0);
-  const [reliableOnly, setReliableOnly] = useState(false);
+  const [reliableOnly, setReliableOnly] = useState(true);
   const [reliability, setReliability] = useState<Record<string, { min_count: number; exemption?: string }>>({});
   const [reliabilityLoading, setReliabilityLoading] = useState(false);
   const [minReliabilityPercent, setMinReliabilityPercent] = useState<number>(100);

@@ -202,7 +202,7 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
 
   return (
     <form className="w-full max-w-[1000px] mx-auto bg-card p-4 rounded-xl border shadow flex flex-col gap-6" onSubmit={handleSubmit}>
-      <div className="flex flex-col gap-4 md:flex-row md:gap-6 relative md:justify-end">
+      <div className="flex flex-col gap-4 md:flex-row md:gap-2 relative md:justify-end">
         <div className="flex flex-col gap-2 flex-1 min-w-[200px]">
           <label htmlFor="origin" className="block text-sm font-medium text-foreground mb-1">Origin(s)</label>
           <AirportMultiSearch
