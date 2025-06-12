@@ -9,7 +9,7 @@ import { format, isValid, addYears } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
+import { ChevronDown, ChevronUp, AlertTriangle, ArrowLeftRight } from 'lucide-react';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { awardFinderSearchRequestSchema } from '@/lib/utils';
 import type { AwardFinderResults, AwardFinderSearchRequest } from '@/types/award-finder-results';
@@ -211,6 +211,21 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
             placeholder="Search origin airports"
             className="h-9"
           />
+        </div>
+        <div className="flex items-center justify-center pt-6 md:pt-8">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Swap origin and destination"
+            className="rounded-full border border-input shadow-sm hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary"
+            onClick={() => {
+              setOrigin(destination);
+              setDestination(origin);
+            }}
+          >
+            <ArrowLeftRight className="h-5 w-5" />
+          </Button>
         </div>
         <div className="flex flex-col gap-2 flex-1 min-w-[200px]">
           <label htmlFor="destination" className="block text-sm font-medium text-foreground mb-1">Destination(s)</label>

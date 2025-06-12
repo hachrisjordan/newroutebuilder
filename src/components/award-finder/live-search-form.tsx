@@ -10,6 +10,7 @@ import type { DateRange } from "react-day-picker";
 import type { AwardFinderResults } from "@/types/award-finder-results";
 import { Input } from "@/components/ui/input";
 import { Progress } from '@/components/ui/progress';
+import { ArrowLeftRight } from "lucide-react";
 
 type LiveSearchResult = {
   program: string;
@@ -177,6 +178,21 @@ const LiveSearchForm = ({ onSearch }: LiveSearchFormProps) => {
             placeholder="Search origin airports"
             className="h-9"
           />
+        </div>
+        <div className="flex items-center justify-center pt-6 md:pt-8">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Swap origin and destination"
+            className="rounded-full border border-input shadow-sm hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary"
+            onClick={() => {
+              setOrigin(destination);
+              setDestination(origin);
+            }}
+          >
+            <ArrowLeftRight className="h-5 w-5" />
+          </Button>
         </div>
         <div className="flex flex-col gap-2 flex-1 min-w-[200px]">
           <label htmlFor="destination" className="block text-sm font-medium text-foreground mb-1">Destination(s)</label>
