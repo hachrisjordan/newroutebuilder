@@ -389,7 +389,7 @@ const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itinera
                                 <div className="flex-1 h-px bg-muted" />
                                 <span className="mx-3 text-xs text-muted-foreground font-mono">
                                   Layover at {cityName} ({at}) for {formatDuration(diffMin)}
-                                  {isLoadingCities && <span className="ml-2 animate-pulse text-muted-foreground">…</span>}
+                                  {isLoadingCities && <span className="ml-2 animate-pulse text-muted-foreground"></span>}
                                   {cityError && <span className="ml-2 text-red-500">(city error)</span>}
                                 </span>
                                 <div className="flex-1 h-px bg-muted" />
