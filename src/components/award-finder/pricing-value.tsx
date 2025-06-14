@@ -86,6 +86,7 @@ const PricingValue: React.FC<PricingValueProps> = ({
   const [computedDistance, setComputedDistance] = useState<number | null>(null);
   const [showNAFlash, setShowNAFlash] = useState(false);
   const [userProfile, setUserProfile] = useState<{ sa?: string; ow?: string; st?: string } | null>(null);
+  const [triedPrograms, setTriedPrograms] = useState<string[]>([]);
 
   // Fetch user profile for default program selection
   useEffect(() => {
@@ -135,6 +136,10 @@ const PricingValue: React.FC<PricingValueProps> = ({
     }
     fetchPrograms();
   }, [airline, userProfile]);
+
+  useEffect(() => {
+    setTriedPrograms([]); // Reset tried programs when allowedPrograms or airline changes
+  }, [allowedPrograms, airline]);
 
   useEffect(() => {
     const fetchRegionsAndPricing = async () => {
@@ -238,13 +243,33 @@ const PricingValue: React.FC<PricingValueProps> = ({
         setPricing({ ...matchedRules[0], allRules: matchedRules });
       } catch (err: any) {
         console.error('[PricingValue] error:', err);
-        setError(err.message || 'Failed to load pricing');
+        const errMsg = err.message || 'Failed to load pricing';
+        if (
+          errMsg === 'No matching pricing rule' &&
+          allowedPrograms.length > 0 &&
+          selectedProgram &&
+          !triedPrograms.includes(selectedProgram)
+        ) {
+          // Try next eligible program
+          const currentIdx = allowedPrograms.indexOf(selectedProgram);
+          const nextIdx = currentIdx + 1;
+          setTriedPrograms(prev => [...prev, selectedProgram]);
+          if (nextIdx < allowedPrograms.length) {
+            setSelectedProgramState(allowedPrograms[nextIdx]);
+            return; // Don't set error yet, let next program try
+          } else {
+            setError('No eligible program found');
+            return;
+          }
+        }
+        setError(errMsg);
       } finally {
         setLoading(false);
       }
     };
     fetchRegionsAndPricing();
-  }, [depIata, arrIata, airline, distance, selectedProgram]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [depIata, arrIata, airline, distance, selectedProgram, triedPrograms]);
 
   useEffect(() => {
     if (!loading && !error && !pricing) {
@@ -266,6 +291,9 @@ const PricingValue: React.FC<PricingValueProps> = ({
         <span className="ml-2">Loading pricing…</span>
       </div>
     );
+  }
+  if (error === 'No eligible program found') {
+    return <div className={className + ' text-red-500'}>No eligible program found</div>;
   }
   if (error) return <div className={className + ' text-red-500'}>Pricing error: {error}</div>;
   if (showNAFlash) return <div className={className + ' animate-pulse text-muted-foreground'}>N/A</div>;
