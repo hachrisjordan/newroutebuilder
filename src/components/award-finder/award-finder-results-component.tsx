@@ -276,6 +276,19 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                   <ClassBar label="F" percent={f} />
                 </div>
               </div>
+              {/* Pricing for non-stop flights at the bottom but above FlightCard */}
+              {flightsArr.length === 1 && (
+                <div className="px-6 pb-2">
+                  <PricingValue
+                    flight={firstFlight}
+                    depIata={depIata}
+                    arrIata={arrIata}
+                    airline={airline}
+                    classAvailability={classAvailability}
+                    classReliability={classReliability}
+                  />
+                </div>
+              )}
               {isOpen && (
                 <>
                   <div className="w-full flex justify-center my-2">
@@ -350,19 +363,6 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                     </div>
                   </div>
                 </>
-              )}
-              {/* Pricing for non-stop flights at the bottom */}
-              {flightsArr.length === 1 && (
-                <div className="px-6 pb-4">
-                  <PricingValue
-                    flight={firstFlight}
-                    depIata={depIata}
-                    arrIata={arrIata}
-                    airline={airline}
-                    classAvailability={classAvailability}
-                    classReliability={classReliability}
-                  />
-                </div>
               )}
             </Card>
           );
