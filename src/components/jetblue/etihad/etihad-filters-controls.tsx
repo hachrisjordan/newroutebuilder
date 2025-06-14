@@ -1,12 +1,13 @@
 'use client';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useMemo, useEffect, useState, useTransition } from 'react';
+import { useMemo, useEffect, useState, useTransition, useRef } from 'react';
 import EtihadFilters from './etihad-filters';
 import EtihadControls from './etihad-controls';
 import EtihadItineraryCard from './etihad-itinerary-card';
 import EtihadPagination from './etihad-pagination';
 import { Loader2 } from 'lucide-react';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
+import airportsData from '@/data/airports.json';
 
 interface Itinerary {
   id: string;
@@ -33,6 +34,12 @@ interface EtihadFiltersControlsProps {
 
 const PAGE_SIZE = 10;
 
+// Build static IATA to CityName map from JSON
+const staticIataToCity: Record<string, string> = {};
+(airportsData as any[]).forEach((airport: any) => {
+  staticIataToCity[airport.IATA] = airport.CityName;
+});
+
 export default function EtihadFiltersControls({
   minSeats,
   maxSeats,
@@ -53,6 +60,11 @@ export default function EtihadFiltersControls({
 
   // Add expand/collapse state
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // Persistent cache for city names
+  const cityCache = useRef<Record<string, string>>({ ...staticIataToCity });
+  const [iataToCity, setIataToCity] = useState<Record<string, string>>({ ...staticIataToCity });
+  const [isLoadingCities, setIsLoadingCities] = useState(false);
 
   // Set loading state on mount and when searchParams changes
   useEffect(() => {
@@ -94,9 +106,6 @@ export default function EtihadFiltersControls({
   const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const paged = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  // Fetch city names for all IATA codes in paged segments
-  const [iataToCity, setIataToCity] = useState<Record<string, string>>({});
-  const [isLoadingCities, setIsLoadingCities] = useState(false);
   useEffect(() => {
     const allIatas = new Set<string>();
     paged.forEach(itinerary => {
@@ -111,7 +120,13 @@ export default function EtihadFiltersControls({
         }
       });
     });
-    if (allIatas.size === 0) return;
+    // Only fetch IATAs not in cache
+    const missingIatas = Array.from(allIatas).filter(iata => !cityCache.current[iata]);
+    if (missingIatas.length === 0) {
+      // All city names are cached
+      setIataToCity({ ...cityCache.current });
+      return;
+    }
     setIsLoadingCities(true);
     const fetchCities = async () => {
       try {
@@ -119,15 +134,15 @@ export default function EtihadFiltersControls({
         const { data, error } = await supabase
           .from('airports')
           .select('iata, city_name')
-          .in('iata', Array.from(allIatas));
+          .in('iata', missingIatas);
         if (error) throw error;
-        const map: Record<string, string> = {};
         data?.forEach((row: { iata: string; city_name: string }) => {
-          map[row.iata] = row.city_name;
+          cityCache.current[row.iata] = row.city_name;
         });
-        setIataToCity(map);
+        setIataToCity({ ...cityCache.current });
       } catch (err) {
-        setIataToCity({});
+        // fallback: just use what we have
+        setIataToCity({ ...cityCache.current });
       } finally {
         setIsLoadingCities(false);
       }
