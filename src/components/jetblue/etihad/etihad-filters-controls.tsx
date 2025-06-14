@@ -8,6 +8,7 @@ import EtihadPagination from './etihad-pagination';
 import { Loader2 } from 'lucide-react';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import airportsData from '@/data/airports.json';
+import isEqual from 'lodash.isequal';
 
 interface Itinerary {
   id: string;
@@ -120,11 +121,12 @@ export default function EtihadFiltersControls({
         }
       });
     });
-    // Only fetch IATAs not in cache
     const missingIatas = Array.from(allIatas).filter(iata => !cityCache.current[iata]);
     if (missingIatas.length === 0) {
-      // All city names are cached
-      setIataToCity({ ...cityCache.current });
+      // Only update state if changed
+      if (!isEqual(iataToCity, cityCache.current)) {
+        setIataToCity({ ...cityCache.current });
+      }
       return;
     }
     setIsLoadingCities(true);
@@ -136,19 +138,29 @@ export default function EtihadFiltersControls({
           .select('iata, city_name')
           .in('iata', missingIatas);
         if (error) throw error;
+        let updated = false;
         data?.forEach((row: { iata: string; city_name: string }) => {
-          cityCache.current[row.iata] = row.city_name;
+          if (cityCache.current[row.iata] !== row.city_name) {
+            cityCache.current[row.iata] = row.city_name;
+            updated = true;
+          }
         });
-        setIataToCity({ ...cityCache.current });
+        // Only update state if changed
+        if (updated && !isEqual(iataToCity, cityCache.current)) {
+          setIataToCity({ ...cityCache.current });
+        }
       } catch (err) {
         // fallback: just use what we have
-        setIataToCity({ ...cityCache.current });
+        if (!isEqual(iataToCity, cityCache.current)) {
+          setIataToCity({ ...cityCache.current });
+        }
       } finally {
         setIsLoadingCities(false);
       }
     };
     fetchCities();
-  }, [paged, segmentMap]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(paged), JSON.stringify(segmentMap)]);
 
   // Compute filter options from filtered results
   const fromOptions = useMemo(() => Array.from(new Set(filtered.map(it => it.from_airport))).sort(), [filtered]);
