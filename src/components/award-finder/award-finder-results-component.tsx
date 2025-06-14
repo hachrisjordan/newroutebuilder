@@ -10,6 +10,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useTheme } from 'next-themes';
 import { getAirlineLogoSrc, getTotalDuration, getClassPercentages } from '@/lib/utils';
 import FlightCard from './flight-card';
+import PricingValue from './pricing-value';
 
 interface AwardFinderResultsFlatCard {
   route: string;
@@ -192,6 +193,28 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
           const { y, w, j, f } = getClassPercentages(flightsArr, reliability, minReliabilityPercent);
           const cardKey = `${route}-${date}-${idx}`;
           const isOpen = expanded === cardKey;
+          // Extract dep/arr IATA for non-stop
+          const segs = route.split('-');
+          const depIata = segs[0];
+          const arrIata = segs[segs.length - 1];
+          // Airline code for non-stop
+          const airline = firstFlight.FlightNumbers.slice(0, 2).toUpperCase();
+          // Class availability and reliability for non-stop
+          const classAvailability = {
+            Y: !!firstFlight.YCount,
+            W: !!firstFlight.WCount,
+            J: !!firstFlight.JCount,
+            F: !!firstFlight.FCount,
+          };
+          const rel = reliability[airline] ?? { min_count: 1 };
+          const exemption = rel.exemption || '';
+          const min = rel.min_count ?? 1;
+          const classReliability = {
+            Y: firstFlight.YCount >= (exemption.includes('Y') ? 1 : min),
+            W: firstFlight.WCount >= (exemption.includes('W') ? 1 : min),
+            J: firstFlight.JCount >= (exemption.includes('J') ? 1 : min),
+            F: firstFlight.FCount >= (exemption.includes('F') ? 1 : min),
+          };
           return (
             <Card key={cardKey} className="rounded-xl border bg-card shadow transition-all cursor-pointer">
               <div onClick={() => handleToggle(cardKey)} className="flex items-center justify-between">
@@ -327,6 +350,19 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                     </div>
                   </div>
                 </>
+              )}
+              {/* Pricing for non-stop flights at the bottom */}
+              {flightsArr.length === 1 && (
+                <div className="px-6 pb-4">
+                  <PricingValue
+                    flight={firstFlight}
+                    depIata={depIata}
+                    arrIata={arrIata}
+                    airline={airline}
+                    classAvailability={classAvailability}
+                    classReliability={classReliability}
+                  />
+                </div>
               )}
             </Card>
           );
