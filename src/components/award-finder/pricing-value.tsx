@@ -17,6 +17,9 @@ import { getAirlineAlliance, isStarAllianceAirline, getAllProgramsFromDb } from 
  * @property className - Optional className
  * @property classAvailability - Object with Y, W, J, F boolean values for available classes
  * @property classReliability - Object with Y, W, J, F boolean values for class reliability
+ * @property pricingPromise - Optional: shared/cached pricing fetch
+ * @property userProfile - Optional: user profile
+ * @property allPrograms - Optional: all programs
  */
 export interface PricingValueProps {
   flight: any;
@@ -28,6 +31,9 @@ export interface PricingValueProps {
   className?: string;
   classAvailability?: Record<'Y' | 'W' | 'J' | 'F', boolean>;
   classReliability: Record<'Y' | 'W' | 'J' | 'F', boolean>;
+  pricingPromise?: Promise<any>;
+  userProfile?: { sa?: string; ow?: string; st?: string } | null;
+  allPrograms?: Array<{ code: string; name: string; ffp: string; alliance: 'SA' | 'OW' | 'ST' }>;
 }
 
 const CLASS_LABELS = [
@@ -72,6 +78,9 @@ const PricingValue: React.FC<PricingValueProps> = ({
   className = '',
   classAvailability = { Y: true, W: true, J: true, F: true },
   classReliability,
+  pricingPromise,
+  userProfile,
+  allPrograms,
 }) => {
   if (!classReliability) {
     throw new Error('classReliability prop is required for PricingValue');
@@ -85,10 +94,16 @@ const PricingValue: React.FC<PricingValueProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [computedDistance, setComputedDistance] = useState<number | null>(null);
   const [showNAFlash, setShowNAFlash] = useState(false);
-  const [userProfile, setUserProfile] = useState<{ sa?: string; ow?: string; st?: string } | null>(null);
+  const [userProfileState, setUserProfile] = useState<{ sa?: string; ow?: string; st?: string } | null>(userProfile ?? null);
+  const [allProgramsState, setAllPrograms] = useState<Array<{ code: string; name: string; ffp: string; alliance: 'SA' | 'OW' | 'ST' }>>(allPrograms ?? []);
+  const [triedPrograms, setTriedPrograms] = useState<string[]>([]);
 
-  // Fetch user profile for default program selection
+  // Only fetch user profile if not provided
   useEffect(() => {
+    if (userProfile !== undefined) {
+      setUserProfile(userProfile);
+      return;
+    }
     async function fetchUserProfile() {
       const supabase = createSupabaseBrowserClient();
       const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -108,13 +123,14 @@ const PricingValue: React.FC<PricingValueProps> = ({
       }
     }
     fetchUserProfile();
-  }, []);
+  }, [userProfile]);
 
-  const setSelectedProgram = (code: string | undefined) => {
-    setSelectedProgramState(code && allowedPrograms.includes(code) ? code : allowedPrograms[0] || '');
-  };
-
+  // Only fetch all programs if not provided
   useEffect(() => {
+    if (allPrograms !== undefined) {
+      setAllPrograms(allPrograms);
+      return;
+    }
     async function fetchPrograms() {
       const alliance = getAirlineAlliance(airline);
       if (!alliance) {
@@ -122,21 +138,67 @@ const PricingValue: React.FC<PricingValueProps> = ({
         setSelectedProgramState('');
         return;
       }
-      const allPrograms = await getAllProgramsFromDb();
-      const filtered = allPrograms.filter(p => p.alliance === alliance).map(p => p.code);
-      let defaultProgram = '';
-      if (userProfile) {
-        if (alliance === 'SA' && userProfile.sa) defaultProgram = userProfile.sa;
-        if (alliance === 'OW' && userProfile.ow) defaultProgram = userProfile.ow;
-        if (alliance === 'ST' && userProfile.st) defaultProgram = userProfile.st;
+      const allProgramsDb = await getAllProgramsFromDb();
+      setAllPrograms(allProgramsDb);
+    }
+    fetchPrograms();
+  }, [airline, allPrograms]);
+
+  useEffect(() => {
+    async function updateAllowedPrograms() {
+      const alliance = getAirlineAlliance(airline);
+      if (!alliance) {
+        setAllowedPrograms([]);
+        setSelectedProgramState('');
+        return;
       }
+      const allProgs = allPrograms !== undefined ? allPrograms : allProgramsState;
+      let defaultProgram = '';
+      if (userProfile !== undefined ? userProfile : userProfileState) {
+        const up = userProfile !== undefined ? userProfile : userProfileState;
+        if (alliance === 'SA' && up?.sa) defaultProgram = up.sa;
+        if (alliance === 'OW' && up?.ow) defaultProgram = up.ow;
+        if (alliance === 'ST' && up?.st) defaultProgram = up.st;
+      }
+      const filtered = allProgs.filter(p => p.alliance === alliance).map(p => p.code);
       setAllowedPrograms(filtered);
       setSelectedProgramState(filtered.includes(defaultProgram) ? defaultProgram : filtered[0] || '');
     }
-    fetchPrograms();
-  }, [airline, userProfile]);
+    updateAllowedPrograms();
+  }, [airline, userProfile, userProfileState, allPrograms, allProgramsState]);
 
   useEffect(() => {
+    setTriedPrograms([]); // Reset tried programs when allowedPrograms or airline changes
+  }, [allowedPrograms, airline]);
+
+  // If pricingPromise is provided, use it for pricing data
+  useEffect(() => {
+    let cancelled = false;
+    if (pricingPromise) {
+      setLoading(true);
+      setError(null);
+      pricingPromise
+        .then((data) => {
+          if (!cancelled) {
+            setPricing(data);
+            setLoading(false);
+          }
+        })
+        .catch((err) => {
+          if (!cancelled) {
+            setError(err?.message || 'Failed to load pricing');
+            setLoading(false);
+          }
+        });
+      return () => {
+        cancelled = true;
+      };
+    }
+  }, [pricingPromise]);
+
+  // Only run the original fetch logic if pricingPromise is not provided
+  useEffect(() => {
+    if (pricingPromise) return; // skip if using shared promise
     const fetchRegionsAndPricing = async () => {
       setLoading(true);
       setError(null);
@@ -238,13 +300,33 @@ const PricingValue: React.FC<PricingValueProps> = ({
         setPricing({ ...matchedRules[0], allRules: matchedRules });
       } catch (err: any) {
         console.error('[PricingValue] error:', err);
-        setError(err.message || 'Failed to load pricing');
+        const errMsg = err.message || 'Failed to load pricing';
+        if (
+          errMsg === 'No matching pricing rule' &&
+          allowedPrograms.length > 0 &&
+          selectedProgram &&
+          !triedPrograms.includes(selectedProgram)
+        ) {
+          // Try next eligible program
+          const currentIdx = allowedPrograms.indexOf(selectedProgram);
+          const nextIdx = currentIdx + 1;
+          setTriedPrograms(prev => [...prev, selectedProgram]);
+          if (nextIdx < allowedPrograms.length) {
+            setSelectedProgramState(allowedPrograms[nextIdx]);
+            return; // Don't set error yet, let next program try
+          } else {
+            setError('No eligible program found');
+            return;
+          }
+        }
+        setError(errMsg);
       } finally {
         setLoading(false);
       }
     };
     fetchRegionsAndPricing();
-  }, [depIata, arrIata, airline, distance, selectedProgram]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [depIata, arrIata, airline, distance, selectedProgram, triedPrograms]);
 
   useEffect(() => {
     if (!loading && !error && !pricing) {
@@ -266,6 +348,9 @@ const PricingValue: React.FC<PricingValueProps> = ({
         <span className="ml-2">Loading pricing…</span>
       </div>
     );
+  }
+  if (error === 'No eligible program found') {
+    return <div className={className + ' text-red-500'}>No eligible program found</div>;
   }
   if (error) return <div className={className + ' text-red-500'}>Pricing error: {error}</div>;
   if (showNAFlash) return <div className={className + ' animate-pulse text-muted-foreground'}>N/A</div>;
@@ -342,7 +427,11 @@ const PricingValue: React.FC<PricingValueProps> = ({
   return (
     <div className={className + ' flex flex-row items-center justify-between w-full gap-2'}>
       <div className="w-fit min-w-0">
-        <SelectProgram airline={airline} selectedProgram={selectedProgram} setSelectedProgram={setSelectedProgram} />
+        <SelectProgram
+          airline={airline}
+          selectedProgram={selectedProgram}
+          setSelectedProgram={(code: string | undefined) => setSelectedProgramState(code ?? '')}
+        />
       </div>
       <div className="flex flex-row flex-wrap min-w-0 gap-2 items-center justify-end">
         {badges.length > 0 ? badges : <span className="text-muted-foreground text-sm">N/A</span>}
