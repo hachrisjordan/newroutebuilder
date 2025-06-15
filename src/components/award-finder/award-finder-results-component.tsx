@@ -10,6 +10,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useTheme } from 'next-themes';
 import { getAirlineLogoSrc, getTotalDuration, getClassPercentages } from '@/lib/utils';
 import FlightCard from './flight-card';
+import PricingValue from './pricing-value';
+import { getAirlineAlliance, getAllProgramsFromDb } from '@/lib/alliance';
 
 interface AwardFinderResultsFlatCard {
   route: string;
@@ -140,6 +142,183 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
 
+  // New: State for user, profile, and all programs
+  const [userProfile, setUserProfile] = React.useState<{ sa?: string; ow?: string; st?: string } | null>(null);
+  const [allPrograms, setAllPrograms] = React.useState<Array<{ code: string; name: string; ffp: string; alliance: 'SA' | 'OW' | 'ST' }>>([]);
+  const [loadingMeta, setLoadingMeta] = React.useState(true);
+  const [metaError, setMetaError] = React.useState<string | null>(null);
+
+  // Fetch user profile and all programs once
+  React.useEffect(() => {
+    let cancelled = false;
+    async function fetchMeta() {
+      setLoadingMeta(true);
+      setMetaError(null);
+      try {
+        const supabase = createSupabaseBrowserClient();
+        // User
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        let profile = null;
+        if (!userError && userData.user) {
+          const { data: prof, error: profileError } = await supabase
+            .from('profiles')
+            .select('sa, ow, st')
+            .eq('id', userData.user.id)
+            .single();
+          if (!profileError && prof) profile = prof;
+        }
+        // All programs
+        const { data: programs, error: programsError } = await supabase
+          .from('airlines')
+          .select('code, name, ffp, alliance')
+          .not('ffp', 'is', null)
+          .in('alliance', ['SA', 'OW', 'ST']);
+        if (programsError) throw programsError;
+        if (!cancelled) {
+          setUserProfile(profile);
+          setAllPrograms(programs || []);
+          setLoadingMeta(false);
+        }
+      } catch (err: any) {
+        if (!cancelled) {
+          setMetaError(err?.message || 'Failed to load user/profile/programs');
+          setLoadingMeta(false);
+        }
+      }
+    }
+    fetchMeta();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Pricing cache for non-stop flights
+  const pricingCache = React.useRef(new Map<string, Promise<any>>());
+
+  // Helper to get pricing promise for a non-stop
+  const getPricingPromise = React.useCallback((
+    flight: Flight,
+    depIata: string,
+    arrIata: string,
+    airline: string,
+    userProfileArg: { sa?: string; ow?: string; st?: string } | null,
+    allProgramsArg: Array<{ code: string; name: string; ffp: string; alliance: 'SA' | 'OW' | 'ST' }>
+  ) => {
+    const key = `${depIata}-${arrIata}-${airline}`;
+    if (pricingCache.current.has(key)) {
+      return pricingCache.current.get(key);
+    }
+    // Fetch logic (no user/profile/program fetch here)
+    const promise = (async () => {
+      // 1. Use provided userProfile and allPrograms
+      const userProfile = userProfileArg;
+      const allPrograms = allProgramsArg;
+      // 2. Get allowed programs
+      const alliance = getAirlineAlliance(airline);
+      if (!alliance) throw new Error('No alliance for airline');
+      const filtered = allPrograms.filter(p => p.alliance === alliance).map(p => p.code);
+      let defaultProgram = '';
+      if (userProfile) {
+        if (alliance === 'SA' && userProfile.sa) defaultProgram = userProfile.sa;
+        if (alliance === 'OW' && userProfile.ow) defaultProgram = userProfile.ow;
+        if (alliance === 'ST' && userProfile.st) defaultProgram = userProfile.st;
+      }
+      const selectedProgram = filtered.includes(defaultProgram) ? defaultProgram : filtered[0] || '';
+      if (!selectedProgram) throw new Error('No eligible program');
+      // 3. Get dep/arr country_code and lat/lon
+      const supabase = createSupabaseBrowserClient();
+      const { data: airports, error: airportErr } = await supabase
+        .from('airports')
+        .select('iata, country_code, latitude, longitude')
+        .in('iata', [depIata, arrIata]);
+      if (airportErr) throw airportErr;
+      const dep = airports?.find((a: any) => a.iata === depIata);
+      const arr = airports?.find((a: any) => a.iata === arrIata);
+      if (!dep || !arr) throw new Error('Missing airport data');
+      const depCountry = dep.country_code;
+      const arrCountry = arr.country_code;
+      // 4. Get dep/arr region
+      let depRegion: string | null = null;
+      let arrRegion: string | null = null;
+      if (selectedProgram) {
+        const regionTable = selectedProgram.toLowerCase();
+        let acs, acErr;
+        try {
+          const result = await supabase
+            .from(regionTable)
+            .select('country_code, region')
+            .in('country_code', [depCountry, arrCountry]);
+          acs = result.data;
+          acErr = result.error;
+        } catch (e: any) {
+          acErr = e;
+        }
+        if (acErr && String(acErr.message || acErr).includes('does not exist')) {
+          depRegion = null;
+          arrRegion = null;
+        } else {
+          if (acErr) throw acErr;
+          depRegion = acs?.find((a: any) => a.country_code === depCountry)?.region ?? null;
+          arrRegion = acs?.find((a: any) => a.country_code === arrCountry)?.region ?? null;
+        }
+      }
+      // 5. Calculate distance
+      let dist: number = 0;
+      if (typeof dep.latitude === 'number' && typeof dep.longitude === 'number' && typeof arr.latitude === 'number' && typeof arr.longitude === 'number') {
+        const toRad = (v: number) => (v * Math.PI) / 180;
+        const R = 6371; // km
+        const dLat = toRad(arr.latitude - dep.latitude);
+        const dLon = toRad(arr.longitude - dep.longitude);
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(toRad(dep.latitude)) * Math.cos(toRad(arr.latitude)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        dist = R * c;
+      }
+      // 6. Query pricing rules
+      const pricingTable = `${selectedProgram.toLowerCase()}_pricing`;
+      let { data: allRules, error: pricingErr } = await supabase
+        .from(pricingTable)
+        .select('*')
+        .overlaps('airlines', [airline])
+        .order('priority', { ascending: true });
+      if (pricingErr) throw pricingErr;
+      let matchedRules = [];
+      if (allRules && allRules.length > 0) {
+        for (const rule of allRules) {
+          if (rule.type_single === 'dist-region') {
+            if (
+              rule.dep_region && rule.arr_region &&
+              depRegion && arrRegion &&
+              rule.dep_region.trim() === depRegion.trim() &&
+              rule.arr_region.trim() === arrRegion.trim() &&
+              typeof dist === 'number' &&
+              dist >= rule.min_dist && dist <= rule.max_dist
+            ) {
+              matchedRules.push(rule);
+            }
+          } else if (rule.type_single === 'region') {
+            if (
+              rule.dep_region && rule.arr_region &&
+              depRegion && arrRegion &&
+              rule.dep_region.trim() === depRegion.trim() &&
+              rule.arr_region.trim() === arrRegion.trim()
+            ) {
+              matchedRules.push(rule);
+            }
+          } else if (rule.type_single === 'dist') {
+            if (
+              typeof dist === 'number' &&
+              dist >= rule.min_dist && dist <= rule.max_dist
+            ) {
+              matchedRules.push(rule);
+            }
+          }
+        }
+      }
+      if (!matchedRules.length) throw new Error('No matching pricing rule');
+      return { ...matchedRules[0], allRules: matchedRules };
+    })();
+    pricingCache.current.set(key, promise);
+    return promise;
+  }, []);
+
   // Collect all unique IATA codes from all cards
   useEffect(() => {
     const allIatas = new Set<string>();
@@ -180,6 +359,13 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
     setExpanded(expanded === key ? null : key);
   };
 
+  if (loadingMeta) {
+    return <div className="text-muted-foreground">Loading user/profile/programs…</div>;
+  }
+  if (metaError) {
+    return <div className="text-red-500">{metaError}</div>;
+  }
+
   return (
     <div className="flex flex-col gap-4 w-full max-w-[1000px] mx-auto">
       <TooltipProvider>
@@ -192,6 +378,30 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
           const { y, w, j, f } = getClassPercentages(flightsArr, reliability, minReliabilityPercent);
           const cardKey = `${route}-${date}-${idx}`;
           const isOpen = expanded === cardKey;
+          // Extract dep/arr IATA for non-stop
+          const segs = route.split('-');
+          const depIata = segs[0];
+          const arrIata = segs[segs.length - 1];
+          // Airline code for non-stop
+          const airline = firstFlight.FlightNumbers.slice(0, 2).toUpperCase();
+          // Class availability and reliability for non-stop
+          const classAvailability = {
+            Y: !!firstFlight.YCount,
+            W: !!firstFlight.WCount,
+            J: !!firstFlight.JCount,
+            F: !!firstFlight.FCount,
+          };
+          const rel = reliability[airline] ?? { min_count: 1 };
+          const exemption = rel.exemption || '';
+          const min = rel.min_count ?? 1;
+          const classReliability = {
+            Y: firstFlight.YCount >= (exemption.includes('Y') ? 1 : min),
+            W: firstFlight.WCount >= (exemption.includes('W') ? 1 : min),
+            J: firstFlight.JCount >= (exemption.includes('J') ? 1 : min),
+            F: firstFlight.FCount >= (exemption.includes('F') ? 1 : min),
+          };
+          // Get pricingPromise for non-stop
+          const pricingPromise = flightsArr.length === 1 ? getPricingPromise(firstFlight, depIata, arrIata, airline, userProfile, allPrograms) : undefined;
           return (
             <Card key={cardKey} className="rounded-xl border bg-card shadow transition-all cursor-pointer">
               <div onClick={() => handleToggle(cardKey)} className="flex items-center justify-between">
@@ -253,6 +463,22 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                   <ClassBar label="F" percent={f} />
                 </div>
               </div>
+              {/* Pricing for non-stop flights at the bottom but above FlightCard */}
+              {flightsArr.length === 1 && (
+                <div className="px-6 pb-2">
+                  <PricingValue
+                    flight={firstFlight}
+                    depIata={depIata}
+                    arrIata={arrIata}
+                    airline={airline}
+                    classAvailability={classAvailability}
+                    classReliability={classReliability}
+                    userProfile={userProfile}
+                    allPrograms={allPrograms}
+                    pricingPromise={pricingPromise}
+                  />
+                </div>
+              )}
               {isOpen && (
                 <>
                   <div className="w-full flex justify-center my-2">
