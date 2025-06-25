@@ -49,7 +49,8 @@ const VariantAnalysis: React.FC<VariantAnalysisProps> = ({ flightData, seatConfi
     });
     return pair;
   }, [pairCounts]);
-  const [mostCommonOrigin, mostCommonDestination] = mostCommonPair.split('|');
+  // Guard: always split a string
+  const [mostCommonOrigin, mostCommonDestination] = (mostCommonPair || '').split('|');
   // Only use flights with the most common pair
   const scopedFlights = useMemo(() =>
     flightData.filter(f => f.origin === mostCommonOrigin && f.destination === mostCommonDestination),
@@ -113,12 +114,15 @@ const VariantAnalysis: React.FC<VariantAnalysisProps> = ({ flightData, seatConfi
   }, [scopedFlights, seatConfigData]);
 
   // Selected variant (default: most frequent)
-  const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
+  const [selectedVariant, setSelectedVariant] = useState<string>('');
+  // Reset selectedVariant when flightData or seatConfigData changes
   useEffect(() => {
-    if (variantStats.length > 0 && !selectedVariant) {
+    if (variantStats.length > 0) {
       setSelectedVariant(variantStats[0].variant);
+    } else {
+      setSelectedVariant('');
     }
-  }, [variantStats, selectedVariant]);
+  }, [variantStats, flightData, seatConfigData]);
 
   // Time period breakdowns (scoped)
   const timePeriods = [3, 7, 14, 28, 60, 180, 360];
@@ -176,7 +180,7 @@ const VariantAnalysis: React.FC<VariantAnalysisProps> = ({ flightData, seatConfi
         <CardTitle className="text-lg font-semibold w-full lg:w-auto">Aircraft Variant Analysis</CardTitle>
         {/* Aircraft variant selector: right-aligned on desktop, flexible width, single line with ellipsis */}
         <div className="w-auto min-w-0 flex-shrink flex-grow lg:justify-end lg:flex lg:items-center">
-          <Select value={selectedVariant || undefined} onValueChange={setSelectedVariant}>
+          <Select value={selectedVariant} onValueChange={setSelectedVariant}>
             <SelectTrigger className="min-w-0 w-auto max-w-full whitespace-nowrap px-2 py-1 text-sm truncate overflow-hidden">
               <SelectValue placeholder="Select variant" className="truncate" />
             </SelectTrigger>

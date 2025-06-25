@@ -33,6 +33,11 @@ interface FlightCalendarProps {
 }
 
 export function FlightCalendar({ flightData }: FlightCalendarProps) {
+  // Early return: no data
+  if (!flightData || flightData.length === 0) {
+    return <div className="text-center text-muted-foreground py-8">No flight data available.</div>;
+  }
+
   // Get unique months from flight data
   const months = Array.from(
     new Set(
@@ -46,6 +51,10 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
     const [bYear, bMonth] = b.split('-').map(Number);
     return aYear !== bYear ? aYear - bYear : aMonth - bMonth;
   });
+
+  if (months.length === 0) {
+    return <div className="text-center text-muted-foreground py-8">No months to display.</div>;
+  }
 
   // Default to the latest month with a non-N/A registration
   const latestValidDate = React.useMemo(() => {

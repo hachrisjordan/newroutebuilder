@@ -69,7 +69,8 @@ const DelayAnalysis: React.FC<DelayAnalysisProps> = ({ flightData }) => {
     });
     return pair;
   }, [pairCounts]);
-  const [mostCommonOrigin, mostCommonDestination] = mostCommonPair.split('|');
+  // Guard: always split a string
+  const [mostCommonOrigin, mostCommonDestination] = (mostCommonPair || '').split('|');
   // Only use flights with the most common pair
   const scopedFlights = useMemo(() =>
     flightData.filter(f => f.origin === mostCommonOrigin && f.destination === mostCommonDestination),
