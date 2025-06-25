@@ -6,6 +6,7 @@ import LiveSearchResultsCards from "@/components/award-finder/live-search-result
 import { Pagination } from '@/components/ui/pagination';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import React from 'react';
+import LiveSearchFilters, { LiveSearchFiltersState } from '@/components/award-finder/live-search-filters';
 
 type LiveSearchResult = {
   program: string;
@@ -15,8 +16,6 @@ type LiveSearchResult = {
   data?: any;
   error?: string;
 };
-
-const PAGE_SIZE = 10;
 
 export default function LiveSearchPage() {
   const [results, setResults] = useState<LiveSearchResult[] | null>(null);
@@ -35,10 +34,100 @@ export default function LiveSearchPage() {
         .flatMap(r => r.data.itinerary.map((itin: any) => ({ ...itin, __program: r.program })))
     : [];
 
+  // --- Filter state and logic ---
+  // Compute min/max for initial state
+  function getPointsRange(cls: string): [number, number] {
+    const pts = allItins.flatMap(i => i.bundles.filter((b: any) => b.class === cls).map((b: any) => Number(b.points)));
+    if (!pts.length) return [0, 0];
+    return [Math.min(...pts), Math.max(...pts)];
+  }
+  const yRange = getPointsRange('Y');
+  const wRange = getPointsRange('W');
+  const jRange = getPointsRange('J');
+  const fRange = getPointsRange('F');
+  const depTimes = allItins.map(i => {
+    const t = i.depart.split('T')[1];
+    if (!t) return 0;
+    const [h, m] = t.split(':');
+    return Number(h) * 60 + Number(m);
+  });
+  const arrTimes = allItins.map(i => {
+    const t = i.arrive.split('T')[1];
+    if (!t) return 0;
+    const [h, m] = t.split(':');
+    return Number(h) * 60 + Number(m);
+  });
+
+  // Compute min/max datetime for departure/arrival
+  const depDates = allItins.map(i => new Date(i.depart)).filter(d => !isNaN(d.getTime()));
+  const arrDates = allItins.map(i => new Date(i.arrive)).filter(d => !isNaN(d.getTime()));
+  const depMin = depDates.length ? depDates.reduce((a, b) => a < b ? a : b).getTime() : Date.now();
+  const depMax = depDates.length ? depDates.reduce((a, b) => a > b ? a : b).getTime() : Date.now();
+  const arrMin = arrDates.length ? arrDates.reduce((a, b) => a < b ? a : b).getTime() : Date.now();
+  const arrMax = arrDates.length ? arrDates.reduce((a, b) => a > b ? a : b).getTime() : Date.now();
+
+  const [filterState, setFilterState] = useState<LiveSearchFiltersState>({
+    dates: [],
+    classes: [],
+    yPoints: yRange,
+    wPoints: wRange,
+    jPoints: jRange,
+    fPoints: fRange,
+    depTime: [depMin, depMax],
+    arrTime: [arrMin, arrMax],
+  });
+
+  // Update filter state if data changes
+  useEffect(() => {
+    setFilterState(fs => ({
+      ...fs,
+      yPoints: yRange,
+      wPoints: wRange,
+      jPoints: jRange,
+      fPoints: fRange,
+      depTime: [depMin, depMax],
+      arrTime: [arrMin, arrMax],
+    }));
+  }, [results]);
+
+  // Filtering logic
+  const filteredItins = React.useMemo(() => {
+    return allItins.filter(itin => {
+      // Date filter
+      if (filterState.dates.length && !filterState.dates.includes(itin.depart.slice(0, 10))) return false;
+      // Class filter
+      if (filterState.classes.length) {
+        const hasClass = itin.bundles.some((b: any) => filterState.classes.includes(b.class));
+        if (!hasClass) return false;
+      }
+      // Y/W/J/F point filters
+      const classFilters = [
+        { key: 'Y', range: filterState.yPoints },
+        { key: 'W', range: filterState.wPoints },
+        { key: 'J', range: filterState.jPoints },
+        { key: 'F', range: filterState.fPoints },
+      ];
+      for (const { key, range } of classFilters) {
+        const bundle = itin.bundles.find((b: any) => b.class === key);
+        if (bundle) {
+          const pts = Number(bundle.points);
+          if (pts < range[0] || pts > range[1]) return false;
+        }
+      }
+      // Departure datetime filter
+      const depT = new Date(itin.depart).getTime();
+      if (depT < filterState.depTime[0] || depT > filterState.depTime[1]) return false;
+      // Arrival datetime filter
+      const arrT = new Date(itin.arrive).getTime();
+      if (arrT < filterState.arrTime[0] || arrT > filterState.arrTime[1]) return false;
+      return true;
+    });
+  }, [allItins, filterState]);
+
   // Sorting logic
   const sortedItins = React.useMemo(() => {
-    if (!sortBy || allItins.length === 0) return allItins;
-    const itins = [...allItins];
+    if (!sortBy || filteredItins.length === 0) return filteredItins;
+    const itins = [...filteredItins];
     if (sortBy === 'duration') {
       itins.sort((a, b) => a.duration - b.duration);
     } else if (sortBy === 'departure') {
@@ -56,8 +145,9 @@ export default function LiveSearchPage() {
       });
     }
     return itins;
-  }, [allItins, sortBy]);
+  }, [filteredItins, sortBy]);
 
+  const PAGE_SIZE = 10;
   const totalPages = Math.ceil(sortedItins.length / PAGE_SIZE);
   const pagedItins = sortedItins.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
@@ -65,10 +155,10 @@ export default function LiveSearchPage() {
     { value: 'duration', label: 'Duration (shortest)' },
     { value: 'departure', label: 'Departure Time (earliest)' },
     { value: 'arrival', label: 'Arrival Time (latest)' },
-    { value: 'y', label: 'Y Price (Lowest)' },
-    { value: 'w', label: 'W Price (Lowest)' },
-    { value: 'j', label: 'J Price (Lowest)' },
-    { value: 'f', label: 'F Price (Lowest)' },
+    { value: 'y', label: 'Economy (Lowest)' },
+    { value: 'w', label: 'Premium Economy (Lowest)' },
+    { value: 'j', label: 'Business (Lowest)' },
+    { value: 'f', label: 'First (Lowest)' },
   ];
 
   return (
@@ -78,6 +168,11 @@ export default function LiveSearchPage() {
         <div className="w-full max-w-4xl mt-8">
           {allItins.length > 0 ? (
             <>
+              <LiveSearchFilters
+                allItins={allItins}
+                filterState={filterState}
+                onFilterChange={setFilterState}
+              />
               <div className="flex items-center w-full justify-end gap-2 mb-4">
                 <label htmlFor="sort" className="text-sm text-muted-foreground mr-2">Sort:</label>
                 <Select value={sortBy} onValueChange={v => setSortBy(v === '' ? undefined : v)}>

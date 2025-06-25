@@ -416,6 +416,7 @@ const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itinera
                               flightNumber={seg.flightnumber}
                               aircraft={aircraftName}
                               isDark={isDark}
+                              duration={seg.duration}
                             />
                           </React.Fragment>
                         );
