@@ -87,6 +87,36 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
     setDuration(maxDuration);
   }, [maxDuration]);
 
+  // Compute min/max departs/arrives
+  const allDepTimes = React.useMemo(() => {
+    const cards = flattenItineraries(results);
+    return cards.map(card => {
+      const flightsArr = card.itinerary.map(fid => results.flights[fid]).filter(Boolean);
+      return flightsArr.length ? new Date(flightsArr[0].DepartsAt).getTime() : null;
+    }).filter((v): v is number => v !== null);
+  }, [results, flattenItineraries]);
+  const allArrTimes = React.useMemo(() => {
+    const cards = flattenItineraries(results);
+    return cards.map(card => {
+      const flightsArr = card.itinerary.map(fid => results.flights[fid]).filter(Boolean);
+      return flightsArr.length ? new Date(flightsArr[flightsArr.length - 1].ArrivesAt).getTime() : null;
+    }).filter((v): v is number => v !== null);
+  }, [results, flattenItineraries]);
+  const depMin = allDepTimes.length ? Math.min(...allDepTimes) : Date.now();
+  const depMax = allDepTimes.length ? Math.max(...allDepTimes) : Date.now() + 24*60*60*1000;
+  const arrMin = allArrTimes.length ? Math.min(...allArrTimes) : Date.now();
+  const arrMax = allArrTimes.length ? Math.max(...allArrTimes) : Date.now() + 24*60*60*1000;
+  const [depTime, setDepTime] = React.useState<[number, number]>([depMin, depMax]);
+  const [arrTime, setArrTime] = React.useState<[number, number]>([arrMin, arrMax]);
+  React.useEffect(() => {
+    setDepTime([depMin, depMax]);
+    setArrTime([arrMin, arrMax]);
+  }, [depMin, depMax, arrMin, arrMax, resetFiltersSignal]);
+  const handleDepTimeChange = (v: [number, number]) => { setDepTime(v); onPageChange(0); };
+  const handleArrTimeChange = (v: [number, number]) => { setArrTime(v); onPageChange(0); };
+  const handleResetDepTime = () => { setDepTime([depMin, depMax]); onPageChange(0); };
+  const handleResetArrTime = () => { setArrTime([arrMin, arrMax]); onPageChange(0); };
+
   // --- Pagination reset wrappers ---
   const handleChangeStops = (stops: number[]) => {
     setSelectedStops(stops);
@@ -192,6 +222,14 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
           );
         });
       }
+      // Filter by departs/arrives time
+      cards = cards.filter(card => {
+        const flightsArr = card.itinerary.map(fid => filteredResults.flights[fid]).filter(Boolean);
+        if (!flightsArr.length) return false;
+        const dep = new Date(flightsArr[0].DepartsAt).getTime();
+        const arr = new Date(flightsArr[flightsArr.length - 1].ArrivesAt).getTime();
+        return dep >= depTime[0] && dep <= depTime[1] && arr >= arrTime[0] && arr <= arrTime[1];
+      });
       const query = debouncedSearchQuery.trim().toLowerCase();
       if (query) {
         cards = cards.filter(card => {
@@ -231,7 +269,7 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [results, sortBy, page, reliableOnly, debouncedSearchQuery, filterReliable, flattenItineraries, getSortValue, PAGE_SIZE, selectedStops, selectedIncludeAirlines, selectedExcludeAirlines, yPercent, wPercent, jPercent, fPercent, duration]);
+  }, [results, sortBy, page, reliableOnly, debouncedSearchQuery, filterReliable, flattenItineraries, getSortValue, PAGE_SIZE, selectedStops, selectedIncludeAirlines, selectedExcludeAirlines, yPercent, wPercent, jPercent, fPercent, duration, depTime, arrTime]);
 
   React.useEffect(() => {
     // Extract unique airline codes from results.flights
@@ -289,8 +327,10 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
     setFPercent(0);
     setDuration(maxDuration);
     setSelectedStops(getStopCounts());
+    setDepTime([depMin, depMax]);
+    setArrTime([arrMin, arrMax]);
     // Optionally, reset other local state if needed
-  }, [resetFiltersSignal, maxDuration, getStopCounts]);
+  }, [resetFiltersSignal, maxDuration, getStopCounts, depMin, depMax, arrMin, arrMax]);
 
   return (
     <TooltipProvider>
@@ -326,6 +366,16 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
             onResetJ={handleResetJ}
             onResetF={handleResetF}
             onResetDuration={handleResetDuration}
+            depMin={depMin}
+            depMax={depMax}
+            depTime={depTime}
+            arrMin={arrMin}
+            arrMax={arrMax}
+            arrTime={arrTime}
+            onDepTimeChange={handleDepTimeChange}
+            onArrTimeChange={handleArrTimeChange}
+            onResetDepTime={handleResetDepTime}
+            onResetArrTime={handleResetArrTime}
           />
         </div>
         <div className="w-full max-w-4xl mx-auto flex flex-col gap-2 mb-4">
