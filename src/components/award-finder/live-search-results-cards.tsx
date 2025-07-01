@@ -39,81 +39,19 @@ interface LiveSearchResultsCardsProps {
       bundleClasses?: Array<Record<string, string>>;
     }>;
   }>;
+  iataToCity: Record<string, string>;
+  aircraftMap: Record<string, string>;
+  isLoadingCities?: boolean;
+  cityError?: string | null;
 }
 
 /**
  * Renders live search itinerary and flight cards using award finder card style, fetching IATA-to-city mapping from Supabase.
  */
-const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itineraries }) => {
+const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itineraries, iataToCity, aircraftMap, isLoadingCities, cityError }) => {
   const [expanded, setExpanded] = useState<number | null>(null);
-  const [iataToCity, setIataToCity] = useState<Record<string, string>>({});
-  const [isLoadingCities, setIsLoadingCities] = useState(false);
-  const [cityError, setCityError] = useState<string | null>(null);
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
-  const [aircraftMap, setAircraftMap] = useState<Record<string, string>>({});
-
-  // Collect all unique IATA codes from all itineraries/segments
-  useEffect(() => {
-    const allIatas = new Set<string>();
-    itineraries.forEach(itin => {
-      allIatas.add(itin.from);
-      allIatas.add(itin.to);
-      itin.connections.forEach(conn => allIatas.add(conn));
-      itin.segments.forEach(seg => {
-        allIatas.add(seg.from);
-        allIatas.add(seg.to);
-      });
-    });
-    if (allIatas.size === 0) {
-      setIataToCity({});
-      return;
-    }
-    const fetchCities = async () => {
-      setIsLoadingCities(true);
-      setCityError(null);
-      try {
-        const supabase = createSupabaseBrowserClient();
-        const iataList = Array.from(allIatas);
-        const { data, error } = await supabase
-          .from('airports')
-          .select('iata, city_name')
-          .in('iata', iataList);
-        if (error) throw error;
-        const map: Record<string, string> = {};
-        data?.forEach((row: { iata: string; city_name: string }) => {
-          map[row.iata] = row.city_name;
-        });
-        setIataToCity(map);
-      } catch (err: any) {
-        setCityError(err.message || 'Failed to load city names');
-      } finally {
-        setIsLoadingCities(false);
-      }
-    };
-    fetchCities();
-  }, [itineraries]);
-
-  useEffect(() => {
-    // Fetch aircraft table
-    const fetchAircraft = async () => {
-      try {
-        const supabase = createSupabaseBrowserClient();
-        const { data, error } = await supabase
-          .from('aircraft')
-          .select('iata_code, name');
-        if (error) throw error;
-        const map: Record<string, string> = {};
-        data?.forEach((row: { iata_code: string; name: string }) => {
-          map[row.iata_code] = row.name;
-        });
-        setAircraftMap(map);
-      } catch (err) {
-        // ignore error, fallback to code
-      }
-    };
-    fetchAircraft();
-  }, [itineraries]);
 
   const handleToggle = (idx: number) => {
     setExpanded(expanded === idx ? null : idx);

@@ -7,6 +7,7 @@ import { Pagination } from '@/components/ui/pagination';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import React from 'react';
 import LiveSearchFilters, { LiveSearchFiltersState } from '@/components/award-finder/live-search-filters';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 
 type LiveSearchResult = {
   program: string;
@@ -21,6 +22,11 @@ export default function LiveSearchPage() {
   const [results, setResults] = useState<LiveSearchResult[] | null>(null);
   const [page, setPage] = useState(0);
   const [sortBy, setSortBy] = useState<string | undefined>(undefined);
+  const [iataToCity, setIataToCity] = useState<Record<string, string>>({});
+  const [aircraftMap, setAircraftMap] = useState<Record<string, string>>({});
+  const [isLoadingAircraft, setIsLoadingAircraft] = useState(false);
+  const [isLoadingCities, setIsLoadingCities] = useState(false);
+  const [cityError, setCityError] = useState<string | null>(null);
 
   // Reset page to 0 when results change
   useEffect(() => {
@@ -161,6 +167,74 @@ export default function LiveSearchPage() {
     { value: 'f', label: 'First (Lowest)' },
   ];
 
+  // Fetch aircraft table once on mount
+  useEffect(() => {
+    setIsLoadingAircraft(true);
+    const fetchAircraft = async () => {
+      try {
+        const supabase = createSupabaseBrowserClient();
+        const { data, error } = await supabase
+          .from('aircraft')
+          .select('iata_code, name');
+        if (error) throw error;
+        const map: Record<string, string> = {};
+        data?.forEach((row: { iata_code: string; name: string }) => {
+          map[row.iata_code] = row.name;
+        });
+        setAircraftMap(map);
+      } catch (err) {
+        // ignore error, fallback to code
+      } finally {
+        setIsLoadingAircraft(false);
+      }
+    };
+    fetchAircraft();
+  }, []);
+
+  // Fetch missing city names when results change
+  useEffect(() => {
+    if (!results) return;
+    const allIatas = new Set<string>();
+    results.forEach(r => {
+      if (r.data && Array.isArray(r.data.itinerary)) {
+        r.data.itinerary.forEach((itin: any) => {
+          allIatas.add(itin.from);
+          allIatas.add(itin.to);
+          (itin.connections || []).forEach((conn: string) => allIatas.add(conn));
+          (itin.segments || []).forEach((seg: any) => {
+            allIatas.add(seg.from);
+            allIatas.add(seg.to);
+          });
+        });
+      }
+    });
+    // Only fetch IATAs not already in cache
+    const missingIatas = Array.from(allIatas).filter(iata => !(iata in iataToCity));
+    if (missingIatas.length === 0) return;
+    setIsLoadingCities(true);
+    setCityError(null);
+    const fetchCities = async () => {
+      try {
+        const supabase = createSupabaseBrowserClient();
+        const { data, error } = await supabase
+          .from('airports')
+          .select('iata, city_name')
+          .in('iata', missingIatas);
+        if (error) throw error;
+        const newMap: Record<string, string> = { ...iataToCity };
+        data?.forEach((row: { iata: string; city_name: string }) => {
+          newMap[row.iata] = row.city_name;
+        });
+        setIataToCity(newMap);
+      } catch (err: any) {
+        setCityError(err.message || 'Failed to load city names');
+      } finally {
+        setIsLoadingCities(false);
+      }
+    };
+    fetchCities();
+  }, [results]);
+
   return (
     <main className="flex flex-1 flex-col items-center bg-background pt-8 pb-12 px-2 sm:px-4">
       <LiveSearchForm onSearch={arr => arr.length === 0 ? setResults(null) : setResults(arr)} />
@@ -186,7 +260,13 @@ export default function LiveSearchPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <LiveSearchResultsCards itineraries={pagedItins} />
+              <LiveSearchResultsCards
+                itineraries={pagedItins}
+                iataToCity={iataToCity}
+                aircraftMap={aircraftMap}
+                isLoadingCities={isLoadingCities}
+                cityError={cityError}
+              />
               <div className="flex justify-center mt-4">
                 <Pagination
                   currentPage={page}
