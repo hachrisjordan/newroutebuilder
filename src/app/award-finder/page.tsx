@@ -58,7 +58,7 @@ export default function AwardFinderPage() {
   const [reliableOnly, setReliableOnly] = useState(true);
   const [reliability, setReliability] = useState<Record<string, { min_count: number; exemption?: string }>>({});
   const [reliabilityLoading, setReliabilityLoading] = useState(false);
-  const [minReliabilityPercent, setMinReliabilityPercent] = useState<number>(100);
+  const [minReliabilityPercent, setMinReliabilityPercent] = useState<number>(85);
   const [resetFiltersSignal, setResetFiltersSignal] = useState(0);
 
   useEffect(() => {
