@@ -324,7 +324,7 @@ const Filters: React.FC<FiltersProps> = ({
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-fit">
           <div className="flex items-center justify-between pr-2">
-            <DropdownMenuLabel>Y % minimum</DropdownMenuLabel>
+            <DropdownMenuLabel>Economy % minimum</DropdownMenuLabel>
             <button type="button" aria-label="Reset Y" onClick={onResetY} className="ml-2 p-1 rounded hover:bg-accent">
               <RotateCw className="w-4 h-4" />
             </button>
@@ -358,7 +358,7 @@ const Filters: React.FC<FiltersProps> = ({
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-fit">
           <div className="flex items-center justify-between pr-2">
-            <DropdownMenuLabel>W % minimum</DropdownMenuLabel>
+            <DropdownMenuLabel>Premium Economy % minimum</DropdownMenuLabel>
             <button type="button" aria-label="Reset W" onClick={onResetW} className="ml-2 p-1 rounded hover:bg-accent">
               <RotateCw className="w-4 h-4" />
             </button>
@@ -392,7 +392,7 @@ const Filters: React.FC<FiltersProps> = ({
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-fit">
           <div className="flex items-center justify-between pr-2">
-            <DropdownMenuLabel>J % minimum</DropdownMenuLabel>
+            <DropdownMenuLabel>Business % minimum</DropdownMenuLabel>
             <button type="button" aria-label="Reset J" onClick={onResetJ} className="ml-2 p-1 rounded hover:bg-accent">
               <RotateCw className="w-4 h-4" />
             </button>
@@ -426,7 +426,7 @@ const Filters: React.FC<FiltersProps> = ({
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-fit">
           <div className="flex items-center justify-between pr-2">
-            <DropdownMenuLabel>F % minimum</DropdownMenuLabel>
+            <DropdownMenuLabel>First % minimum</DropdownMenuLabel>
             <button type="button" aria-label="Reset F" onClick={onResetF} className="ml-2 p-1 rounded hover:bg-accent">
               <RotateCw className="w-4 h-4" />
             </button>
