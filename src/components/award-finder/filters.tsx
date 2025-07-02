@@ -48,6 +48,16 @@ function formatDateTime(dt: Date) {
   return `${mm}-${dd} ${hh}:${min}`;
 }
 
+// Add a helper for MM/DD HH:mm format (removes Z first)
+function formatSliderIso(val: number) {
+  const iso = new Date(val).toISOString().replace(/Z$/, '');
+  // iso: '2025-07-06T18:40:00.000'
+  const [date, time] = iso.split('T');
+  const [year, month, day] = date.split('-');
+  const [hh, mm] = time.split(':');
+  return `${month}/${day} ${hh}:${mm}`;
+}
+
 interface FiltersProps {
   stopCounts: number[];
   selectedStops: number[];
@@ -458,7 +468,7 @@ const Filters: React.FC<FiltersProps> = ({
           <DropdownMenuSeparator />
           <div className="px-2 py-2 w-64 flex flex-col gap-2">
             <Slider min={depMin} max={depMax} value={depTime} onValueChange={v => onDepTimeChange(v as [number, number])} step={15 * 60 * 1000} />
-            <div className="text-xs text-center">{formatDateTime(new Date(depTime[0]))} - {formatDateTime(new Date(depTime[1]))}</div>
+            <div className="text-xs text-center">{formatSliderIso(depTime[0])} - {formatSliderIso(depTime[1])}</div>
           </div>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -479,7 +489,7 @@ const Filters: React.FC<FiltersProps> = ({
           <DropdownMenuSeparator />
           <div className="px-2 py-2 w-64 flex flex-col gap-2">
             <Slider min={arrMin} max={arrMax} value={arrTime} onValueChange={v => onArrTimeChange(v as [number, number])} step={15 * 60 * 1000} />
-            <div className="text-xs text-center">{formatDateTime(new Date(arrTime[0]))} - {formatDateTime(new Date(arrTime[1]))}</div>
+            <div className="text-xs text-center">{formatSliderIso(arrTime[0])} - {formatSliderIso(arrTime[1])}</div>
           </div>
         </DropdownMenuContent>
       </DropdownMenu>

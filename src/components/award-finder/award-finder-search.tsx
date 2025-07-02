@@ -9,7 +9,7 @@ import { format, isValid, addYears } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { ChevronDown, ChevronUp, AlertTriangle, ArrowLeftRight } from 'lucide-react';
+import { ChevronDown, ChevronUp, AlertTriangle, ArrowLeftRight, X } from 'lucide-react';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { awardFinderSearchRequestSchema } from '@/lib/utils';
 import type { AwardFinderResults, AwardFinderSearchRequest } from '@/types/award-finder-results';
@@ -36,11 +36,11 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const maxCombination = 9;
   const combinationCount = origin.length * destination.length;
 
-  // Helper to get allowed max stops based on x
-  const getAllowedMaxStops = (x: number) => {
+  // Helper to get allowed max stops based on x and apiKey
+  const getAllowedMaxStops = (x: number, hasApiKey: boolean) => {
+    if (!hasApiKey) return 2;
     if (x === 0) return 4;
     if (x === 1) return 4;
     if (x > 1 && x <= 5) return 3;
@@ -48,12 +48,31 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
     return 2; // fallback, should not happen
   };
 
+  // Helper to get allowed max combinations based on apiKey
+  const getAllowedMaxCombination = (hasApiKey: boolean) => (hasApiKey ? 9 : 4);
+
+  // Effect: enforce maxStops and combination limits when apiKey changes
   useEffect(() => {
-    const allowed = getAllowedMaxStops(combinationCount);
-    if (maxStops > allowed) {
-      setMaxStops(allowed);
+    const hasApiKey = !!apiKey.trim();
+    // 1. Enforce maxStops
+    const allowedMaxStops = getAllowedMaxStops(origin.length * destination.length, hasApiKey);
+    if (maxStops > allowedMaxStops) {
+      setMaxStops(allowedMaxStops);
     }
-  }, [origin, destination]);
+    // 2. Enforce combination limit
+    const allowedMaxComb = getAllowedMaxCombination(hasApiKey);
+    if (origin.length * destination.length > allowedMaxComb) {
+      setOrigin([]);
+      setDestination([]);
+    }
+    // 3. Enforce date range limit
+    if (!hasApiKey && date?.from && date?.to) {
+      const diff = Math.ceil((date.to.getTime() - date.from.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      if (diff > 3) {
+        setDate({ from: date.from, to: undefined });
+      }
+    }
+  }, [apiKey, origin, destination, maxStops, date]);
 
   useEffect(() => {
     const fetchApiKey = async () => {
@@ -127,14 +146,14 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
     destination.length > 0 &&
     !!date?.from &&
     !!date?.to &&
-    !!apiKey &&
     maxStops >= 0 &&
     maxStops <= 4 &&
     !apiKeyError &&
     !maxStopsError &&
-    combinationCount <= maxCombination;
+    combinationCount <= getAllowedMaxCombination(!!apiKey.trim());
 
-  const allowedMaxStops = getAllowedMaxStops(combinationCount);
+  const allowedMaxStops = getAllowedMaxStops(combinationCount, !!apiKey.trim());
+  const maxCombination = getAllowedMaxCombination(!!apiKey.trim());
 
   const getDateRangeDays = () => {
     if (date?.from && date?.to) {
@@ -145,6 +164,16 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
   };
   const dateRangeDays = getDateRangeDays();
   const showDateRangeWarning = dateRangeDays > 7;
+
+  // Calendar disabled days logic for 3-day range when no API key
+  const calendarDisabled = !apiKey.trim() && date?.from
+    ? [
+        {
+          before: date.from,
+          after: new Date(date.from.getTime() + 2 * 24 * 60 * 60 * 1000),
+        },
+      ]
+    : undefined;
 
   // --- SUBMIT HANDLER ---
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -173,7 +202,7 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
       maxStop: maxStops,
       startDate,
       endDate,
-      apiKey: apiKey.trim(),
+      apiKey: apiKey.trim() ? apiKey.trim() : null,
     };
     // Validate with Zod (will update schema next)
     // const parseResult = awardFinderSearchRequestSchema.safeParse(requestBody);
@@ -264,6 +293,16 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
                 </Tooltip>
               </TooltipProvider>
             )}
+            {date?.from && (
+              <button
+                type="button"
+                aria-label="Clear date range"
+                className="ml-2 p-1 rounded hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary"
+                onClick={() => setDate(undefined)}
+              >
+                <X className="h-2 w-2 text-muted-foreground" />
+              </button>
+            )}
           </label>
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
@@ -281,7 +320,15 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
                 selected={date}
                 fromDate={new Date()}
                 toDate={addYears(new Date(), 1)}
+                disabled={calendarDisabled}
                 onSelect={(range, selectedDay) => {
+                  if (!apiKey.trim() && range?.from && range?.to) {
+                    const diff = Math.ceil((range.to.getTime() - range.from.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                    if (diff > 3) {
+                      setDate({ from: range.from, to: undefined });
+                      return;
+                    }
+                  }
                   if (date?.from && date?.to && selectedDay) {
                     setDate({ from: selectedDay, to: undefined });
                   } else {
