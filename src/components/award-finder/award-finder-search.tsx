@@ -18,11 +18,12 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/comp
 
 interface AwardFinderSearchProps {
   onSearch: (results: AwardFinderResults) => void;
+  minReliabilityPercent?: number;
 }
 
 const SEARCH_CACHE_KEY = 'awardFinderSearchParams';
 
-export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
+export function AwardFinderSearch({ onSearch, minReliabilityPercent }: AwardFinderSearchProps) {
   const [origin, setOrigin] = useState<string[]>([]);
   const [destination, setDestination] = useState<string[]>([]);
   const [date, setDate] = useState<DateRange | undefined>(undefined);
@@ -203,6 +204,7 @@ export function AwardFinderSearch({ onSearch }: AwardFinderSearchProps) {
       startDate,
       endDate,
       apiKey: apiKey.trim() ? apiKey.trim() : null,
+      minReliabilityPercent: typeof minReliabilityPercent === 'number' ? minReliabilityPercent : 85,
     };
     // Validate with Zod (will update schema next)
     // const parseResult = awardFinderSearchRequestSchema.safeParse(requestBody);

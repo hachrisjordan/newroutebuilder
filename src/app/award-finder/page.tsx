@@ -131,7 +131,7 @@ export default function AwardFinderPage() {
         setResults(data);
         setPage(0);
         setResetFiltersSignal(s => s + 1);
-      }} />
+      }} minReliabilityPercent={minReliabilityPercent} />
       {results && (
         <AwardFinderResultsCard
           results={results}
