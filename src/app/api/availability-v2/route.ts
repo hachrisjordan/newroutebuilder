@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import Valkey from 'iovalkey';
+import { addDays, parseISO, format } from 'date-fns';
+import { createClient } from '@supabase/supabase-js';
 
 // Zod schema for request validation
 const availabilityV2Schema = z.object({
@@ -14,6 +17,81 @@ const SEATS_SEARCH_URL = "https://seats.aero/partnerapi/search?";
 
 if (!SEATS_SEARCH_URL) {
   throw new Error('SEATS_SEARCH_URL environment variable is not set');
+}
+
+// --- Valkey (iovalkey) setup ---
+let valkey: any = null;
+function getValkeyClient(): any {
+  if (valkey) return valkey;
+  const host = process.env.VALKEY_HOST;
+  const port = process.env.VALKEY_PORT ? parseInt(process.env.VALKEY_PORT, 10) : 6379;
+  const password = process.env.VALKEY_PASSWORD;
+  if (!host) return null;
+  valkey = new Valkey({ host, port, password });
+  return valkey;
+}
+
+async function saveSeatsAeroLink(url: string) {
+  const client = getValkeyClient();
+  if (!client) return;
+  try {
+    // Use a Redis set to deduplicate, and set TTL 24h (86400s)
+    await client.sadd('seats_aero_links', url);
+    await client.expire('seats_aero_links', 86400);
+  } catch (err) {
+    // Non-blocking, log only
+    console.error('Valkey saveSeatsAeroLink error:', err);
+  }
+}
+
+/**
+ * Normalizes a flight number by removing leading zeros after the airline prefix.
+ * E.g., BA015 → BA15, JL001 → JL1
+ */
+function normalizeFlightNumber(flightNumber: string): string {
+  const match = flightNumber.match(/^([A-Z]{2,3})(0*)(\d+)$/i);
+  if (!match) return flightNumber;
+  const [, prefix, , number] = match;
+  return `${prefix.toUpperCase()}${parseInt(number, 10)}`;
+}
+
+// Use environment variables for Supabase
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+// --- Reliability Table In-Memory Cache ---
+let reliabilityCache: any[] | null = null;
+let reliabilityCacheTimestamp = 0;
+const RELIABILITY_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+async function getReliabilityTableCached() {
+  const now = Date.now();
+  if (reliabilityCache && now - reliabilityCacheTimestamp < RELIABILITY_CACHE_TTL_MS) {
+    return reliabilityCache;
+  }
+  const supabase = createClient(supabaseUrl, supabaseKey);
+  const { data, error } = await supabase.from('reliability').select('code, min_count, exemption, ffp_program');
+  if (error) {
+    console.error('Failed to fetch reliability table:', error);
+    reliabilityCache = [];
+  } else {
+    reliabilityCache = data || [];
+  }
+  reliabilityCacheTimestamp = now;
+  return reliabilityCache;
+}
+
+/**
+ * Returns the count multiplier for a given flight/cabin/source based on reliability table.
+ */
+function getCountMultiplier({ code, cabin, source, reliabilityTable }: { code: string, cabin: string, source: string, reliabilityTable: any[] }) {
+  const entry = reliabilityTable.find((r) => r.code === code);
+  if (!entry) return 1;
+  if (entry.exemption && typeof entry.exemption === 'string' && entry.exemption.toUpperCase() === (cabin || '').slice(0, 1).toUpperCase()) return 1;
+  if (Array.isArray(entry.ffp_program) && entry.ffp_program.length > 0) {
+    if (entry.ffp_program.includes(source)) return entry.min_count || 1;
+  }
+  return 1;
 }
 
 /**
@@ -36,6 +114,16 @@ export async function POST(req: NextRequest) {
     }
     const { routeId, startDate, endDate, cabin, carriers } = parseResult.data;
 
+    // Compute seatsAeroEndDate as +3 days after user input endDate
+    let seatsAeroEndDate: string;
+    try {
+      // Accept both ISO and YYYY-MM-DD formats
+      const parsedEndDate = endDate.length > 10 ? parseISO(endDate) : new Date(endDate);
+      seatsAeroEndDate = format(addDays(parsedEndDate, 3), 'yyyy-MM-dd');
+    } catch (e) {
+      return NextResponse.json({ error: 'Invalid endDate format' }, { status: 400 });
+    }
+
     // Parse route segments
     const segments = routeId.split('-');
     const originAirports = segments[0].split('/');
@@ -49,62 +137,138 @@ export async function POST(req: NextRequest) {
     let processedCount = 0;
     const uniqueItems = new Map<string, boolean>();
     const results: any[] = [];
+    let seatsAeroRequests = 0;
+    let lastResponse: Response | null = null;
 
-    // Continue fetching until all data is retrieved
-    while (hasMore) {
-      // Combine all origins and connections
-      const allOrigins = [...originAirports];
-      const allDestinations = [...destinationSegments];
-      middleSegments.forEach(segment => {
-        allOrigins.push(...segment);
-        allDestinations.unshift(...segment);
-      });
+    // Fetch reliability table (cached)
+    const reliabilityTable = await getReliabilityTableCached();
 
-      // Construct search params (only include known working params)
-      const searchParams = new URLSearchParams({
-        origin_airport: allOrigins.join(','),
-        destination_airport: allDestinations.join(','),
-        start_date: startDate,
-        end_date: endDate,
-        take: '1000',
-        include_trips: 'true',
-        only_direct_flights: 'true',
-        carriers: 'A3%2CAC%2CCA%2CAI%2CNZ%2CNH%2COZ%2COS%2CAV%2CSN%2CCM%2COU%2CMS%2CET%2CBR%2CLO%2CLH%2CCL%2CZH%2CSQ%2CSA%2CLX%2CTP%2CTG%2CTK%2CUA%2CAR%2CAM%2CUX%2CAF%2CCI%2CMU%2CDL%2CGA%2CKQ%2CME%2CKL%2CKE%2CSV%2CSK%2CRO%2CVN%2CVS%2CMF’%2CAS%2CAA%2CBA%2CCX%2CFJ%2CAY%2CIB%2CJL%2CMS%2CQF%2CQR%2CRJ%2CAT%2CUL'
-      });
-      if (cabin) searchParams.append('cabin', cabin);
-      if (carriers) searchParams.append('carriers', carriers);
-      if (skip > 0) searchParams.append('skip', skip.toString());
-      if (cursor) searchParams.append('cursor', cursor);
-
-      // Fetch from external API (use /partnerapi/search)
-      const response = await fetch(`https://seats.aero/partnerapi/search?${searchParams.toString()}`, {
-        method: 'GET',
-        headers: {
-          accept: 'application/json',
-          'Partner-Authorization': apiKey,
+    // --- Parallelized Paginated Fetches ---
+    // Fetch first page to get hasMore and cursor
+    const allOrigins = [...originAirports];
+    const allDestinations = [...destinationSegments];
+    middleSegments.forEach(segment => {
+      allOrigins.push(...segment);
+      allDestinations.unshift(...segment);
+    });
+    const baseParams: Record<string, string> = {
+      origin_airport: allOrigins.join(','),
+      destination_airport: allDestinations.join(','),
+      start_date: startDate,
+      end_date: seatsAeroEndDate,
+      take: '1000',
+      include_trips: 'true',
+      only_direct_flights: 'true',
+      include_filtered: 'false',
+      carriers: 'A3%2CEY%2CAC%2CCA%2CAI%2CNZ%2CNH%2COZ%2COS%2CAV%2CSN%2CCM%2COU%2CMS%2CET%2CBR%2CLO%2CLH%2CCL%2CZH%2CSQ%2CSA%2CLX%2CTP%2CTG%2CTK%2CUA%2CAR%2CAM%2CUX%2CAF%2CCI%2CMU%2CDL%2CGA%2CKQ%2CME%2CKL%2CKE%2CSV%2CSK%2CRO%2CMH%2CVN%2CVS%2CMF%2CAS%2CAA%2CBA%2CCX%2CFJ%2CAY%2CIB%2CJL%2CMS%2CQF%2CQR%2CRJ%2CAT%2CUL%2CWY%2CJX%2CEK'
+    };
+    if (cabin) baseParams.cabin = cabin;
+    if (carriers) baseParams.carriers = carriers;
+    // Helper to build URL
+    const buildUrl = (params: Record<string, string | number>) => {
+      const sp = new URLSearchParams(params as any);
+      return `https://seats.aero/partnerapi/search?${sp.toString()}`;
+    };
+    // Fetch first page
+    const firstUrl = buildUrl({ ...baseParams });
+    saveSeatsAeroLink(firstUrl); // fire-and-forget
+    const firstRes = await fetch(firstUrl, {
+      method: 'GET',
+      headers: {
+        accept: 'application/json',
+        'Partner-Authorization': apiKey,
+      },
+    });
+    seatsAeroRequests++;
+    if (firstRes.status === 429) {
+      const retryAfter = firstRes.headers.get('Retry-After');
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded. Please try again later.',
+          retryAfter: retryAfter ? Number(retryAfter) : undefined,
         },
-      });
-      if (!response.ok) {
-        throw new Error(`Seats.aero API Error: ${response.statusText}`);
+        { status: 429 }
+      );
+    }
+    if (!firstRes.ok) {
+      return NextResponse.json(
+        { error: `Seats.aero API Error: ${firstRes.statusText}` },
+        { status: firstRes.status }
+      );
+    }
+    const firstData = await firstRes.json();
+    lastResponse = firstRes;
+    let allPages = [firstData];
+    let cursors: string[] = [];
+    hasMore = firstData.hasMore || false;
+    cursor = firstData.cursor;
+    // If skip is supported, fire off parallel fetches
+    if (hasMore && typeof skip === 'number') {
+      // Try to estimate number of pages (if possible)
+      // If total count is not available, fetch up to 5 more pages in parallel as a safe default
+      const maxPages = 5;
+      const fetches = [];
+      for (let i = 1; i <= maxPages; i++) {
+        const params = { ...baseParams, skip: i * 1000 };
+        const url = buildUrl(params);
+        saveSeatsAeroLink(url); // fire-and-forget
+        fetches.push(
+          fetch(url, {
+            method: 'GET',
+            headers: {
+              accept: 'application/json',
+              'Partner-Authorization': apiKey,
+            },
+          })
+            .then(async (res) => {
+              seatsAeroRequests++;
+              if (res.ok) return res.json();
+              return null;
+            })
+            .catch(() => null)
+        );
       }
-      const data = await response.json();
-
-      // Process and buffer each item
-      if (data.data && Array.isArray(data.data) && data.data.length > 0) {
-        for (const item of data.data) {
+      const morePages = await Promise.all(fetches);
+      allPages = [firstData, ...morePages.filter(Boolean)];
+    } else {
+      // Fallback: sequential fetch using cursor
+      while (hasMore && cursor) {
+        const params = { ...baseParams, cursor };
+        const url = buildUrl(params);
+        saveSeatsAeroLink(url); // fire-and-forget
+        const res = await fetch(url, {
+          method: 'GET',
+          headers: {
+            accept: 'application/json',
+            'Partner-Authorization': apiKey,
+          },
+        });
+        seatsAeroRequests++;
+        if (!res.ok) break;
+        const data = await res.json();
+        allPages.push(data);
+        hasMore = data.hasMore || false;
+        cursor = data.cursor;
+        lastResponse = res;
+      }
+    }
+    // --- Optimized Deduplication and Merging ---
+    for (const page of allPages) {
+      if (page && page.data && Array.isArray(page.data) && page.data.length > 0) {
+        for (const item of page.data) {
           if (uniqueItems.has(item.ID)) continue;
-          // Only process direct flights (Stops === 0) and flatten
           if (item.AvailabilityTrips && Array.isArray(item.AvailabilityTrips) && item.AvailabilityTrips.length > 0) {
             for (const trip of item.AvailabilityTrips) {
               if (trip.Stops !== 0) continue;
               const flightNumbersArr = (trip.FlightNumbers || '').split(/,\s*/);
               for (const flightNumber of flightNumbersArr) {
+                const normalizedFlightNumber = normalizeFlightNumber(flightNumber);
                 results.push({
                   originAirport: item.Route.OriginAirport,
                   destinationAirport: item.Route.DestinationAirport,
                   date: item.Date,
                   distance: item.Route.Distance,
-                  FlightNumbers: flightNumber,
+                  FlightNumbers: normalizedFlightNumber,
                   TotalDuration: trip.TotalDuration || 0,
                   Aircraft: Array.isArray(trip.Aircraft) && trip.Aircraft.length > 0 ? trip.Aircraft[0] : '',
                   DepartsAt: trip.DepartsAt || '',
@@ -113,18 +277,14 @@ export async function POST(req: NextRequest) {
                   WMile: (trip.Cabin && trip.Cabin.toLowerCase() === 'premium') ? (trip.MileageCost || 0) : 0,
                   JMile: (trip.Cabin && trip.Cabin.toLowerCase() === 'business') ? (trip.MileageCost || 0) : 0,
                   FMile: (trip.Cabin && trip.Cabin.toLowerCase() === 'first') ? (trip.MileageCost || 0) : 0,
+                  Source: trip.Source || item.Source || '',
+                  Cabin: trip.Cabin || '',
                 });
               }
             }
           }
           uniqueItems.set(item.ID, true);
-          processedCount++;
         }
-      }
-      hasMore = data.hasMore || false;
-      if (hasMore) {
-        skip += 1000;
-        cursor = data.cursor;
       }
     }
     // Merge duplicates based on originAirport, destinationAirport, date, FlightNumbers
@@ -134,15 +294,16 @@ export async function POST(req: NextRequest) {
         entry.originAirport,
         entry.destinationAirport,
         entry.date,
-        entry.FlightNumbers
+        normalizeFlightNumber(entry.FlightNumbers)
       ].join('|');
+      const flightPrefix = (entry.FlightNumbers || '').slice(0, 2).toUpperCase();
       if (!mergedMap.has(key)) {
         mergedMap.set(key, {
           ...entry,
-          YCount: entry.YMile > 0 ? 1 : 0,
-          WCount: entry.WMile > 0 ? 1 : 0,
-          JCount: entry.JMile > 0 ? 1 : 0,
-          FCount: entry.FMile > 0 ? 1 : 0,
+          YCount: entry.YMile > 0 ? getCountMultiplier({ code: flightPrefix, cabin: 'Y', source: entry.Source, reliabilityTable }) : 0,
+          WCount: entry.WMile > 0 ? getCountMultiplier({ code: flightPrefix, cabin: 'W', source: entry.Source, reliabilityTable }) : 0,
+          JCount: entry.JMile > 0 ? getCountMultiplier({ code: flightPrefix, cabin: 'J', source: entry.Source, reliabilityTable }) : 0,
+          FCount: entry.FMile > 0 ? getCountMultiplier({ code: flightPrefix, cabin: 'F', source: entry.Source, reliabilityTable }) : 0,
           YMile: undefined,
           WMile: undefined,
           JMile: undefined,
@@ -150,10 +311,10 @@ export async function POST(req: NextRequest) {
         });
       } else {
         const merged = mergedMap.get(key);
-        merged.YCount += entry.YMile > 0 ? 1 : 0;
-        merged.WCount += entry.WMile > 0 ? 1 : 0;
-        merged.JCount += entry.JMile > 0 ? 1 : 0;
-        merged.FCount += entry.FMile > 0 ? 1 : 0;
+        merged.YCount += entry.YMile > 0 ? getCountMultiplier({ code: flightPrefix, cabin: 'Y', source: entry.Source, reliabilityTable }) : 0;
+        merged.WCount += entry.WMile > 0 ? getCountMultiplier({ code: flightPrefix, cabin: 'W', source: entry.Source, reliabilityTable }) : 0;
+        merged.JCount += entry.JMile > 0 ? getCountMultiplier({ code: flightPrefix, cabin: 'J', source: entry.Source, reliabilityTable }) : 0;
+        merged.FCount += entry.FMile > 0 ? getCountMultiplier({ code: flightPrefix, cabin: 'F', source: entry.Source, reliabilityTable }) : 0;
         // Accept the longer Aircraft string
         if ((entry.Aircraft || '').length > (merged.Aircraft || '').length) {
           merged.Aircraft = entry.Aircraft;
@@ -178,12 +339,18 @@ export async function POST(req: NextRequest) {
         'AR','AM','UX','AF','CI','MU','DL','GA','KQ','ME','KL','KE','SV','SK','RO','VN','VS','MF'
       ];
       const oneWorld = [
-        'AS','AA','BA','CX','FJ','AY','IB','JL','MS','QF','QR','RJ','AT','UL'
+        'AS','AA','BA','CX','FJ','AY','IB','JL','MS','QF','QR','RJ','AT','UL','MH','WY'
       ];
-      let alliance: 'SA' | 'ST' | 'OW' | undefined;
+      const etihad = ['EY'];
+      const emirates = ['EK'];
+      const starlux = ['JX'];
+      let alliance: 'SA' | 'ST' | 'OW' | 'EY' | 'EK' | 'JX' | undefined;
       if (starAlliance.includes(flightPrefix)) alliance = 'SA';
       else if (skyTeam.includes(flightPrefix)) alliance = 'ST';
       else if (oneWorld.includes(flightPrefix)) alliance = 'OW';
+      else if (etihad.includes(flightPrefix)) alliance = 'EY';
+      else if (emirates.includes(flightPrefix)) alliance = 'EK';
+      else if (starlux.includes(flightPrefix)) alliance = 'JX';
       else alliance = undefined;
       return alliance ? { ...rest, alliance } : null;
     }).filter(Boolean);
@@ -210,7 +377,7 @@ export async function POST(req: NextRequest) {
           latestArrival: entry.ArrivesAt,
           flights: [
             {
-              FlightNumbers: entry.FlightNumbers,
+              FlightNumbers: normalizeFlightNumber(entry.FlightNumbers),
               TotalDuration: entry.TotalDuration,
               Aircraft: entry.Aircraft,
               DepartsAt: entry.DepartsAt,
@@ -219,6 +386,7 @@ export async function POST(req: NextRequest) {
               WCount: entry.WCount,
               JCount: entry.JCount,
               FCount: entry.FCount,
+              distance: entry.distance,
             }
           ]
         });
@@ -238,7 +406,7 @@ export async function POST(req: NextRequest) {
           group.latestArrival = entry.ArrivesAt;
         }
         group.flights.push({
-          FlightNumbers: entry.FlightNumbers,
+          FlightNumbers: normalizeFlightNumber(entry.FlightNumbers),
           TotalDuration: entry.TotalDuration,
           Aircraft: entry.Aircraft,
           DepartsAt: entry.DepartsAt,
@@ -247,13 +415,28 @@ export async function POST(req: NextRequest) {
           WCount: entry.WCount,
           JCount: entry.JCount,
           FCount: entry.FCount,
+          distance: entry.distance,
         });
       }
     }
     const groupedResults = Array.from(groupedMap.values());
-    return NextResponse.json(groupedResults);
+    // Forward rate limit headers from the last fetch response if present
+    let rlRemaining: string | null = null;
+    let rlReset: string | null = null;
+    if (lastResponse && lastResponse.headers) {
+      rlRemaining = lastResponse.headers.get('x-ratelimit-remaining');
+      rlReset = lastResponse.headers.get('x-ratelimit-reset');
+    }
+    const nextRes = NextResponse.json({ groups: groupedResults, seatsAeroRequests });
+    if (rlRemaining) nextRes.headers.set('x-ratelimit-remaining', rlRemaining);
+    if (rlReset) nextRes.headers.set('x-ratelimit-reset', rlReset);
+    return nextRes;
   } catch (error: any) {
+    // Log with context, but avoid flooding logs
     console.error('Error in /api/availability-v2:', error);
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message || 'Internal server error' },
+      { status: 500 }
+    );
   }
 } 
