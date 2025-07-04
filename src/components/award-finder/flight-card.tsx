@@ -1,7 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { X, Check, AlertTriangle, DollarSign } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { TooltipTouch } from '@/components/ui/tooltip-touch';
 import { getAirlineLogoSrc } from '@/lib/utils';
 import type { Flight } from '@/types/award-finder-results';
 import PricingValue from './pricing-value';
@@ -85,22 +85,17 @@ const FlightCard: React.FC<FlightCardProps> = ({
                 });
                 if (!hasGreenCheck) {
                   return (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          type="button"
-                          tabIndex={0}
-                          aria-label="Repositioning / Cash flight"
-                          className="p-1 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                          style={{ touchAction: 'manipulation' }}
-                        >
-                          <DollarSign className="text-emerald-600 h-4 w-4" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-xs text-xs">
-                        <div>Repositioning / Cash flight</div>
-                      </TooltipContent>
-                    </Tooltip>
+                    <TooltipTouch content={<div>Repositioning / Cash flight</div>}>
+                      <button
+                        type="button"
+                        tabIndex={0}
+                        aria-label="Repositioning / Cash flight"
+                        className="p-1 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        style={{ touchAction: 'manipulation' }}
+                      >
+                        <DollarSign className="text-emerald-600 h-4 w-4" />
+                      </button>
+                    </TooltipTouch>
                   );
                 }
                 return null;
@@ -173,27 +168,24 @@ const FlightCard: React.FC<FlightCardProps> = ({
                 icon = <X className="text-red-400 h-4 w-4" />;
               } else if (count < minCount) {
                 icon = (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        tabIndex={0}
-                        aria-label="Unreliable availability warning"
-                        className="p-1 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                        style={{ touchAction: 'manipulation' }}
-                      >
-                        <AlertTriangle className="text-yellow-500 h-4 w-4" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-xs text-xs">
+                  <TooltipTouch
+                    content={
                       <div>
-                        This flight likely has dynamic pricing and may not be available on partner programs.
+                        <div>This flight likely has dynamic pricing and may not be available on partner programs.</div>
+                        <div className="mt-2 font-medium">For best results, look for flights with a green check.</div>
                       </div>
-                      <div className="mt-2 font-medium">
-                        For best results, look for flights with a green check.
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
+                    }
+                  >
+                    <button
+                      type="button"
+                      tabIndex={0}
+                      aria-label="Unreliable availability warning"
+                      className="p-1 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                      style={{ touchAction: 'manipulation' }}
+                    >
+                      <AlertTriangle className="text-yellow-500 h-4 w-4" />
+                    </button>
+                  </TooltipTouch>
                 );
               } else {
                 icon = <Check className="text-green-600 h-4 w-4" />;

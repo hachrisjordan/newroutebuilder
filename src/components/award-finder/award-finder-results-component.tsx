@@ -10,6 +10,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useTheme } from 'next-themes';
 import { getAirlineLogoSrc, getTotalDuration, getClassPercentages } from '@/lib/utils';
 import FlightCard from './flight-card';
+import { TooltipTouch } from '@/components/ui/tooltip-touch';
 
 interface AwardFinderResultsFlatCard {
   route: string;
@@ -217,22 +218,17 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                         });
                         if (hasCashLeg) {
                           return (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  type="button"
-                                  tabIndex={0}
-                                  aria-label="Contains repositioning / cash leg"
-                                  className="p-1 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500 ml-1 align-middle"
-                                  style={{ touchAction: 'manipulation' }}
-                                >
-                                  <DollarSign className="text-emerald-600 h-5 w-5" />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="max-w-xs text-xs">
-                                <div>This itinerary contains a repositioning / cash leg</div>
-                              </TooltipContent>
-                            </Tooltip>
+                            <TooltipTouch content={<div>This itinerary contains a repositioning / cash leg</div>}>
+                              <button
+                                type="button"
+                                tabIndex={0}
+                                aria-label="Contains repositioning / cash leg"
+                                className="p-1 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500 ml-1 align-middle"
+                                style={{ touchAction: 'manipulation' }}
+                              >
+                                <DollarSign className="text-emerald-600 h-5 w-5" />
+                              </button>
+                            </TooltipTouch>
                           );
                         }
                         return null;

@@ -9,6 +9,8 @@ import { getTotalDuration, getClassPercentages } from '@/lib/utils';
 import { Info } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import Filters from './filters';
+import type { AirportMeta, AirportFilterState } from './filters';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 
 interface AwardFinderResultsCardProps {
   results: AwardFinderResults;
@@ -173,6 +175,84 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [results]);
 
+  // Airport filter state
+  const [airportFilter, setAirportFilter] = React.useState<AirportFilterState>({
+    include: { origin: [], destination: [], connection: [] },
+    exclude: { origin: [], destination: [], connection: [] },
+  });
+  const handleChangeAirportFilter = (state: AirportFilterState) => {
+    setAirportFilter(state);
+    onPageChange(0);
+  };
+  const handleResetAirportFilter = () => {
+    setAirportFilter({ include: { origin: [], destination: [], connection: [] }, exclude: { origin: [], destination: [], connection: [] } });
+    onPageChange(0);
+  };
+  const [iataToCity, setIataToCity] = React.useState<Record<string, string>>({});
+  const [isLoadingCities, setIsLoadingCities] = React.useState(false);
+  const [cityError, setCityError] = React.useState<string | null>(null);
+  // Fetch city names for all unique IATA codes in results
+  React.useEffect(() => {
+    const allIatas = new Set<string>();
+    const cards = flattenItineraries(results);
+    cards.forEach(card => {
+      const segs = card.route.split('-');
+      segs.forEach(iata => { if (iata) allIatas.add(iata); });
+    });
+    if (allIatas.size === 0) {
+      setIataToCity({});
+      return;
+    }
+    const fetchCities = async () => {
+      setIsLoadingCities(true);
+      setCityError(null);
+      try {
+        const supabase = createSupabaseBrowserClient();
+        const iataList = Array.from(allIatas);
+        const { data, error } = await supabase
+          .from('airports')
+          .select('iata, city_name')
+          .in('iata', iataList);
+        if (error) throw error;
+        const map: Record<string, string> = {};
+        data?.forEach((row: { iata: string; city_name: string }) => {
+          map[row.iata] = row.city_name;
+        });
+        setIataToCity(map);
+      } catch (err: any) {
+        setCityError(err.message || 'Failed to load city names');
+      } finally {
+        setIsLoadingCities(false);
+      }
+    };
+    fetchCities();
+  }, [results, flattenItineraries]);
+  // Helper to extract airport meta by role from cards, using CODE - CITYNAME
+  const airportMeta: AirportMeta[] = React.useMemo(() => {
+    const meta: AirportMeta[] = [];
+    const seen = new Set<string>();
+    const cards = flattenItineraries(results);
+    cards.forEach(card => {
+      const segs = card.route.split('-');
+      if (segs.length < 2) return;
+      if (!seen.has(segs[0])) {
+        meta.push({ code: segs[0], name: iataToCity[segs[0]] ? `${segs[0]} - ${iataToCity[segs[0]]}` : segs[0], role: 'origin' });
+        seen.add(segs[0]);
+      }
+      if (!seen.has(segs[segs.length-1])) {
+        meta.push({ code: segs[segs.length-1], name: iataToCity[segs[segs.length-1]] ? `${segs[segs.length-1]} - ${iataToCity[segs[segs.length-1]]}` : segs[segs.length-1], role: 'destination' });
+        seen.add(segs[segs.length-1]);
+      }
+      for (let i = 1; i < segs.length-1; ++i) {
+        if (!seen.has(segs[i])) {
+          meta.push({ code: segs[i], name: iataToCity[segs[i]] ? `${segs[i]} - ${iataToCity[segs[i]]}` : segs[i], role: 'connection' });
+          seen.add(segs[i]);
+        }
+      }
+    });
+    return meta;
+  }, [results, flattenItineraries, iataToCity]);
+
   // Data processing effect
   React.useEffect(() => {
     let cancelled = false;
@@ -230,6 +310,33 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
         const arr = new Date(flightsArr[flightsArr.length - 1].ArrivesAt).getTime();
         return dep >= depTime[0] && dep <= depTime[1] && arr >= arrTime[0] && arr <= arrTime[1];
       });
+      // Filter by airport filter
+      if (airportFilter.include.origin.length || airportFilter.include.destination.length || airportFilter.include.connection.length) {
+        cards = cards.filter(card => {
+          const segs = card.route.split('-');
+          const origin = segs[0];
+          const destination = segs[segs.length-1];
+          const connections = segs.slice(1, -1);
+          let match = true;
+          if (airportFilter.include.origin.length) match = match && airportFilter.include.origin.includes(origin);
+          if (airportFilter.include.destination.length) match = match && airportFilter.include.destination.includes(destination);
+          if (airportFilter.include.connection.length) match = match && connections.some(c => airportFilter.include.connection.includes(c));
+          return match;
+        });
+      }
+      if (airportFilter.exclude.origin.length || airportFilter.exclude.destination.length || airportFilter.exclude.connection.length) {
+        cards = cards.filter(card => {
+          const segs = card.route.split('-');
+          const origin = segs[0];
+          const destination = segs[segs.length-1];
+          const connections = segs.slice(1, -1);
+          let match = true;
+          if (airportFilter.exclude.origin.length) match = match && !airportFilter.exclude.origin.includes(origin);
+          if (airportFilter.exclude.destination.length) match = match && !airportFilter.exclude.destination.includes(destination);
+          if (airportFilter.exclude.connection.length) match = match && !connections.some(c => airportFilter.exclude.connection.includes(c));
+          return match;
+        });
+      }
       const query = debouncedSearchQuery.trim().toLowerCase();
       if (query) {
         const terms = query.split(/\s+/).filter(Boolean);
@@ -272,7 +379,7 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [results, sortBy, page, reliableOnly, debouncedSearchQuery, filterReliable, flattenItineraries, getSortValue, PAGE_SIZE, selectedStops, selectedIncludeAirlines, selectedExcludeAirlines, yPercent, wPercent, jPercent, fPercent, duration, depTime, arrTime]);
+  }, [results, sortBy, page, reliableOnly, debouncedSearchQuery, filterReliable, flattenItineraries, getSortValue, PAGE_SIZE, selectedStops, selectedIncludeAirlines, selectedExcludeAirlines, yPercent, wPercent, jPercent, fPercent, duration, depTime, arrTime, airportFilter]);
 
   React.useEffect(() => {
     // Extract unique airline codes from results.flights
@@ -332,6 +439,7 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
     setSelectedStops(getStopCounts());
     setDepTime([depMin, depMax]);
     setArrTime([arrMin, arrMax]);
+    setAirportFilter({ include: { origin: [], destination: [], connection: [] }, exclude: { origin: [], destination: [], connection: [] } });
     // Optionally, reset other local state if needed
   }, [resetFiltersSignal, maxDuration, getStopCounts, depMin, depMax, arrMin, arrMax]);
 
@@ -379,6 +487,12 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
             onArrTimeChange={handleArrTimeChange}
             onResetDepTime={handleResetDepTime}
             onResetArrTime={handleResetArrTime}
+            airportMeta={airportMeta}
+            selectedAirportFilter={airportFilter}
+            onChangeAirportFilter={handleChangeAirportFilter}
+            onResetAirportFilter={handleResetAirportFilter}
+            isLoadingCities={isLoadingCities}
+            cityError={cityError}
           />
         </div>
         <div className="w-full max-w-4xl mx-auto flex flex-col gap-2 mb-4">

@@ -14,7 +14,7 @@ import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { awardFinderSearchRequestSchema } from '@/lib/utils';
 import type { AwardFinderResults, AwardFinderSearchRequest } from '@/types/award-finder-results';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { TooltipTouch } from '@/components/ui/tooltip-touch';
 
 interface AwardFinderSearchProps {
   onSearch: (results: AwardFinderResults) => void;
@@ -271,29 +271,28 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent }: AwardFind
           <label htmlFor="date" className="block text-sm font-medium text-foreground mb-1 flex items-center gap-1">
             Date
             {showDateRangeWarning && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      tabIndex={0}
-                      aria-label="Wide date range warning"
-                      className="ml-1 align-middle p-1 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                      style={{ touchAction: 'manipulation' }}
-                    >
-                      <AlertTriangle className="text-yellow-500 h-4 w-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-xs">
+              <TooltipTouch
+                content={
+                  <div className="max-w-xs">
                     <div>
                       Searching across a wide date range may result in large datasets, longer wait times, increased usage of the seats.aero API, and slower processing.
                     </div>
                     <div className="mt-2 font-medium">
                       For best results, we recommend searching within a 4–7 day range.
                     </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+                  </div>
+                }
+              >
+                <button
+                  type="button"
+                  tabIndex={0}
+                  aria-label="Wide date range warning"
+                  className="ml-1 align-middle p-1 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  style={{ touchAction: 'manipulation' }}
+                >
+                  <AlertTriangle className="text-yellow-500 h-4 w-4" />
+                </button>
+              </TooltipTouch>
             )}
             {date?.from && (
               <button

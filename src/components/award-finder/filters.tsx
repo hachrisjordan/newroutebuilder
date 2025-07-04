@@ -58,6 +58,25 @@ function formatSliderIso(val: number) {
   return `${month}/${day} ${hh}:${mm}`;
 }
 
+export interface AirportMeta {
+  code: string; // IATA
+  name: string; // City or airport name
+  role: 'origin' | 'destination' | 'connection';
+}
+
+export interface AirportFilterState {
+  include: {
+    origin: string[];
+    destination: string[];
+    connection: string[];
+  };
+  exclude: {
+    origin: string[];
+    destination: string[];
+    connection: string[];
+  };
+}
+
 interface FiltersProps {
   stopCounts: number[];
   selectedStops: number[];
@@ -97,6 +116,12 @@ interface FiltersProps {
   onArrTimeChange: (value: [number, number]) => void;
   onResetDepTime: () => void;
   onResetArrTime: () => void;
+  airportMeta: AirportMeta[];
+  selectedAirportFilter: AirportFilterState;
+  onChangeAirportFilter: (state: AirportFilterState) => void;
+  onResetAirportFilter: () => void;
+  isLoadingCities?: boolean;
+  cityError?: string | null;
 }
 
 const Filters: React.FC<FiltersProps> = ({
@@ -138,6 +163,12 @@ const Filters: React.FC<FiltersProps> = ({
   onArrTimeChange,
   onResetDepTime,
   onResetArrTime,
+  airportMeta,
+  selectedAirportFilter,
+  onChangeAirportFilter,
+  onResetAirportFilter,
+  isLoadingCities,
+  cityError,
 }) => {
   const allStopsSelected = selectedStops.length === stopCounts.length && stopCounts.length > 0;
 
@@ -193,6 +224,29 @@ const Filters: React.FC<FiltersProps> = ({
     if (key === 'arrTime') return arrTime[0] === arrMin && arrTime[1] === arrMax;
     return true;
   }
+
+  const [roleTab, setRoleTab] = React.useState<'origin' | 'destination' | 'connection'>('origin');
+  const [includeExcludeTab, setIncludeExcludeTab] = React.useState<'include' | 'exclude'>('include');
+  const roles: Array<'origin' | 'destination' | 'connection'> = ['origin', 'destination', 'connection'];
+  const airportsByRole: Record<'origin' | 'destination' | 'connection', AirportMeta[]> = {
+    origin: airportMeta.filter(a => a.role === 'origin'),
+    destination: airportMeta.filter(a => a.role === 'destination'),
+    connection: airportMeta.filter(a => a.role === 'connection'),
+  };
+  const showRole = (role: 'origin' | 'destination' | 'connection') => airportsByRole[role].length > 1;
+  const availableRoles = roles.filter(showRole);
+  React.useEffect(() => {
+    if (!availableRoles.includes(roleTab) && availableRoles.length > 0) {
+      setRoleTab(availableRoles[0]);
+    }
+    // eslint-disable-next-line
+  }, [availableRoles.length]);
+
+  // Before rendering the airport checkbox list, define sortedAirports
+  const sortedAirports: AirportMeta[] = airportsByRole[roleTab].slice().sort((a, b) => a.code.localeCompare(b.code));
+
+  // Only show the Airports filter if at least one role has more than one airport
+  const hasAnyEligibleAirportRole = roles.some(role => airportsByRole[role].length > 1);
 
   return (
     <div className="flex flex-row gap-3 w-full flex-wrap items-center">
@@ -493,6 +547,73 @@ const Filters: React.FC<FiltersProps> = ({
           </div>
         </DropdownMenuContent>
       </DropdownMenu>
+      {/* Airports filter */}
+      {hasAnyEligibleAirportRole && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant={isDefault('airports') ? 'outline' : 'default'} className={cn('justify-start px-4 py-2')}>
+              Airports
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-fit">
+            <div className="flex items-center justify-between pr-2">
+              <DropdownMenuLabel>Airports</DropdownMenuLabel>
+              <button type="button" aria-label="Reset airports" onClick={onResetAirportFilter} className="ml-2 p-1 rounded hover:bg-accent">
+                <RotateCw className="w-4 h-4" />
+              </button>
+            </div>
+            <DropdownMenuSeparator />
+            {/* Role Tabs (Origin/Destination/Connection) */}
+            <Tabs value={roleTab} onValueChange={v => setRoleTab(v as 'origin' | 'destination' | 'connection')} className="w-full mb-2">
+              <TabsList className="w-full flex">
+                {availableRoles.map(role => (
+                  <TabsTrigger key={role} value={role} className="flex-1">{role.charAt(0).toUpperCase() + role.slice(1)}</TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+            {/* Include/Exclude Button Group */}
+            <div className="flex items-center gap-2 mb-2">
+              <Button
+                variant={includeExcludeTab === 'include' ? 'default' : 'outline'}
+                size="sm"
+                className="flex-1"
+                onClick={() => setIncludeExcludeTab('include')}
+              >
+                Include
+              </Button>
+              <Button
+                variant={includeExcludeTab === 'exclude' ? 'default' : 'outline'}
+                size="sm"
+                className="flex-1"
+                onClick={() => setIncludeExcludeTab('exclude')}
+              >
+                Exclude
+              </Button>
+            </div>
+            {/* Checkbox list for airports in selected role and mode */}
+            <div className="max-h-60 overflow-y-auto">
+              {sortedAirports.map((airport) => (
+                <div key={airport.code} className="flex items-center gap-2">
+                  <DropdownMenuCheckboxItem
+                    checked={selectedAirportFilter[includeExcludeTab][roleTab].includes(airport.code)}
+                    onCheckedChange={checked => {
+                      const next = { ...selectedAirportFilter };
+                      if (checked) next[includeExcludeTab][roleTab] = [...next[includeExcludeTab][roleTab], airport.code];
+                      else next[includeExcludeTab][roleTab] = next[includeExcludeTab][roleTab].filter(c => c !== airport.code);
+                      onChangeAirportFilter(next);
+                    }}
+                    onSelect={e => e.preventDefault()}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span>{airport.code} - {airport.name.replace(/^.*? - /, '')}</span>
+                    </span>
+                  </DropdownMenuCheckboxItem>
+                </div>
+              ))}
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </div>
   );
 };

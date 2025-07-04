@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { AlertTriangle } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { TooltipTouch } from '@/components/ui/tooltip-touch';
 import { getHaversineDistance } from '@/lib/route-helpers';
 import SelectProgram from './select-program';
 import { getAirlineAlliance, isStarAllianceAirline, getAllProgramsFromDb } from '@/lib/alliance';

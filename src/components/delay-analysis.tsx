@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { TooltipTouch } from '@/components/ui/tooltip-touch';
 
 export interface DelayAnalysisProps {
   flightData: Array<{
@@ -250,59 +250,56 @@ const DelayAnalysis: React.FC<DelayAnalysisProps> = ({ flightData }) => {
                     <span>{period.label}</span>
                     <span className="font-semibold">{period.avgDelay} ({period.onTimePct.toFixed(1)}%, {period.onTime}/{period.total})</span>
                   </div>
-                  <TooltipProvider delayDuration={100}>
-                    <Tooltip open={open} onOpenChange={setOpen}>
-                      <TooltipTrigger asChild>
-                        <div
-                          className="w-full h-3 bg-gray-200 rounded flex overflow-hidden cursor-pointer"
-                          onClick={e => {
-                            e.stopPropagation();
-                            setOpen(v => !v);
-                          }}
-                          onTouchEnd={e => {
-                            e.stopPropagation();
-                            setOpen(v => !v);
-                          }}
-                        >
-                          {categories.map(cat => {
-                            const count = period.delayDist[cat] || 0;
-                            const pct = total > 0 ? (count / total) * 100 : 0;
-                            if (pct === 0) return null;
-                            return (
-                              <div
-                                key={cat}
-                                style={{ width: `${pct}%`, background: colorMap[cat], minWidth: pct > 0 ? '0.5rem' : 0 }}
-                                className="h-3"
-                              />
-                            );
-                          })}
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent className="p-2 bg-white dark:bg-zinc-900 border rounded-lg text-[10px] min-w-[320px] max-w-[400px]">
-                        <div className="flex flex-col gap-1">
-                          {categories.map(cat => {
-                            const count = period.delayDist[cat] || 0;
-                            const pct = total > 0 ? (count / total) * 100 : 0;
-                            let catColor = colorMap[cat];
-                            return (
-                              <div key={cat} className="mb-1 last:mb-0">
-                                <div className="flex justify-between mb-0.5">
-                                  <span>{cat}</span>
-                                  <span>{count} ({pct.toFixed(1)}%)</span>
-                                </div>
-                                <div className="w-full h-1.5 bg-gray-200 rounded">
-                                  <div
-                                    className="h-1.5 rounded"
-                                    style={{ width: `${pct}%`, background: catColor, minWidth: pct > 0 ? '0.5rem' : 0 }}
-                                  />
-                                </div>
+                  <TooltipTouch content={
+                    <div className="p-2 bg-white dark:bg-zinc-900 border rounded-lg text-[10px] min-w-[320px] max-w-[400px]">
+                      <div className="flex flex-col gap-1">
+                        {categories.map(cat => {
+                          const count = period.delayDist[cat] || 0;
+                          const pct = total > 0 ? (count / total) * 100 : 0;
+                          let catColor = colorMap[cat];
+                          return (
+                            <div key={cat} className="mb-1 last:mb-0">
+                              <div className="flex justify-between mb-0.5">
+                                <span>{cat}</span>
+                                <span>{count} ({pct.toFixed(1)}%)</span>
                               </div>
-                            );
-                          })}
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                              <div className="w-full h-1.5 bg-gray-200 rounded">
+                                <div
+                                  className="h-1.5 rounded"
+                                  style={{ width: `${pct}%`, background: catColor, minWidth: pct > 0 ? '0.5rem' : 0 }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  }>
+                    <div
+                      className="w-full h-3 bg-gray-200 rounded flex overflow-hidden cursor-pointer"
+                      onClick={e => {
+                        e.stopPropagation();
+                        setOpen(v => !v);
+                      }}
+                      onTouchEnd={e => {
+                        e.stopPropagation();
+                        setOpen(v => !v);
+                      }}
+                    >
+                      {categories.map(cat => {
+                        const count = period.delayDist[cat] || 0;
+                        const pct = total > 0 ? (count / total) * 100 : 0;
+                        if (pct === 0) return null;
+                        return (
+                          <div
+                            key={cat}
+                            style={{ width: `${pct}%`, background: colorMap[cat], minWidth: pct > 0 ? '0.5rem' : 0 }}
+                            className="h-3"
+                          />
+                        );
+                      })}
+                    </div>
+                  </TooltipTouch>
                 </div>
               );
             })}
