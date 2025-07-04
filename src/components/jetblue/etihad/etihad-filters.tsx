@@ -191,7 +191,7 @@ export default function EtihadFilters({
           }
         }}>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="w-36 justify-start truncate overflow-hidden text-ellipsis">
+            <Button variant="outline" className="justify-start px-4 py-2">
               {isDatesOpen ? pendingDates.length ? pendingDates.join(', ') : 'All' : dates.length ? dates.join(', ') : 'All'}
             </Button>
           </DropdownMenuTrigger>

@@ -171,7 +171,7 @@ const LiveSearchFilters: React.FC<LiveSearchFiltersProps> = ({ allItins, filterS
       {/* Date multi-select */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant={isDefault('dates') ? "outline" : "default"} className={cn("w-36 justify-start truncate overflow-hidden text-ellipsis")}>Date</Button>
+          <Button variant={isDefault('dates') ? "outline" : "default"} className={cn("justify-start px-4 py-2")}>Date</Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-48 max-h-64 overflow-y-auto">
           <div className="flex items-center justify-between pr-2">
@@ -201,7 +201,7 @@ const LiveSearchFilters: React.FC<LiveSearchFiltersProps> = ({ allItins, filterS
       {/* Class multi-select */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant={isDefault('classes') ? "outline" : "default"} className={cn("w-36 justify-start truncate overflow-hidden text-ellipsis")}>Class</Button>
+          <Button variant={isDefault('classes') ? "outline" : "default"} className={cn("justify-start px-4 py-2")}>Class</Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-48 max-h-64 overflow-y-auto">
           <div className="flex items-center justify-between pr-2">
