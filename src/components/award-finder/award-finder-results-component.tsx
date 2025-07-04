@@ -3,7 +3,7 @@ import type { Flight } from '@/types/award-finder-results';
 import React from 'react';
 import Image from 'next/image';
 import { Progress } from '../ui/progress';
-import { ChevronDown, ChevronUp, X, Check, AlertTriangle } from 'lucide-react';
+import { ChevronDown, ChevronUp, X, Check, AlertTriangle, DollarSign } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -197,7 +197,47 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
               <div onClick={() => handleToggle(cardKey)} className="flex items-center justify-between">
                 <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between py-4 gap-2 p-4 w-full">
                   <div className="flex flex-col md:flex-row md:items-center gap-2 w-full">
-                    <span className="font-semibold text-lg text-primary">{route}</span>
+                    <span className="font-semibold text-lg text-primary">{route}
+                      {(() => {
+                        const hasCashLeg = flightsArr.some(f => {
+                          const code = getAirlineCode(f.FlightNumbers);
+                          const rel = reliability[code];
+                          const min = rel?.min_count ?? 1;
+                          const exemption = rel?.exemption || '';
+                          const classCounts = [
+                            { cls: 'Y', count: f.YCount },
+                            { cls: 'W', count: f.WCount },
+                            { cls: 'J', count: f.JCount },
+                            { cls: 'F', count: f.FCount },
+                          ];
+                          return !classCounts.some(({ cls, count }) => {
+                            const minCount = exemption.includes(cls) ? 1 : min;
+                            return count >= minCount;
+                          });
+                        });
+                        if (hasCashLeg) {
+                          return (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  tabIndex={0}
+                                  aria-label="Contains repositioning / cash leg"
+                                  className="p-1 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500 ml-1 align-middle"
+                                  style={{ touchAction: 'manipulation' }}
+                                >
+                                  <DollarSign className="text-emerald-600 h-5 w-5" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-xs text-xs">
+                                <div>This itinerary contains a repositioning / cash leg</div>
+                              </TooltipContent>
+                            </Tooltip>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </span>
                     <span className="text-muted-foreground text-sm md:ml-4">{date}</span>
                   </div>
                   <div className="flex flex-col md:flex-row md:items-center w-full md:w-auto gap-1 md:gap-6 mt-2 md:mt-0 ml-auto">

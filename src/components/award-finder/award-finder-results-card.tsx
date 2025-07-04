@@ -232,13 +232,16 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
       });
       const query = debouncedSearchQuery.trim().toLowerCase();
       if (query) {
+        const terms = query.split(/\s+/).filter(Boolean);
         cards = cards.filter(card => {
-          if (card.route.toLowerCase().includes(query) || card.date.toLowerCase().includes(query)) {
-            return true;
-          }
-          return card.itinerary.some(fid => {
-            const flight = filteredResults.flights[fid];
-            return flight && flight.FlightNumbers.toLowerCase().includes(query);
+          // For each term, it must match route, date, or any flight number
+          return terms.every(term => {
+            if (card.route.toLowerCase().includes(term)) return true;
+            if (card.date.toLowerCase().includes(term)) return true;
+            return card.itinerary.some(fid => {
+              const flight = filteredResults.flights[fid];
+              return flight && flight.FlightNumbers.toLowerCase().includes(term);
+            });
           });
         });
       }
@@ -380,25 +383,6 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
         </div>
         <div className="w-full max-w-4xl mx-auto flex flex-col gap-2 mb-4">
           <div className="flex flex-row items-center justify-between gap-2 w-full">
-            <label className="flex items-center gap-1 text-sm">
-              <Checkbox
-                id="reliableOnly"
-                checked={reliableOnly}
-                onCheckedChange={onReliableOnlyChange}
-                className="mr-2"
-              />
-              <span>Reliable results</span>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="ml-1 cursor-pointer text-muted-foreground"><Info className="w-4 h-4" /></span>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-xs text-xs">
-                  Only shows itineraries with reliable award space, filtering out most flights with likely dynamic pricing that may not be bookable via partner programs.<br />
-                  <br />
-                  You can allow a certain maximum % of unreliable flight time in User → Settings (recommended for cash positioning flights).
-                </TooltipContent>
-              </Tooltip>
-            </label>
             <div className="flex flex-1 justify-end items-center gap-2">
               <Input
                 type="text"
