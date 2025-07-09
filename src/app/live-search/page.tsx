@@ -37,7 +37,11 @@ export default function LiveSearchPage() {
   const allItins = results
     ? results
         .filter(r => r.data && Array.isArray(r.data.itinerary) && r.data.itinerary.length > 0)
-        .flatMap(r => r.data.itinerary.map((itin: any) => ({ ...itin, __program: r.program })))
+        .flatMap(r => r.data.itinerary.map((itin: any) => ({ 
+          ...itin, 
+          __program: r.program,
+          __currency: r.data.currency // Add currency from the result's data
+        })))
     : [];
 
   // --- Filter state and logic ---
@@ -266,12 +270,6 @@ export default function LiveSearchPage() {
                 aircraftMap={aircraftMap}
                 isLoadingCities={isLoadingCities}
                 cityError={cityError}
-                currency={
-                  // Try to get currency from the first result's data
-                  results && results.length > 0 && results[0].data && results[0].data.currency
-                    ? results[0].data.currency
-                    : undefined
-                }
               />
               <div className="flex justify-center mt-4">
                 <Pagination

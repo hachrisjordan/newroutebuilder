@@ -38,18 +38,19 @@ interface LiveSearchResultsCardsProps {
       distance: number;
       bundleClasses?: Array<Record<string, string>>;
     }>;
+    __program?: string; // Program code
+    __currency?: string; // Currency for this specific itinerary
   }>;
   iataToCity: Record<string, string>;
   aircraftMap: Record<string, string>;
   isLoadingCities?: boolean;
   cityError?: string | null;
-  currency?: string; // Added currency prop
 }
 
 /**
  * Renders live search itinerary and flight cards using award finder card style, fetching IATA-to-city mapping from Supabase.
  */
-const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itineraries, iataToCity, aircraftMap, isLoadingCities, cityError, currency }) => {
+const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itineraries, iataToCity, aircraftMap, isLoadingCities, cityError }) => {
   const [expanded, setExpanded] = useState<number | null>(null);
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
@@ -232,7 +233,7 @@ const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itinera
                           <span className="mr-1">{b.class}:</span>
                           <span className="tabular-nums mr-1">{Number(b.points).toLocaleString()}</span>
                           <span className="ml-1 text-xs font-normal opacity-80">
-                            + {currency && typeof currency === 'string' && currency.trim() ? currency.trim() : 'USD'} {Number(b.fareTax).toFixed(2)}
+                            + {itin.__currency && typeof itin.__currency === 'string' && itin.__currency.trim() ? itin.__currency.trim() : 'USD'} {Number(b.fareTax).toFixed(2)}
                           </span>
                         </span>
                         {/* Mixed-cabin bar logic */}
