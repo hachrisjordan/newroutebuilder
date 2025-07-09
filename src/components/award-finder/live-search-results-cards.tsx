@@ -232,7 +232,7 @@ const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itinera
                           <span className="mr-1">{b.class}:</span>
                           <span className="tabular-nums mr-1">{Number(b.points).toLocaleString()}</span>
                           <span className="ml-1 text-xs font-normal opacity-80">
-                            +{currency && typeof currency === 'string' && currency.trim() ? currency.trim() : 'USD'} {Number(b.fareTax).toFixed(2)}
+                            + {currency && typeof currency === 'string' && currency.trim() ? currency.trim() : 'USD'} {Number(b.fareTax).toFixed(2)}
                           </span>
                         </span>
                         {/* Mixed-cabin bar logic */}
