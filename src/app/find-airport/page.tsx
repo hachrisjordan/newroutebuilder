@@ -184,7 +184,7 @@ export default function FindAirportPage() {
   const handleShare = () => {
     if (!targetAirport) return;
     let result = buildShareString(guesses);
-    result += '\n\nTry Find the Airport at https://bbairtools.com/find-airport';
+    result += '\n\nTry Find the Airport Game at https://bbairtools.com/find-airport';
     navigator.clipboard.writeText(result.trim());
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
