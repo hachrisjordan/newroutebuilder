@@ -114,7 +114,7 @@ export function AirportSearch({ value, onChange, placeholder, className }: Airpo
     try {
       // Try to find the airport by searching for its IATA code
       const response = await searchAirports(iataCode, 1, 100);
-      const airport = response.airports.find(a => a.iata.toUpperCase() === iataCode.toUpperCase());
+      const airport = response.airports.find((a: any) => a.iata.toUpperCase() === iataCode.toUpperCase());
       
       if (airport) {
         const option = {

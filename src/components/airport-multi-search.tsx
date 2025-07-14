@@ -107,7 +107,7 @@ export function AirportMultiSearch({ value, onChange, placeholder, className }: 
       for (const code of iataCodes) {
         try {
           const response = await searchAirports(code, 1, 100);
-          const airport = response.airports.find(a => a.iata.toUpperCase() === code.toUpperCase());
+          const airport = response.airports.find((a: any) => a.iata.toUpperCase() === code.toUpperCase());
           
           if (airport) {
             selectedAirports.push({
