@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Loader2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import airportsData from '@/data/airports.json';
+import { searchAirports } from '@/lib/airports';
 
 interface AirportSearchProps {
   value: string | undefined;
@@ -57,19 +57,19 @@ const parseSearchInput = (inputValue: any) => {
   }
 };
 
-// Build airport options from JSON
-const airportOptions: AirportOption[] = (airportsData as any[]).map((airport: any) => ({
-  value: airport.IATA,
-  label: `${airport.IATA} - ${airport.CityName} (${airport.Country})`,
+// Helper to convert the API response into the local option shape.
+const toOption = (airport: { iata: string; city_name: string; country: string }): AirportOption => ({
+  value: airport.iata,
+  label: `${airport.iata} - ${airport.city_name} (${airport.country})`,
   data: {
-    city_name: airport.CityName,
-    country: airport.Country,
+    city_name: airport.city_name,
+    country: airport.country,
   },
-}));
+});
 
 export function AirportSearch({ value, onChange, placeholder, className }: AirportSearchProps) {
   const [search, setSearch] = useState('');
-  const [options, setOptions] = useState<AirportOption[]>(airportOptions);
+  const [options, setOptions] = useState<AirportOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [total, setTotal] = useState(0);
@@ -78,21 +78,48 @@ export function AirportSearch({ value, onChange, placeholder, className }: Airpo
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize search with value if it exists
+  // Fetch details for an initial value so that the input shows the correct label.
   useEffect(() => {
-    if (value) {
-      const option = airportOptions.find(opt => opt.value === value);
-      if (option) {
-        setSearch(option.label);
-      }
+    if (!value) {
+      setSearch('');
+      return;
     }
+
+    (async () => {
+      try {
+        const { airports } = await searchAirports(value, 1, 1);
+        const match = airports.find(a => a.iata.toUpperCase() === value.toUpperCase());
+        if (match) {
+          setSearch(toOption(match).label);
+        }
+      } catch (err) {
+        console.error('Failed to fetch initial airport:', err);
+      }
+    })();
   }, [value]);
+
+  const fetchOptions = useCallback(
+    async (query: string, nextPage: number = 1, append = false) => {
+      setLoading(true);
+      try {
+        const { airports, total } = await searchAirports(query, nextPage, pageSize);
+        const mapped = airports.map(toOption);
+        setOptions(prev => (append ? [...prev, ...mapped] : mapped));
+        setTotal(total);
+      } catch (err) {
+        console.error('Failed to search airports:', err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   // Filtering and sorting logic (EXACT from seat-type-viewer.jsx)
   const filterAndSortOptions = useCallback((input: string) => {
-    if (!input) return airportOptions;
+    if (!input) return options;
     const searchText = parseSearchInput(input);
-    return airportOptions
+    return options
       .filter(option => {
         const iata = String(option.value || '').toLowerCase();
         const label = String(option.label || '').toLowerCase();
@@ -119,13 +146,14 @@ export function AirportSearch({ value, onChange, placeholder, className }: Airpo
         }
         return String(iataA).localeCompare(String(iataB));
       });
-  }, []);
+  }, [options]);
 
   // Handle search input
   const handleSearch = (value: string) => {
     setSearch(value);
     setShowDropdown(true);
-    setOptions(filterAndSortOptions(value));
+    setPage(1);
+    fetchOptions(value, 1, false);
   };
 
   // Handle scroll to load more
@@ -139,9 +167,9 @@ export function AirportSearch({ value, onChange, placeholder, className }: Airpo
     // Load more when reaching bottom
     if (scrollHeight - scrollTop <= clientHeight * 1.5) {
       const nextPage = page + 1;
-      if (nextPage * pageSize <= total) {
+      if (nextPage * pageSize <= total && !loading) {
         setPage(nextPage);
-        setOptions(filterAndSortOptions(search));
+        fetchOptions(search, nextPage, true);
       }
     }
   };
@@ -153,7 +181,7 @@ export function AirportSearch({ value, onChange, placeholder, className }: Airpo
         setShowDropdown(false);
         // Reset search to selected value if one exists
         if (value) {
-          const option = airportOptions.find(opt => opt.value === value);
+          const option = options.find(opt => opt.value === value);
           if (option) {
             setSearch(option.label);
           }
@@ -162,7 +190,7 @@ export function AirportSearch({ value, onChange, placeholder, className }: Airpo
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [value]);
+  }, [value, options]);
 
   // Handle option selection
   const handleSelect = (option: AirportOption) => {
@@ -174,7 +202,9 @@ export function AirportSearch({ value, onChange, placeholder, className }: Airpo
   // Handle input focus
   const handleFocus = () => {
     setShowDropdown(true);
-    setOptions(filterAndSortOptions(search));
+    if (options.length === 0) {
+      fetchOptions(search, 1, false);
+    }
   };
 
   return (
@@ -196,7 +226,7 @@ export function AirportSearch({ value, onChange, placeholder, className }: Airpo
             onClick={() => {
               setSearch('');
               onChange('');
-              setOptions(airportOptions);
+              setOptions([]);
             }}
           >
             <X className="h-3 w-3" />

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Loader2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import airportsData from '@/data/airports.json';
+import { searchAirports } from '@/lib/airports';
 
 interface AirportMultiSearchProps {
   value: string[];
@@ -56,28 +56,29 @@ const parseSearchInput = (inputValue: any) => {
   }
 };
 
-const airportOptions: AirportOption[] = (airportsData as any[]).map((airport: any) => ({
-  value: airport.IATA,
-  label: `${airport.IATA} - ${airport.CityName} (${airport.Country})`,
+const toOption = (airport: { iata: string; city_name: string; country: string }): AirportOption => ({
+  value: airport.iata,
+  label: `${airport.iata} - ${airport.city_name} (${airport.country})`,
   data: {
-    city_name: airport.CityName,
-    country: airport.Country,
+    city_name: airport.city_name,
+    country: airport.country,
   },
-}));
+});
 
 export function AirportMultiSearch({ value, onChange, placeholder, className }: AirportMultiSearchProps) {
   const [search, setSearch] = useState('');
-  const [options, setOptions] = useState<AirportOption[]>(airportOptions);
+  const [options, setOptions] = useState<AirportOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedOptions, setSelectedOptions] = useState<AirportOption[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Filtering and sorting logic
   const filterAndSortOptions = useCallback((input: string) => {
-    if (!input) return airportOptions;
+    if (!input) return options;
     const searchText = parseSearchInput(input);
-    return airportOptions
+    return options
       .filter(option => {
         const iata = String(option.value || '').toLowerCase();
         const label = String(option.label || '').toLowerCase();
@@ -104,13 +105,34 @@ export function AirportMultiSearch({ value, onChange, placeholder, className }: 
         }
         return String(iataA).localeCompare(String(iataB));
       });
-  }, []);
+  }, [options]);
+
+  // Fetch options based on search / pagination
+  const pageSize = 20;
+  const [page, setPage] = useState(1);
+
+  const fetchOptions = useCallback(
+    async (query: string, nextPage: number = 1, append = false) => {
+      setLoading(true);
+      try {
+        const { airports } = await searchAirports(query, nextPage, pageSize);
+        const mapped = airports.map(toOption);
+        setOptions(prev => (append ? [...prev, ...mapped] : mapped));
+      } catch (err) {
+        console.error('Failed to fetch airports:', err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   // Handle search input
   const handleSearch = (value: string) => {
     setSearch(value);
     setShowDropdown(true);
-    setOptions(filterAndSortOptions(value));
+    setPage(1);
+    fetchOptions(value, 1, false);
   };
 
   // Handle click outside to close dropdown
@@ -144,12 +166,35 @@ export function AirportMultiSearch({ value, onChange, placeholder, className }: 
   // Handle input focus
   const handleFocus = () => {
     setShowDropdown(true);
-    setOptions(filterAndSortOptions(''));
+    if (options.length === 0) {
+      fetchOptions('', 1, false);
+    }
   };
 
-  // Show selected as tags
-  const selectedOptions = airportOptions.filter(opt => value.includes(opt.value));
+  // Load selected option details when value prop changes
+  useEffect(() => {
+    if (value.length === 0) {
+      setSelectedOptions([]);
+      return;
+    }
 
+    (async () => {
+      try {
+        const fetched = await Promise.all(
+          value.map(async code => {
+            const { airports } = await searchAirports(code, 1, 1);
+            const match = airports.find(a => a.iata.toUpperCase() === code.toUpperCase());
+            return match ? toOption(match) : null;
+          })
+        );
+        setSelectedOptions(fetched.filter(Boolean) as AirportOption[]);
+      } catch (err) {
+        console.error('Failed to fetch selected airports:', err);
+      }
+    })();
+  }, [value]);
+
+  // Show selected as tags
   return (
     <div className="relative w-full" ref={dropdownRef}>
       <div
