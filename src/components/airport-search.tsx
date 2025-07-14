@@ -4,7 +4,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Loader2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
 import { searchAirports } from '@/lib/utils';
+
 
 interface AirportSearchProps {
   value: string | undefined;
