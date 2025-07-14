@@ -107,11 +107,12 @@ const directionToIcon: Record<string, string> = {
   NW: ':arrow_upper_left:',
 };
 
-// Format distance for display (full value in km, with thousands separator)
+// Format distance for display (full value in miles, with thousands separator)
 export function formatDistance(distance: number): string {
-  if (distance === 0) return '0 km';
-  if (distance < 1) return '< 1 km';
-  return `${distance.toLocaleString()} km`;
+  if (distance === 0) return '0 mi';
+  if (distance < 1) return '< 1 mi';
+  const miles = Math.round(distance * 0.621371);
+  return `${miles.toLocaleString()} mi`;
 }
 
 // Build share string for guesses with aligned columns
