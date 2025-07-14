@@ -8,7 +8,7 @@ import EtihadPagination from './etihad-pagination';
 import { Loader2 } from 'lucide-react';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import airportsData from '@/data/airports.json';
-import { isDeepStrictEqual } from 'util';
+import { isDeepStrictEqual } from '@/lib/utils';
 
 interface Itinerary {
   id: string;

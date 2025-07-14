@@ -8,6 +8,58 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
+ * Custom deep strict equality check that works in the browser and properly distinguishes
+ * between arrays and objects. Fixes the bug where [1,2] was considered equal to {0:1, 1:2}.
+ * @param a First value to compare
+ * @param b Second value to compare
+ * @returns true if values are deeply equal, false otherwise
+ */
+export function isDeepStrictEqual(a: any, b: any): boolean {
+  // Same reference check
+  if (a === b) return true;
+  
+  // Null/undefined checks
+  if (a == null || b == null) return a === b;
+  
+  // Type checks
+  if (typeof a !== typeof b) return false;
+  
+  // Primitive types (already handled by === above, but keeping for clarity)
+  if (typeof a !== 'object') return a === b;
+  
+  // Array vs Object distinction - this is the key fix for the reported bug
+  const aIsArray = Array.isArray(a);
+  const bIsArray = Array.isArray(b);
+  if (aIsArray !== bIsArray) return false;
+  
+  // Date objects
+  if (a instanceof Date && b instanceof Date) {
+    return a.getTime() === b.getTime();
+  }
+  
+  // RegExp objects
+  if (a instanceof RegExp && b instanceof RegExp) {
+    return a.toString() === b.toString();
+  }
+  
+  // Get keys for comparison
+  const keys1 = Object.keys(a);
+  const keys2 = Object.keys(b);
+  
+  // Length comparison is sufficient - no need for redundant includes check
+  if (keys1.length !== keys2.length) return false;
+  
+  // Recursively check each property
+  for (const key of keys1) {
+    // Since we already verified lengths are equal, we don't need keys2.includes(key)
+    if (!(key in b)) return false;
+    if (!isDeepStrictEqual(a[key], b[key])) return false;
+  }
+  
+  return true;
+}
+
+/**
  * Formats ontime status for diverted flights.
  * @param ontime - The original ontime string (e.g., "Diverted to LGW")
  * @returns Formatted string (e.g., "Diverted (LGW)")
