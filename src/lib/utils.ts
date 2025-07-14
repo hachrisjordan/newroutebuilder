@@ -166,3 +166,35 @@ export const awardFinderSearchParamsSchema = z.object({
 export const awardFinderSearchRequestSchema = awardFinderSearchParamsSchema.extend({
   apiKey: z.string().min(1),
 });
+
+/**
+ * Searches airports using the dynamic API endpoint
+ * @param search - Search query string
+ * @param page - Page number (default: 1)
+ * @param pageSize - Items per page (default: 20)
+ */
+export async function searchAirports(search: string = '', page: number = 1, pageSize: number = 20) {
+  try {
+    const params = new URLSearchParams({
+      search: search.trim(),
+      page: page.toString(),
+      pageSize: pageSize.toString(),
+    });
+    
+    const response = await fetch(`/api/airports?${params}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch airports: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return {
+      airports: data.airports || [],
+      total: data.total || 0,
+      page: data.page || 1,
+      pageSize: data.pageSize || pageSize,
+    };
+  } catch (error) {
+    console.error('Error searching airports:', error);
+    throw error;
+  }
+}
