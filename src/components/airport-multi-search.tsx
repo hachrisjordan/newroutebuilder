@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Loader2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { searchAirports } from '@/lib/airports-api';
+
+import { searchAirports } from '@/lib/utils';
 
 interface AirportMultiSearchProps {
   value: string[];
@@ -56,22 +57,33 @@ const parseSearchInput = (inputValue: any) => {
   }
 };
 
-// Airport options will be loaded dynamically via API
-const airportOptions: AirportOption[] = [];
-
 export function AirportMultiSearch({ value, onChange, placeholder, className }: AirportMultiSearchProps) {
   const [search, setSearch] = useState('');
-  const [options, setOptions] = useState<AirportOption[]>(airportOptions);
+  const [options, setOptions] = useState<AirportOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedOptions, setSelectedOptions] = useState<AirportOption[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
-  // Filtering and sorting logic
-  const filterAndSortOptions = useCallback((input: string) => {
-    if (!input) return airportOptions;
+  // Function to convert API response to options format
+  const convertToOptions = (airports: any[]): AirportOption[] => {
+    return airports.map(airport => ({
+      value: airport.iata,
+      label: `${airport.iata} - ${airport.city_name} (${airport.country})`,
+      data: {
+        city_name: airport.city_name,
+        country: airport.country,
+      },
+    }));
+  };
+
+  // Filtering and sorting logic (restored from original)
+  const filterAndSortOptions = useCallback((options: AirportOption[], input: string) => {
+    if (!input) return options;
     const searchText = parseSearchInput(input);
-    return airportOptions
+    return options
       .filter(option => {
         const iata = String(option.value || '').toLowerCase();
         const label = String(option.label || '').toLowerCase();
@@ -100,11 +112,81 @@ export function AirportMultiSearch({ value, onChange, placeholder, className }: 
       });
   }, []);
 
-  // Handle search input
-  const handleSearch = (value: string) => {
-    setSearch(value);
+  // Load airports from API
+  const loadAirports = useCallback(async (searchTerm: string) => {
+    setLoading(true);
+    try {
+      const response = await searchAirports(searchTerm, 1, 50); // Load more for multi-select
+      const newOptions = convertToOptions(response.airports);
+      const sortedOptions = filterAndSortOptions(newOptions, searchTerm);
+      setOptions(sortedOptions);
+    } catch (error) {
+      console.error('Failed to load airports:', error);
+      setOptions([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [filterAndSortOptions]);
+
+  // Load selected options for display
+  const loadSelectedOptions = useCallback(async (iataCodes: string[]) => {
+    if (iataCodes.length === 0) {
+      setSelectedOptions([]);
+      return;
+    }
+
+    try {
+      // Load all selected airports by searching for each IATA code
+      const selectedAirports: AirportOption[] = [];
+      
+      for (const code of iataCodes) {
+        try {
+          const response = await searchAirports(code, 1, 100);
+          const airport = response.airports.find((a: any) => a.iata.toUpperCase() === code.toUpperCase());
+          
+          if (airport) {
+            selectedAirports.push({
+              value: airport.iata,
+              label: `${airport.iata} - ${airport.city_name} (${airport.country})`,
+              data: {
+                city_name: airport.city_name,
+                country: airport.country,
+              },
+            });
+          }
+        } catch (error) {
+          console.error(`Failed to load airport ${code}:`, error);
+        }
+      }
+      
+      setSelectedOptions(selectedAirports);
+    } catch (error) {
+      console.error('Failed to load selected airports:', error);
+    }
+  }, []);
+
+  // Initialize selected options when value changes
+  useEffect(() => {
+    if (value.length !== selectedOptions.length || 
+        !value.every(v => selectedOptions.some(opt => opt.value === v))) {
+      loadSelectedOptions(value);
+    }
+  }, [value, selectedOptions, loadSelectedOptions]);
+
+  // Handle search input with debouncing
+  const handleSearch = (searchValue: string) => {
+    setSearch(searchValue);
     setShowDropdown(true);
-    setOptions(filterAndSortOptions(value));
+    
+    // Clear existing debounce timer
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    
+    // Set new debounce timer
+    debounceRef.current = setTimeout(() => {
+      loadAirports(searchValue);
+    }, 300);
   };
 
   // Handle click outside to close dropdown
@@ -117,6 +199,15 @@ export function AirportMultiSearch({ value, onChange, placeholder, className }: 
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Cleanup debounce on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
   }, []);
 
   // Handle option selection (toggle)
@@ -138,11 +229,11 @@ export function AirportMultiSearch({ value, onChange, placeholder, className }: 
   // Handle input focus
   const handleFocus = () => {
     setShowDropdown(true);
-    setOptions(filterAndSortOptions(''));
+    // Load options if we don't have any and no search is active
+    if (options.length === 0 && !loading) {
+      loadAirports('');
+    }
   };
-
-  // Show selected as tags
-  const selectedOptions = airportOptions.filter(opt => value.includes(opt.value));
 
   return (
     <div className="relative w-full" ref={dropdownRef}>
@@ -201,6 +292,11 @@ export function AirportMultiSearch({ value, onChange, placeholder, className }: 
           {loading && (
             <div className="flex items-center justify-center py-4">
               <Loader2 className="h-4 w-4 animate-spin" />
+            </div>
+          )}
+          {!loading && options.length === 0 && search && (
+            <div className="px-3 py-4 text-center text-muted-foreground">
+              No airports found
             </div>
           )}
           {!loading && options.map(option => (
