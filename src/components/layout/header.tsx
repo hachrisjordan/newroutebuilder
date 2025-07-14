@@ -16,7 +16,6 @@ const navigation = [
   { name: 'Seat Type / Delay', href: '/seat-type-delay' },
   { name: 'Award Finder', href: '/award-finder' },
   { name: 'Live Search', href: '/live-search' },
-  { name: 'Find Airport', href: '/find-airport' },
 ];
 
 const specialAwards = [
