@@ -82,17 +82,51 @@ export function AirportSearch({ value, onChange, placeholder, className }: Airpo
     }));
   };
 
+  // Filtering and sorting logic (restored from original)
+  const filterAndSortOptions = useCallback((options: AirportOption[], input: string) => {
+    if (!input) return options;
+    const searchText = parseSearchInput(input);
+    return options
+      .filter(option => {
+        const iata = String(option.value || '').toLowerCase();
+        const label = String(option.label || '').toLowerCase();
+        return iata.includes(searchText) || label.includes(searchText);
+      })
+      .sort((a, b) => {
+        const input = searchText;
+        const iataA = String(a.value || '').toLowerCase();
+        const iataB = String(b.value || '').toLowerCase();
+        let scoreA = 0;
+        let scoreB = 0;
+        if (iataA === input) scoreA = 1000;
+        if (iataB === input) scoreB = 1000;
+        if (iataA.startsWith(input) && iataA !== input) scoreA = 500;
+        if (iataB.startsWith(input) && iataB !== input) scoreB = 500;
+        if (iataA.includes(input) && !iataA.startsWith(input)) scoreA = 200;
+        if (iataB.includes(input) && !iataB.startsWith(input)) scoreB = 200;
+        const labelA = String(a.label || '').toLowerCase();
+        const labelB = String(b.label || '').toLowerCase();
+        if (scoreA === 0 && labelA.includes(input)) scoreA = 10;
+        if (scoreB === 0 && labelB.includes(input)) scoreB = 10;
+        if (scoreA !== scoreB) {
+          return scoreB - scoreA;
+        }
+        return String(iataA).localeCompare(String(iataB));
+      });
+  }, []);
+
   // Load airports from API
   const loadAirports = useCallback(async (searchTerm: string, pageNum: number = 1, append: boolean = false) => {
     setLoading(true);
     try {
       const response = await searchAirports(searchTerm, pageNum, pageSize);
       const newOptions = convertToOptions(response.airports);
+      const sortedOptions = filterAndSortOptions(newOptions, searchTerm);
       
       if (append && pageNum > 1) {
-        setOptions(prev => [...prev, ...newOptions]);
+        setOptions(prev => [...prev, ...sortedOptions]);
       } else {
-        setOptions(newOptions);
+        setOptions(sortedOptions);
       }
       
       setTotal(response.total);
@@ -107,7 +141,7 @@ export function AirportSearch({ value, onChange, placeholder, className }: Airpo
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filterAndSortOptions]);
 
   // Load initial options for selected value
   const loadSelectedOption = useCallback(async (iataCode: string) => {
