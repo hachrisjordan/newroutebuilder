@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Loader2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import airportsData from '@/data/airports.json';
+import { searchAirports } from '@/lib/airports-api';
 
 interface AirportMultiSearchProps {
   value: string[];
@@ -56,14 +56,8 @@ const parseSearchInput = (inputValue: any) => {
   }
 };
 
-const airportOptions: AirportOption[] = (airportsData as any[]).map((airport: any) => ({
-  value: airport.IATA,
-  label: `${airport.IATA} - ${airport.CityName} (${airport.Country})`,
-  data: {
-    city_name: airport.CityName,
-    country: airport.Country,
-  },
-}));
+// Airport options will be loaded dynamically via API
+const airportOptions: AirportOption[] = [];
 
 export function AirportMultiSearch({ value, onChange, placeholder, className }: AirportMultiSearchProps) {
   const [search, setSearch] = useState('');

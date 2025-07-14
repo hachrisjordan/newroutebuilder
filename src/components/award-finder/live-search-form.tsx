@@ -262,7 +262,7 @@ const LiveSearchForm = ({ onSearch }: LiveSearchFormProps) => {
       )}
       {isLoading && (
         <div className="mt-4 w-full">
-          <Progress value={progress.total > 0 ? (progress.done / progress.total) * 100 : 0} className="h-2" barClassName="bg-primary" />
+          <Progress value={progress.total > 0 ? (progress.done / progress.total) * 100 : 0} className="h-2" />
           <div className="text-xs text-muted-foreground mt-1 text-center">
             Searching... {progress.done} / {progress.total}
           </div>
