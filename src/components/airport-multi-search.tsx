@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Loader2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import airportsData from '@/data/airports.json';
+import { searchAirports, AirportOption } from '@/lib/airport-search';
 
 interface AirportMultiSearchProps {
   value: string[];
@@ -13,104 +13,76 @@ interface AirportMultiSearchProps {
   className?: string;
 }
 
-interface AirportOption {
-  value: string;
-  label: string;
-  data: {
-    city_name: string;
-    country: string;
-  };
-}
-
-const parseSearchInput = (inputValue: any) => {
-  if (!inputValue) return '';
-  try {
-    if (typeof inputValue === 'object' && inputValue !== null) {
-      if (inputValue._searchText) {
-        return String(inputValue._searchText).toLowerCase();
-      } else if (inputValue.input) {
-        return String(inputValue.input).toLowerCase();
-      } else if (inputValue.searchText) {
-        return String(inputValue.searchText).toLowerCase();
-      } else if (inputValue.value) {
-        return String(inputValue.value).toLowerCase();
-      } else if (inputValue.searchValue) {
-        return String(inputValue.searchValue).toLowerCase();
-      } else {
-        const str = String(inputValue);
-        if (str.startsWith('{') && str.includes('searchValue')) {
-          try {
-            const parsed = JSON.parse(str);
-            if (parsed.searchValue) {
-              return String(parsed.searchValue).toLowerCase();
-            }
-          } catch (e) {}
-        }
-        return '';
-      }
-    } else {
-      return String(inputValue || '').toLowerCase();
-    }
-  } catch (error) {
-    return '';
-  }
-};
-
-const airportOptions: AirportOption[] = (airportsData as any[]).map((airport: any) => ({
-  value: airport.IATA,
-  label: `${airport.IATA} - ${airport.CityName} (${airport.Country})`,
-  data: {
-    city_name: airport.CityName,
-    country: airport.Country,
-  },
-}));
-
 export function AirportMultiSearch({ value, onChange, placeholder, className }: AirportMultiSearchProps) {
   const [search, setSearch] = useState('');
-  const [options, setOptions] = useState<AirportOption[]>(airportOptions);
+  const [options, setOptions] = useState<AirportOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [selectedOptions, setSelectedOptions] = useState<AirportOption[]>([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const pageSize = 20;
 
-  // Filtering and sorting logic
-  const filterAndSortOptions = useCallback((input: string) => {
-    if (!input) return airportOptions;
-    const searchText = parseSearchInput(input);
-    return airportOptions
-      .filter(option => {
-        const iata = String(option.value || '').toLowerCase();
-        const label = String(option.label || '').toLowerCase();
-        return iata.includes(searchText) || label.includes(searchText);
-      })
-      .sort((a, b) => {
-        const input = searchText;
-        const iataA = String(a.value || '').toLowerCase();
-        const iataB = String(b.value || '').toLowerCase();
-        let scoreA = 0;
-        let scoreB = 0;
-        if (iataA === input) scoreA = 1000;
-        if (iataB === input) scoreB = 1000;
-        if (iataA.startsWith(input) && iataA !== input) scoreA = 500;
-        if (iataB.startsWith(input) && iataB !== input) scoreB = 500;
-        if (iataA.includes(input) && !iataA.startsWith(input)) scoreA = 200;
-        if (iataB.includes(input) && !iataB.startsWith(input)) scoreB = 200;
-        const labelA = String(a.label || '').toLowerCase();
-        const labelB = String(b.label || '').toLowerCase();
-        if (scoreA === 0 && labelA.includes(input)) scoreA = 10;
-        if (scoreB === 0 && labelB.includes(input)) scoreB = 10;
-        if (scoreA !== scoreB) {
-          return scoreB - scoreA;
-        }
-        return String(iataA).localeCompare(String(iataB));
-      });
+  // Fetch airport options
+  const fetchOptions = useCallback(async (searchValue: string, pageNum = 1) => {
+    setLoading(true);
+    try {
+      const { options, total } = await searchAirports({ search: searchValue, page: pageNum, pageSize });
+      setOptions(options);
+      setTotal(total);
+    } catch (e) {
+      setOptions([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  // Fetch on search change
+  useEffect(() => {
+    if (showDropdown) {
+      fetchOptions(search, 1);
+      setPage(1);
+    }
+  }, [search, showDropdown, fetchOptions]);
+
+  // Fetch selected options for tags
+  useEffect(() => {
+    if (value.length > 0) {
+      Promise.all(value.map(code => searchAirports({ search: code, page: 1, pageSize: 1 })))
+        .then(results => {
+          setSelectedOptions(results.map(r => r.options[0]).filter(Boolean));
+        });
+    } else {
+      setSelectedOptions([]);
+    }
+  }, [value]);
 
   // Handle search input
   const handleSearch = (value: string) => {
     setSearch(value);
     setShowDropdown(true);
-    setOptions(filterAndSortOptions(value));
+  };
+
+  // Handle scroll to load more
+  const handleScroll = async (e: React.UIEvent<HTMLDivElement>) => {
+    const { target } = e;
+    if (!target) return;
+    const scrollElement = target as HTMLDivElement;
+    const { scrollTop, scrollHeight, clientHeight } = scrollElement;
+    if (scrollHeight - scrollTop <= clientHeight * 1.5 && !loading && options.length < total) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      setLoading(true);
+      try {
+        const { options: moreOptions } = await searchAirports({ search, page: nextPage, pageSize });
+        setOptions(prev => [...prev, ...moreOptions]);
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   // Handle click outside to close dropdown
@@ -144,11 +116,9 @@ export function AirportMultiSearch({ value, onChange, placeholder, className }: 
   // Handle input focus
   const handleFocus = () => {
     setShowDropdown(true);
-    setOptions(filterAndSortOptions(''));
+    fetchOptions(search, 1);
+    setPage(1);
   };
-
-  // Show selected as tags
-  const selectedOptions = airportOptions.filter(opt => value.includes(opt.value));
 
   return (
     <div className="relative w-full" ref={dropdownRef}>
@@ -203,6 +173,7 @@ export function AirportMultiSearch({ value, onChange, placeholder, className }: 
       {showDropdown && (search || options.length > 0) && (
         <div
           className="absolute z-50 w-full min-w-[250px] mt-1 bg-popover/95 dark:bg-popover/90 rounded-md shadow-lg border dark:border-border/50 max-h-[300px] overflow-y-auto min-w-0"
+          onScroll={handleScroll}
         >
           {loading && (
             <div className="flex items-center justify-center py-4">
