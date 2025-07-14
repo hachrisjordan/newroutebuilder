@@ -11,6 +11,12 @@ export function Footer() {
         </div>
         <div className="flex items-center space-x-4">
           <Link
+            href="/find-airport"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            Find the Airport Game
+          </Link>
+          <Link
             href="/privacy"
             className="text-sm text-muted-foreground hover:text-foreground"
           >

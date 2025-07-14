@@ -11,6 +11,8 @@ const AirportSchema = z.object({
   name: z.string(),
   city_name: z.string(),
   country: z.string(),
+  latitude: z.number(),
+  longitude: z.number(),
 });
 
 export async function GET(request: Request) {
@@ -24,7 +26,7 @@ export async function GET(request: Request) {
 
     let query = supabase
       .from('airports')
-      .select('iata, name, city_name, country', { count: 'exact' })
+      .select('iata, name, city_name, country, latitude, longitude', { count: 'exact' })
       .order('city_name', { ascending: true });
 
     if (search) {
