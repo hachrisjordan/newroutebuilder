@@ -3,6 +3,7 @@ export interface Airport {
   name: string;
   city_name: string;
   country: string;
+  country_code?: string;
   latitude: number;
   longitude: number;
 }

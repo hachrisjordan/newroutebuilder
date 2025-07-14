@@ -24,6 +24,7 @@ interface Airport {
   name: string;
   city_name: string;
   country: string;
+  country_code: string;
   latitude: number;
   longitude: number;
 }
@@ -50,7 +51,7 @@ export async function GET() {
     // Fetch a random international airport from Supabase
     const { data, error } = await supabase
       .from('airports')
-      .select('iata, name, city_name, country, latitude, longitude')
+      .select('iata, name, city_name, country, country_code, latitude, longitude')
       .or('name.ilike.%international%,name.ilike.%intl%')
       .limit(1000);
 

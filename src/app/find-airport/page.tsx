@@ -199,8 +199,11 @@ export default function FindAirportPage() {
           </Badge>
           <span className="text-sm font-medium">{guess.airport.name}</span>
         </div>
-        <div className="text-xs text-muted-foreground mt-1">
-          {guess.airport.city_name}, {guess.airport.country}
+        <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+          <span>{guess.airport.city_name}, {guess.airport.country}</span>
+          {guess.airport.country_code && (
+            <span className={`fi fi-${guess.airport.country_code.toLowerCase()}`} title={guess.airport.country_code} style={{ width: 18, height: 12, minWidth: 18, minHeight: 12, display: 'inline-block', borderRadius: 4, overflow: 'hidden' }}></span>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -295,7 +298,6 @@ export default function FindAirportPage() {
                     onChange={(e) => handleCodeInput(idx, e.target.value)}
                     onKeyDown={(e) => handleCodeKeyDown(idx, e)}
                     className="w-12 h-12 text-2xl text-center font-mono border rounded focus:ring-2 focus:ring-primary bg-background uppercase mx-1"
-                    disabled={!!selectedAirport}
                     autoFocus={idx === 0}
                   />
                 ))}
