@@ -8,6 +8,142 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
+ * Custom deep strict equality check that works in the browser and properly distinguishes
+ * between arrays and objects. Fixes bugs with array vs object comparison, type distinction,
+ * and circular reference handling.
+ * @param a First value to compare
+ * @param b Second value to compare
+ * @returns true if values are deeply equal, false otherwise
+ */
+export function isDeepStrictEqual(a: any, b: any): boolean {
+  return _isDeepStrictEqualWithCache(a, b, new WeakMap());
+}
+
+/**
+ * Internal implementation with circular reference tracking
+ */
+function _isDeepStrictEqualWithCache(a: any, b: any, visited: WeakMap<object, WeakSet<object>>): boolean {
+  // Same reference check
+  if (a === b) return true;
+  
+  // Null/undefined checks
+  if (a == null || b == null) return a === b;
+  
+  // Type checks
+  if (typeof a !== typeof b) return false;
+  
+  // Primitive types (already handled by === above, but keeping for clarity)
+  if (typeof a !== 'object') return a === b;
+  
+  // Circular reference detection
+  if (typeof a === 'object' && typeof b === 'object') {
+    if (!visited.has(a)) {
+      visited.set(a, new WeakSet());
+    }
+    if (visited.get(a)!.has(b)) {
+      return true; // Circular reference detected, assume equal
+    }
+    visited.get(a)!.add(b);
+  }
+  
+  // Array vs Object distinction
+  const aIsArray = Array.isArray(a);
+  const bIsArray = Array.isArray(b);
+  if (aIsArray !== bIsArray) return false;
+  
+  // Constructor/Type distinction for objects
+  if (!aIsArray && a.constructor !== b.constructor) return false;
+  
+  // Handle specific object types
+  
+  // Date objects
+  if (a instanceof Date && b instanceof Date) {
+    return a.getTime() === b.getTime();
+  }
+  
+  // RegExp objects
+  if (a instanceof RegExp && b instanceof RegExp) {
+    return a.toString() === b.toString();
+  }
+  
+  // Error objects
+  if (a instanceof Error && b instanceof Error) {
+    return a.name === b.name && a.message === b.message && a.stack === b.stack;
+  }
+  
+  // Map objects
+  if (a instanceof Map && b instanceof Map) {
+    if (a.size !== b.size) return false;
+    for (const [key, value] of a) {
+      if (!b.has(key) || !_isDeepStrictEqualWithCache(value, b.get(key), visited)) {
+        return false;
+      }
+    }
+    return true;
+  }
+  
+  // Set objects
+  if (a instanceof Set && b instanceof Set) {
+    if (a.size !== b.size) return false;
+    for (const value of a) {
+      let found = false;
+      for (const bValue of b) {
+        if (_isDeepStrictEqualWithCache(value, bValue, visited)) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) return false;
+    }
+    return true;
+  }
+  
+  // ArrayBuffer objects
+  if (a instanceof ArrayBuffer && b instanceof ArrayBuffer) {
+    if (a.byteLength !== b.byteLength) return false;
+    const aView = new Uint8Array(a);
+    const bView = new Uint8Array(b);
+    for (let i = 0; i < aView.length; i++) {
+      if (aView[i] !== bView[i]) return false;
+    }
+    return true;
+  }
+  
+  // TypedArray objects (Uint8Array, Int32Array, etc.)
+  if (ArrayBuffer.isView(a) && ArrayBuffer.isView(b)) {
+    if (a.constructor !== b.constructor) return false;
+    if (a.byteLength !== b.byteLength) return false;
+    const aArray = a as any;
+    const bArray = b as any;
+    if (aArray.length !== bArray.length) return false;
+    for (let i = 0; i < aArray.length; i++) {
+      if (aArray[i] !== bArray[i]) return false;
+    }
+    return true;
+  }
+  
+  // Function objects - only equal if same reference (already handled above)
+  if (typeof a === 'function' && typeof b === 'function') {
+    return false; // Functions are only equal if they're the same reference
+  }
+  
+  // Plain objects and arrays - compare properties
+  const keys1 = Object.keys(a);
+  const keys2 = Object.keys(b);
+  
+  // Length comparison
+  if (keys1.length !== keys2.length) return false;
+  
+  // Recursively check each property
+  for (const key of keys1) {
+    if (!(key in b)) return false;
+    if (!_isDeepStrictEqualWithCache(a[key], b[key], visited)) return false;
+  }
+  
+  return true;
+}
+
+/**
  * Formats ontime status for diverted flights.
  * @param ontime - The original ontime string (e.g., "Diverted to LGW")
  * @returns Formatted string (e.g., "Diverted (LGW)")
