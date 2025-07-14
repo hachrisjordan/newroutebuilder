@@ -68,7 +68,7 @@ export function AirportSearch({ value, onChange, placeholder, className }: Airpo
   const pageSize = 20;
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<NodeJS.Timeout>();
+  const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // Function to convert API response to options format
   const convertToOptions = (airports: any[]): AirportOption[] => {

@@ -64,7 +64,7 @@ export function AirportMultiSearch({ value, onChange, placeholder, className }: 
   const [selectedOptions, setSelectedOptions] = useState<AirportOption[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<NodeJS.Timeout>();
+  const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // Function to convert API response to options format
   const convertToOptions = (airports: any[]): AirportOption[] => {
