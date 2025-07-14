@@ -8,7 +8,7 @@ import EtihadPagination from './etihad-pagination';
 import { Loader2 } from 'lucide-react';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import airportsData from '@/data/airports.json';
-import isEqual from 'lodash.isequal';
+import { isDeepStrictEqual } from 'util';
 
 interface Itinerary {
   id: string;
@@ -124,7 +124,7 @@ export default function EtihadFiltersControls({
     const missingIatas = Array.from(allIatas).filter(iata => !cityCache.current[iata]);
     if (missingIatas.length === 0) {
       // Only update state if changed
-      if (!isEqual(iataToCity, cityCache.current)) {
+      if (!isDeepStrictEqual(iataToCity, cityCache.current)) {
         setIataToCity({ ...cityCache.current });
       }
       return;
@@ -146,12 +146,12 @@ export default function EtihadFiltersControls({
           }
         });
         // Only update state if changed
-        if (updated && !isEqual(iataToCity, cityCache.current)) {
+        if (updated && !isDeepStrictEqual(iataToCity, cityCache.current)) {
           setIataToCity({ ...cityCache.current });
         }
       } catch (err) {
         // fallback: just use what we have
-        if (!isEqual(iataToCity, cityCache.current)) {
+        if (!isDeepStrictEqual(iataToCity, cityCache.current)) {
           setIataToCity({ ...cityCache.current });
         }
       } finally {
