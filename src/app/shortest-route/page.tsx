@@ -377,6 +377,31 @@ export default function ShortestRoutePage() {
           <div className="space-y-2">
             <h3 className="font-medium">Your Guesses ({guesses.length}/{challenge.tries})</h3>
             {guesses.map((g, i) => {
+              // Compute feedback for each hub
+              const correctHubs = challenge.shortestRoute.slice(1, -1); // [hub1, hub2]
+              // Track which correct hubs have been matched (for yellow logic)
+              const matched = [false, false];
+              // First pass: mark greens
+              const feedback: ("green" | "yellow" | "red")[] = g.hubs.map((hub, idx) => {
+                if (hub === correctHubs[idx]) {
+                  matched[idx] = true;
+                  return "green";
+                }
+                return undefined as unknown as "green" | "yellow" | "red";
+              });
+              // Second pass: mark yellows
+              g.hubs.forEach((hub, idx) => {
+                if (feedback[idx] === undefined) {
+                  // Find if this hub exists in correctHubs at a different index and not already matched
+                  const otherIdx = correctHubs.findIndex((h, j) => h === hub && !matched[j] && j !== idx);
+                  if (otherIdx !== -1) {
+                    matched[otherIdx] = true;
+                    feedback[idx] = "yellow";
+                  } else {
+                    feedback[idx] = "red";
+                  }
+                }
+              });
               return (
                 <div key={i} className="flex items-center gap-2 p-2 border rounded-lg bg-muted/50">
                   <div className="flex-1 flex gap-2 items-center">
@@ -387,9 +412,13 @@ export default function ShortestRoutePage() {
                   {g.isValid ? (
                     <div className="flex items-center gap-2">
                       {g.hubs.map((hub, idx) =>
-                        challenge.shortestRoutes.some((route) => route[idx] === hub)
-                          ? <Check key={idx} className="w-5 h-5 text-green-600" />
-                          : <X key={idx} className="w-5 h-5 text-red-500" />
+                        feedback[idx] === 'green' ? (
+                          <Check key={idx} className="w-5 h-5 text-green-600" />
+                        ) : feedback[idx] === 'yellow' ? (
+                          <span key={idx} className="w-5 h-5 text-yellow-500 text-lg">🟨</span>
+                        ) : (
+                          <X key={idx} className="w-5 h-5 text-red-600" />
+                        )
                       )}
                       <span className="text-sm font-medium">{g.totalDistance} mi</span>
                       <span className="text-xs text-muted-foreground">
