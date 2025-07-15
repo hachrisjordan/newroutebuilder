@@ -18,28 +18,49 @@ export interface GameGuess {
 // Calculate distance between two airports using Haversine formula
 export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Earth's radius in kilometers
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
+  const toRad = (x: number) => x * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+
+  // Compute both eastward and westward longitude differences
+  const dLonEast = toRad(((lon2 - lon1 + 360) % 360));
+  const dLonWest = toRad(((lon1 - lon2 + 360) % 360));
+
+  // Haversine for eastward
+  const aEast =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLonEast / 2) * Math.sin(dLonEast / 2);
+  const cEast = 2 * Math.atan2(Math.sqrt(aEast), Math.sqrt(1 - aEast));
+  const distEast = R * cEast;
+
+  // Haversine for westward
+  const aWest =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLonWest / 2) * Math.sin(dLonWest / 2);
+  const cWest = 2 * Math.atan2(Math.sqrt(aWest), Math.sqrt(1 - aWest));
+  const distWest = R * cWest;
+
+  // Return the shorter distance
+  return Math.min(distEast, distWest);
 }
 
-// Determine direction between two airports
-export function getDirection(lat1: number, lon1: number, lat2: number, lon2: number): { direction: string; icon: string } {
+// Determine direction between two airports, matching the shortest path (east or west)
+export function getDirection(lat1: number, lon1: number, lat2: number, lon2: number, useEast: boolean): { direction: string; icon: string } {
+  const toRad = (x: number) => x * Math.PI / 180;
+  const toDeg = (x: number) => x * 180 / Math.PI;
   const dLat = lat2 - lat1;
-  const dLon = lon2 - lon1;
-  
-  // Calculate angle in degrees
-  const angle = Math.atan2(dLon, dLat) * 180 / Math.PI;
-  
-  // Normalize angle to 0-360
+  let dLon;
+  if (useEast) {
+    dLon = ((lon2 - lon1 + 360) % 360);
+    if (dLon > 180) dLon -= 360; // Normalize to [-180, 180]
+  } else {
+    dLon = -((lon1 - lon2 + 360) % 360);
+    if (dLon < -180) dLon += 360;
+  }
+  // Calculate angle in degrees (bearing from guessed to target)
+  const angle = toDeg(Math.atan2(toRad(dLon), toRad(dLat)));
   const normalizedAngle = (angle + 360) % 360;
-  
-  // Map to 8 directions
   const directions = [
     { direction: 'N', icon: '⬆️' },    // 0°
     { direction: 'NE', icon: '↗️' },   // 45°
@@ -50,30 +71,42 @@ export function getDirection(lat1: number, lon1: number, lat2: number, lon2: num
     { direction: 'W', icon: '⬅️' },    // 270°
     { direction: 'NW', icon: '↖️' }    // 315°
   ];
-  
   const index = Math.round(normalizedAngle / 45) % 8;
   return directions[index];
 }
 
-// Process a guess and return distance and direction
+// Process a guess and return distance and direction (matching shortest path)
 export function processGuess(targetAirport: Airport, guessedAirport: Airport): GameGuess {
-  const distance = calculateDistance(
-    targetAirport.latitude,
-    targetAirport.longitude,
-    guessedAirport.latitude,
-    guessedAirport.longitude
-  );
-  
-  const { direction, icon } = getDirection(
-    guessedAirport.latitude,
-    guessedAirport.longitude,
-    targetAirport.latitude,
-    targetAirport.longitude
-  );
-  
+  const lat1 = targetAirport.latitude;
+  const lon1 = targetAirport.longitude;
+  const lat2 = guessedAirport.latitude;
+  const lon2 = guessedAirport.longitude;
+  const toRad = (x: number) => x * Math.PI / 180;
+  const dLat = toRad(lat1 - lat2);
+  // Compute both eastward and westward longitude differences
+  const dLonEast = toRad(((lon1 - lon2 + 360) % 360));
+  const dLonWest = toRad(((lon2 - lon1 + 360) % 360));
+  // Haversine for eastward
+  const aEast =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat2)) * Math.cos(toRad(lat1)) *
+    Math.sin(dLonEast / 2) * Math.sin(dLonEast / 2);
+  const cEast = 2 * Math.atan2(Math.sqrt(aEast), Math.sqrt(1 - aEast));
+  const distEast = 6371 * cEast;
+  // Haversine for westward
+  const aWest =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat2)) * Math.cos(toRad(lat1)) *
+    Math.sin(dLonWest / 2) * Math.sin(dLonWest / 2);
+  const cWest = 2 * Math.atan2(Math.sqrt(aWest), Math.sqrt(1 - aWest));
+  const distWest = 6371 * cWest;
+  // Use the shorter path
+  const useEast = distEast <= distWest;
+  const distance = Math.round(Math.min(distEast, distWest));
+  const { direction, icon } = getDirection(lat2, lon2, lat1, lon1, useEast);
   return {
     airport: guessedAirport,
-    distance: Math.round(distance),
+    distance,
     direction,
     directionIcon: icon
   };

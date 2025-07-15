@@ -163,19 +163,37 @@ export default function ShortestRoutePage() {
         )
         .join('\n');
     } else {
-      // Daily mode: only show emoji and result, not airport codes
+      // Daily mode: show emoji squares for each hub (green, yellow, red)
       const correctHubs = challenge.shortestRoute.slice(1, -1);
       result = guesses
-        .map((g) =>
-          g.hubs
-            .map((hub, idx) =>
-              hub === correctHubs[idx] ? '🟩' : '🟥'
-            )
-            .join('') +
-          (g.isValid
-            ? ` ${g.totalDistance} mi ${g.differenceFromShortest === 0 ? '0%' : (g.differenceFromShortest !== undefined ? `+${((g.differenceFromShortest / challenge.shortestDistance) * 100).toFixed(1)}%` : '')}`
-            : ` ${g.error || ''}`)
-        )
+        .map((g) => {
+          // Compute feedback for each hub (same as UI)
+          const matched = [false, false];
+          const feedback: ("green" | "yellow" | "red")[] = g.hubs.map((hub, idx) => {
+            if (hub === correctHubs[idx]) {
+              matched[idx] = true;
+              return "green";
+            }
+            return undefined as unknown as "green" | "yellow" | "red";
+          });
+          g.hubs.forEach((hub, idx) => {
+            if (feedback[idx] === undefined) {
+              const otherIdx = correctHubs.findIndex((h, j) => h === hub && !matched[j] && j !== idx);
+              if (otherIdx !== -1) {
+                matched[otherIdx] = true;
+                feedback[idx] = "yellow";
+              } else {
+                feedback[idx] = "red";
+              }
+            }
+          });
+          return (
+            feedback.map(f => f === 'green' ? '🟩' : f === 'yellow' ? '🟨' : '🟥').join('') +
+            (g.isValid
+              ? ` ${g.totalDistance} mi ${g.differenceFromShortest === 0 ? '0%' : (g.differenceFromShortest !== undefined ? `+${((g.differenceFromShortest / challenge.shortestDistance) * 100).toFixed(1)}%` : '')}`
+              : ` ${g.error || ''}`)
+          );
+        })
         .join('\n');
     }
     result += '\n\nTry Shortest Route Game at https://bbairtools.com/shortest-route';
