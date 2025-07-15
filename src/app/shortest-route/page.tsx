@@ -11,16 +11,15 @@ const MODES = [
   { label: 'Daily', value: 'daily' },
   { label: 'Practice', value: 'practice' },
 ];
-const STOP_MODES = [
-  { label: '1-stop', value: 1 },
-  { label: '2-stop', value: 2 },
-];
+// Remove STOP_MODES and stopCount selector
+// Always use 2 stops
 
 type Mode = 'daily' | 'practice';
 
 export default function ShortestRoutePage() {
   const [mode, setMode] = useState<Mode>('daily');
-  const [stopCount, setStopCount] = useState<1 | 2>(2);
+  // Remove stopCount from state, always use 2
+  const stopCount = 2;
   const [challenge, setChallenge] = useState<ShortestRouteChallenge | null>(null);
   const [guesses, setGuesses] = useState<ShortestRouteGuess[]>([]);
   // Instead of a single box per hub, use 3 boxes per hub (like Find Airport)
@@ -223,31 +222,21 @@ export default function ShortestRoutePage() {
   const isReadyToSubmit = () => {
     if (!challenge) return false;
     // All boxes filled
-    const allFilled = Array.from({ length: challenge.stopCount }).every((_, hubIdx) =>
-      hubInputs[hubIdx].every((c) => c.length === 1)
-    );
+    const allFilled = hubInputs.every((arr) => arr.every((c) => c.length === 1));
     if (!allFilled) return false;
     // All hubs are valid airport codes
-    const allValid = Array.from({ length: challenge.stopCount }).every((_, hubIdx) => {
-      const code = hubInputs[hubIdx].join('');
-      return airportsCache[code];
-    });
+    const allValid = hubInputs.every((arr) => airportsCache[arr.join('')]);
     return allValid;
   };
   const handleSubmit = async () => {
     if (!challenge) return;
     // Validate hubs
-    const invalidIdx = Array.from({ length: challenge.stopCount }).findIndex((_, hubIdx) => {
-      const code = hubInputs[hubIdx].join('');
-      return !airportsCache[code];
-    });
+    const invalidIdx = hubInputs.findIndex((arr) => !airportsCache[arr.join('')]);
     if (invalidIdx !== -1) {
       setError('Not a valid airport code.');
       return;
     }
-    const hubs = Array.from({ length: challenge.stopCount }).map((_, hubIdx) =>
-      hubInputs[hubIdx].join('')
-    );
+    const hubs = hubInputs.map((arr) => arr.join(''));
     const res = await fetch('/api/shortest-route', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -258,7 +247,11 @@ export default function ShortestRoutePage() {
     setGuesses((prev) => [...prev, guess]);
     setHubInputs([['', '', ''], ['', '', '']]);
     setError(guess.error || '');
-    if (guess.isValid && guess.differenceFromShortest === 0) {
+    // Win if hubs match any shortest route
+    const isWin = challenge.shortestRoutes.some((route) =>
+      route.every((hub, idx) => hub === hubs[idx])
+    );
+    if (guess.isValid && isWin && guess.differenceFromShortest === 0) {
       setGameStatus('won');
     } else if (guesses.length + 1 >= challenge.tries) {
       setGameStatus('lost');
@@ -301,22 +294,7 @@ export default function ShortestRoutePage() {
             </label>
           ))}
         </fieldset>
-        <fieldset className="flex gap-4 items-center" aria-label="Stop Count">
-          {STOP_MODES.map((s) => (
-            <label key={s.value} className="flex items-center gap-1 cursor-pointer select-none">
-              <input
-                type="radio"
-                name="stop-mode"
-                value={s.value}
-                checked={stopCount === s.value}
-                onChange={() => setStopCount(s.value as 1 | 2)}
-                className="accent-primary h-4 w-4 border-gray-300 focus:ring-primary"
-                aria-checked={stopCount === s.value}
-              />
-              <span className={`text-sm font-medium ${stopCount === s.value ? 'text-primary' : 'text-muted-foreground'}`}>{s.label}</span>
-            </label>
-          ))}
-        </fieldset>
+        {/* Remove stopCount selector from UI */}
       </div>
       <Card>
         <CardHeader>
@@ -399,7 +377,6 @@ export default function ShortestRoutePage() {
           <div className="space-y-2">
             <h3 className="font-medium">Your Guesses ({guesses.length}/{challenge.tries})</h3>
             {guesses.map((g, i) => {
-              const correctHubs = challenge.shortestRoute.slice(1, -1); // exclude origin and destination
               return (
                 <div key={i} className="flex items-center gap-2 p-2 border rounded-lg bg-muted/50">
                   <div className="flex-1 flex gap-2 items-center">
@@ -409,13 +386,10 @@ export default function ShortestRoutePage() {
                   </div>
                   {g.isValid ? (
                     <div className="flex items-center gap-2">
-                      {/* Icons for each hub */}
                       {g.hubs.map((hub, idx) =>
-                        hub === correctHubs[idx] ? (
-                          <Check key={idx} className="w-5 h-5 text-green-600" />
-                        ) : (
-                          <X key={idx} className="w-5 h-5 text-red-500" />
-                        )
+                        challenge.shortestRoutes.some((route) => route[idx] === hub)
+                          ? <Check key={idx} className="w-5 h-5 text-green-600" />
+                          : <X key={idx} className="w-5 h-5 text-red-500" />
                       )}
                       <span className="text-sm font-medium">{g.totalDistance} mi</span>
                       <span className="text-xs text-muted-foreground">

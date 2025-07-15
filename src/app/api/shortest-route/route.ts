@@ -52,7 +52,7 @@ async function getRandomChallengeFromDB(stopCount: 1 | 2, mode: 'daily' | 'pract
     const candidates = Object.values(pairCounts).filter((row) => row.count > 10);
     if (candidates.length === 0) continue;
     const { origin, destination } = getRandomElement(candidates);
-    // Find the shortest route for this combo
+    // Find all shortest routes for this combo
     const { data: routes, error: routeErr } = await supabase
       .from('path')
       .select('*')
@@ -60,16 +60,22 @@ async function getRandomChallengeFromDB(stopCount: 1 | 2, mode: 'daily' | 'pract
       .eq('type', type)
       .eq('origin', origin)
       .eq('destination', destination)
-      .order('totalDistance', { ascending: true })
-      .limit(1);
+      .order('totalDistance', { ascending: true });
     if (routeErr || !routes || routes.length === 0) continue;
-    const shortest = routes[0];
+    const minDistance = routes[0].totalDistance;
+    const shortestRoutes = routes.filter(r => r.totalDistance === minDistance);
     const shortestRoute = [origin];
-    if (stopCount === 1 && shortest.h1) shortestRoute.push(shortest.h1);
-    if (stopCount === 2 && shortest.h1 && shortest.h2) {
-      shortestRoute.push(shortest.h1, shortest.h2);
+    if (stopCount === 1 && shortestRoutes[0].h1) shortestRoute.push(shortestRoutes[0].h1);
+    if (stopCount === 2 && shortestRoutes[0].h1 && shortestRoutes[0].h2) {
+      shortestRoute.push(shortestRoutes[0].h1, shortestRoutes[0].h2);
     }
     shortestRoute.push(destination);
+    // Collect all shortest hub sequences
+    const allShortestHubSeqs = shortestRoutes.map(r =>
+      stopCount === 1
+        ? [r.h1]
+        : [r.h1, r.h2]
+    );
     return {
       id: `${origin}-${destination}-${alliance}-${stopCount}`,
       origin,
@@ -77,7 +83,8 @@ async function getRandomChallengeFromDB(stopCount: 1 | 2, mode: 'daily' | 'pract
       alliance,
       stopCount: stopCount as 1 | 2,
       shortestRoute,
-      shortestDistance: shortest.totalDistance,
+      shortestRoutes: allShortestHubSeqs, // <-- new field
+      shortestDistance: minDistance,
       tries: stopCount === 1 ? 6 : 8,
       mode,
     } satisfies ShortestRouteChallenge;
@@ -164,7 +171,7 @@ export async function POST(req: NextRequest) {
     guess = {
       hubs,
       isValid: false,
-      error: 'No such route for this alliance',
+      error: 'Invalid route',
     };
     return NextResponse.json({ guess });
   }

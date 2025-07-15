@@ -10,6 +10,7 @@ export interface ShortestRouteChallenge {
   alliance: Alliance;
   stopCount: 1 | 2;
   shortestRoute: string[]; // [origin, hub1, destination] or [origin, hub1, hub2, destination]
+  shortestRoutes: string[][]; // all shortest hub sequences (hubs only)
   shortestDistance: number;
   tries: number;
   mode: 'daily' | 'practice';
