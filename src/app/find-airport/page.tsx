@@ -179,6 +179,13 @@ export default function FindAirportPage() {
     if (e.key === 'Backspace' && !codeLetters[idx] && idx > 0) {
       inputRefs[idx - 1].current?.focus();
     }
+    // Submit on Enter/Return if all 3 letters are filled and code is valid
+    if ((e.key === 'Enter' || e.key === 'Return') && codeLetters.every((l) => l.length === 1)) {
+      const code = codeLetters.join('').toUpperCase();
+      if (airportsCache[code]) {
+        handleSubmit();
+      }
+    }
   };
 
   const handleSubmit = () => {

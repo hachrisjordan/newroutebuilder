@@ -96,16 +96,16 @@ export function getGameStatus(guesses: GameGuess[]): 'playing' | 'won' | 'lost' 
   return 'playing';
 }
 
-// Map direction to Discord-style icon
-const directionToIcon: Record<string, string> = {
-  N: ':arrow_up:',
-  NE: ':arrow_upper_right:',
-  E: ':arrow_right:',
-  SE: ':arrow_lower_right:',
-  S: ':arrow_down:',
-  SW: ':arrow_lower_left:',
-  W: ':arrow_left:',
-  NW: ':arrow_upper_left:',
+// Map direction to emoji
+const directionToEmoji: Record<string, string> = {
+  N: '⬆️',
+  NE: '↗️',
+  E: '➡️',
+  SE: '↘️',
+  S: '⬇️',
+  SW: '↙️',
+  W: '⬅️',
+  NW: '↖️',
 };
 
 // Format distance for display (full value in miles, with thousands separator)
@@ -116,23 +116,23 @@ export function formatDistance(distance: number): string {
   return `${miles.toLocaleString()} mi`;
 }
 
-// Build share string for guesses with aligned columns
+// Build share string for guesses with aligned columns (using emoji)
 export function buildShareString(guesses: GameGuess[]): string {
   // Get max distance width
   const distStrings = guesses.map((guess) => guess.distance === 0 ? '' : formatDistance(guess.distance));
   const maxDistLen = Math.max(...distStrings.map(s => s.trim().length), 7);
   // Get max icon+dir width
-  const iconDirStrings = guesses.map((guess) => guess.distance === 0 ? '' : `${directionToIcon[guess.direction] || ''}${guess.direction}`);
-  const maxIconDirLen = Math.max(...iconDirStrings.map(s => s.length), 16);
+  const iconDirStrings = guesses.map((guess) => guess.distance === 0 ? '' : `${directionToEmoji[guess.direction] || ''}${guess.direction}`);
+  const maxIconDirLen = Math.max(...iconDirStrings.map(s => s.length), 4);
 
   return guesses
     .map((guess) => {
       if (guess.distance === 0) {
         // Pad left so green squares align with icon column
-        return ' '.repeat(maxDistLen + 1) + ':green_square::green_square::green_square:';
+        return ' '.repeat(maxDistLen + 1) + '🟩🟩🟩';
       }
       const dist = formatDistance(guess.distance).trim().padEnd(maxDistLen, ' ');
-      const icon = directionToIcon[guess.direction] || '';
+      const icon = directionToEmoji[guess.direction] || '';
       const iconDir = (icon + guess.direction).padEnd(maxIconDirLen, ' ');
       return `${dist} ${iconDir}`;
     })
