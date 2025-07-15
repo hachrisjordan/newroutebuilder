@@ -248,10 +248,7 @@ export default function ShortestRoutePage() {
     setHubInputs([['', '', ''], ['', '', '']]);
     setError(guess.error || '');
     // Win if hubs match any shortest route
-    const isWin = challenge.shortestRoutes.some((route) =>
-      route.every((hub, idx) => hub === hubs[idx])
-    );
-    if (guess.isValid && isWin && guess.differenceFromShortest === 0) {
+    if (guess.isValid && guess.differenceFromShortest === 0) {
       setGameStatus('won');
     } else if (guesses.length + 1 >= challenge.tries) {
       setGameStatus('lost');
