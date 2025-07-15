@@ -98,8 +98,33 @@ export default function FindAirportPage() {
         throw new Error('Failed to fetch target airport');
       }
       const data = await response.json();
-      setTargetAirport(data.airport);
+      const backendAirport = data.airport;
+      setTargetAirport(backendAirport);
       setGameStatus('playing');
+
+      // --- True reset logic ---
+      const today = new Date().toISOString().split('T')[0];
+      const localKey = `airport-game-${backendAirport.iata}-${today}`;
+      const allKeys = Object.keys(localStorage);
+      // Find any airport-game-*-{today} key that does not match backendAirport.iata
+      allKeys.forEach((key) => {
+        if (key.startsWith('airport-game-') && key.endsWith(today) && key !== localKey) {
+          localStorage.removeItem(key);
+        }
+      });
+      // If the current localStorage key exists but is for a different airport, clear it
+      const cached = localStorage.getItem(localKey);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (parsed && parsed.guesses && parsed.guesses[0] && parsed.guesses[0].airport && parsed.guesses[0].airport.iata !== backendAirport.iata) {
+            localStorage.removeItem(localKey);
+            setGuesses([]);
+            setCodeLetters(['', '', '']);
+          }
+        } catch {}
+      }
+      // --- End true reset logic ---
     } catch (err) {
       setError('Failed to load the game. Please try again.');
       setGameStatus('playing'); // Allow retry
