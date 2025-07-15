@@ -7,17 +7,17 @@ export interface ShortestRouteChallenge {
   id: string;
   origin: string; // IATA
   destination: string; // IATA
-  alliance: Alliance;
-  stopCount: 2;
-  shortestRoute: string[]; // [origin, hub1, hub2, destination]
-  shortestRoutes: string[][]; // all shortest hub sequences (hubs only)
+  alliance?: Alliance; // Only for 2-stop
+  stopCount: 1 | 2;
+  shortestRoute: string[]; // [origin, hub, destination] or [origin, hub1, hub2, destination]
+  shortestRoutes: string[][]; // all shortest hub sequences (hubs only): [[hub]] or [[hub1, hub2]]
   shortestDistance: number;
   tries: number;
   mode: 'daily' | 'practice';
 }
 
 export interface ShortestRouteGuess {
-  hubs: string[]; // [hub1, hub2]
+  hubs: string[]; // [hub] or [hub1, hub2]
   isValid: boolean;
   totalDistance?: number;
   differenceFromShortest?: number;
@@ -25,7 +25,7 @@ export interface ShortestRouteGuess {
 }
 
 export const ShortestRouteGuessSchema = z.object({
-  hubs: z.array(z.string().length(3)).length(2),
+  hubs: z.array(z.string().length(3)).min(1).max(2),
 });
 
 export interface PathRow {

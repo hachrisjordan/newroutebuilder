@@ -11,21 +11,21 @@ const MODES = [
   { label: 'Daily', value: 'daily' },
   { label: 'Practice', value: 'practice' },
 ];
-// Remove STOP_MODES and stopCount selector
-// Always use 2 stops
+const STOP_MODES = [
+  { label: '1 stop', value: 1 },
+  { label: '2 stops', value: 2 },
+];
 
 type Mode = 'daily' | 'practice';
 
 export default function ShortestRoutePage() {
   const [mode, setMode] = useState<Mode>('daily');
-  // Remove stopCount from state, always use 2
-  const stopCount = 2;
+  const [stopCount, setStopCount] = useState<1 | 2>(2);
   const [challenge, setChallenge] = useState<ShortestRouteChallenge | null>(null);
   const [guesses, setGuesses] = useState<ShortestRouteGuess[]>([]);
-  // Instead of a single box per hub, use 3 boxes per hub (like Find Airport)
   const [hubInputs, setHubInputs] = useState([
     ['', '', ''], // hub1
-    ['', '', ''], // hub2
+    ['', '', ''], // hub2 (may be unused for 1-stop)
   ]);
   const [error, setError] = useState('');
   const [gameStatus, setGameStatus] = useState<'loading' | 'playing' | 'won' | 'lost'>('loading');
@@ -87,7 +87,10 @@ export default function ShortestRoutePage() {
   useEffect(() => {
     fetchChallenge();
     setGuesses([]);
-    setHubInputs([['', '', ''], ['', '', '']]);
+    setHubInputs([
+      ['', '', ''],
+      ['', '', ''],
+    ]);
     setGameStatus('loading');
     setError('');
   }, [mode, stopCount]);
@@ -139,7 +142,10 @@ export default function ShortestRoutePage() {
   const fetchChallenge = async () => {
     setGameStatus('loading');
     setGuesses([]);
-    setHubInputs([['', '', ''], ['', '', '']]);
+    setHubInputs([
+      ['', '', ''],
+      ['', '', ''],
+    ]);
     setError('');
     const params = new URLSearchParams({ mode, stopCount: String(stopCount) });
     const res = await fetch(`/api/shortest-route?${params}`);
@@ -203,7 +209,10 @@ export default function ShortestRoutePage() {
   };
   const handleNewPracticeGame = () => {
     setGuesses([]);
-    setHubInputs([['', '', ''], ['', '', '']]);
+    setHubInputs([
+      ['', '', ''],
+      ['', '', ''],
+    ]);
     setError('');
     setGameStatus('loading');
     fetchChallenge();
@@ -239,21 +248,21 @@ export default function ShortestRoutePage() {
   };
   const isReadyToSubmit = () => {
     if (!challenge) return false;
-    // All boxes filled
-    const allFilled = hubInputs.every((arr) => arr.every((c) => c.length === 1));
+    // All boxes filled for the current stopCount
+    const allFilled = Array.from({ length: challenge.stopCount }).every((_, i) => hubInputs[i].every((c) => c.length === 1));
     if (!allFilled) return false;
     // All hubs are valid airport codes
-    const allValid = hubInputs.every((arr) => airportsCache[arr.join('')]);
+    const allValid = Array.from({ length: challenge.stopCount }).every((_, i) => airportsCache[hubInputs[i].join('')]);
     return allValid;
   };
   const handleSubmit = async () => {
     if (!challenge) return;
     // Validate hubs
-    const invalidIdx = hubInputs.findIndex((arr) => !airportsCache[arr.join('')]);
+    const invalidIdx = Array.from({ length: challenge.stopCount }).findIndex((_, i) => !airportsCache[hubInputs[i].join('')]);
     if (invalidIdx !== -1) {
       return;
     }
-    const hubs = hubInputs.map((arr) => arr.join(''));
+    const hubs = Array.from({ length: challenge.stopCount }).map((_, i) => hubInputs[i].join(''));
     const res = await fetch('/api/shortest-route', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -267,7 +276,10 @@ export default function ShortestRoutePage() {
       return;
     }
     setGuesses((prev) => [...prev, guess]);
-    setHubInputs([['', '', ''], ['', '', '']]);
+    setHubInputs([
+      ['', '', ''],
+      ['', '', ''],
+    ]);
     // Win if minimal
     if (guess.differenceFromShortest === 0) {
       setGameStatus('won');
@@ -312,14 +324,33 @@ export default function ShortestRoutePage() {
             </label>
           ))}
         </fieldset>
-        {/* Remove stopCount selector from UI */}
+        <fieldset className="flex gap-4 items-center" aria-label="Stop Count">
+          {STOP_MODES.map((m) => (
+            <label key={m.value} className="flex items-center gap-1 cursor-pointer select-none">
+              <input
+                type="radio"
+                name="stop-count"
+                value={m.value}
+                checked={stopCount === m.value}
+                onChange={() => setStopCount(m.value as 1 | 2)}
+                className="accent-primary h-4 w-4 border-gray-300 focus:ring-primary"
+                aria-checked={stopCount === m.value}
+              />
+              <span className={`text-sm font-medium ${stopCount === m.value ? 'text-primary' : 'text-muted-foreground'}`}>{m.label}</span>
+            </label>
+          ))}
+        </fieldset>
       </div>
       <Card>
         <CardHeader>
           <CardTitle className="text-center">Shortest Route</CardTitle>
           <p className="text-center text-muted-foreground">
-            Find the shortest {challenge.stopCount}-stop route from <Badge>{challenge.origin}</Badge> to <Badge>{challenge.destination}</Badge> on <Badge>{ALLIANCE_LABELS[challenge.alliance] || challenge.alliance}</Badge>.
-          </p>
+            {challenge.stopCount === 1
+              ? <>Find the shortest 1-stop route from <Badge>{challenge.origin}</Badge> to <Badge>{challenge.destination}</Badge> on the same alliance.</>
+              : <>Find the shortest 2-stop route from <Badge>{challenge.origin}</Badge> to <Badge>{challenge.destination}</Badge>
+                  {challenge.alliance ? <> on <Badge>{ALLIANCE_LABELS[challenge.alliance] || challenge.alliance}</Badge></> : null}.</>
+              }
+            </p>
         </CardHeader>
         <CardContent className="space-y-6">
           {error && (
@@ -333,6 +364,24 @@ export default function ShortestRoutePage() {
               <p className="text-sm text-muted-foreground mt-1">
                 Route: {[challenge.origin, ...challenge.shortestRoute.slice(1, -1), challenge.destination].join(' - ')} ({challenge.shortestDistance} mi)
               </p>
+              {/* Show all shortest routes if more than one */}
+              {Array.isArray(challenge.shortestRoutes) && challenge.shortestRoutes.length > 1 && (
+                <div className="mt-3 text-left">
+                  <p className="font-semibold text-green-700 mb-1 text-center">All shortest routes ({challenge.shortestRoutes.length}):</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    {challenge.shortestRoutes.map((hubs, idx) => {
+                      const routeStr = [challenge.origin, ...hubs, challenge.destination].join(' - ');
+                      // Highlight if this is the route the user found
+                      const userFound = guesses.some(g => g.differenceFromShortest === 0 && g.hubs[0] === hubs[0] && g.hubs[1] === hubs[1]);
+                      return (
+                        <li key={idx} className={userFound ? 'font-bold text-green-800' : ''}>
+                          {routeStr} {userFound && <span className="ml-1">(your route)</span>}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
           {gameStatus === 'lost' && (
@@ -341,6 +390,24 @@ export default function ShortestRoutePage() {
               <p className="text-sm text-muted-foreground mt-1">
                 Shortest route was: {[challenge.origin, ...challenge.shortestRoute.slice(1, -1), challenge.destination].join(' - ')} ({challenge.shortestDistance} mi)
               </p>
+              {/* Show all shortest routes if more than one */}
+              {Array.isArray(challenge.shortestRoutes) && challenge.shortestRoutes.length > 1 && (
+                <div className="mt-3 text-left">
+                  <p className="font-semibold text-red-700 mb-1 text-center">All shortest routes ({challenge.shortestRoutes.length}):</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    {challenge.shortestRoutes.map((hubs, idx) => {
+                      const routeStr = [challenge.origin, ...hubs, challenge.destination].join(' - ');
+                      // Highlight if the user guessed this route
+                      const userFound = guesses.some(g => g.differenceFromShortest === 0 && g.hubs[0] === hubs[0] && g.hubs[1] === hubs[1]);
+                      return (
+                        <li key={idx} className={userFound ? 'font-bold text-green-800' : ''}>
+                          {routeStr} {userFound && <span className="ml-1">(your route)</span>}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
           {gameStatus === 'playing' && (
