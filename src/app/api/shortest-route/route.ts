@@ -10,7 +10,7 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const alliances: Alliance[] = ['ST', 'SA', 'OW'];
-const STOP_TYPES = { 1: 'A-H-B', 2: 'A-H-H-B' } as const;
+const STOP_TYPES = { 2: 'A-H-H-B' } as const;
 
 // Valkey setup
 let valkey: any = null;
@@ -28,12 +28,12 @@ function getRandomElement<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-// Helper: Get all (origin, destination, alliance, stopCount) combos with >10 routes
-async function getRandomChallengeFromDB(stopCount: 1 | 2, mode: 'daily' | 'practice') {
+// Helper: Get all (origin, destination, alliance) combos with >10 routes for 2-stop only
+async function getRandomChallengeFromDB(mode: 'daily' | 'practice') {
   for (let attempt = 0; attempt < 10; attempt++) {
     const alliance = getRandomElement(alliances);
-    const type = STOP_TYPES[stopCount];
-    // Fetch all paths for this alliance and stopCount
+    const type = STOP_TYPES[2];
+    // Fetch all paths for this alliance and 2-stop
     const { data, error } = await supabase
       .from('path')
       .select('origin, destination, id')
@@ -64,28 +64,19 @@ async function getRandomChallengeFromDB(stopCount: 1 | 2, mode: 'daily' | 'pract
     if (routeErr || !routes || routes.length === 0) continue;
     const minDistance = routes[0].totalDistance;
     const shortestRoutes = routes.filter(r => r.totalDistance === minDistance);
-    const shortestRoute = [origin];
-    if (stopCount === 1 && shortestRoutes[0].h1) shortestRoute.push(shortestRoutes[0].h1);
-    if (stopCount === 2 && shortestRoutes[0].h1 && shortestRoutes[0].h2) {
-      shortestRoute.push(shortestRoutes[0].h1, shortestRoutes[0].h2);
-    }
-    shortestRoute.push(destination);
+    const shortestRoute = [origin, shortestRoutes[0].h1, shortestRoutes[0].h2, destination];
     // Collect all shortest hub sequences
-    const allShortestHubSeqs = shortestRoutes.map(r =>
-      stopCount === 1
-        ? [r.h1]
-        : [r.h1, r.h2]
-    );
+    const allShortestHubSeqs = shortestRoutes.map(r => [r.h1, r.h2]);
     return {
-      id: `${origin}-${destination}-${alliance}-${stopCount}`,
+      id: `${origin}-${destination}-${alliance}-2`,
       origin,
       destination,
       alliance,
-      stopCount: stopCount as 1 | 2,
+      stopCount: 2,
       shortestRoute,
       shortestRoutes: allShortestHubSeqs, // <-- new field
       shortestDistance: minDistance,
-      tries: stopCount === 1 ? 6 : 8,
+      tries: 8,
       mode,
     } satisfies ShortestRouteChallenge;
   }
@@ -95,19 +86,15 @@ async function getRandomChallengeFromDB(stopCount: 1 | 2, mode: 'daily' | 'pract
 export async function GET(req: NextRequest) {
   try {
     const url = req.nextUrl;
-    const stopCountParam = url.searchParams.get('stopCount');
-    let stopCount: 1 | 2 = 2;
-    if (stopCountParam === '1') stopCount = 1;
-    else if (stopCountParam === '2') stopCount = 2;
     const mode = (url.searchParams.get('mode') === 'daily') ? 'daily' : 'practice';
     if (mode === 'practice') {
-      const challenge = await getRandomChallengeFromDB(stopCount, 'practice');
+      const challenge = await getRandomChallengeFromDB('practice');
       return NextResponse.json({ challenge });
     }
     // Daily mode: use Valkey cache
     const client = getValkeyClient();
     const today = new Date();
-    const todayKey = `shortest_route_${stopCount}_${today.toISOString().split('T')[0]}`;
+    const todayKey = `shortest_route_2_${today.toISOString().split('T')[0]}`;
     if (client) {
       try {
         const cached = await client.get(todayKey);
@@ -120,7 +107,7 @@ export async function GET(req: NextRequest) {
       }
     }
     // Not cached: generate, cache, and return
-    const challenge = await getRandomChallengeFromDB(stopCount, 'daily');
+    const challenge = await getRandomChallengeFromDB('daily');
     if (client) {
       try {
         // Set TTL to expire at midnight UTC tomorrow
@@ -142,21 +129,17 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const { hubs, challengeId } = body;
-  const [origin, destination, alliance, stopCountStr] = challengeId.split('-');
-  const stopCount = parseInt(stopCountStr, 10);
-  const type = STOP_TYPES[stopCount as 1 | 2];
+  const [origin, destination, alliance] = challengeId.split('-');
+  const type = STOP_TYPES[2];
   let query = supabase
     .from('path')
     .select('*')
     .eq('alliance', alliance)
     .eq('type', type)
     .eq('origin', origin)
-    .eq('destination', destination);
-  if (stopCount === 1) {
-    query = query.eq('h1', hubs[0]);
-  } else if (stopCount === 2) {
-    query = query.eq('h1', hubs[0]).eq('h2', hubs[1]);
-  }
+    .eq('destination', destination)
+    .eq('h1', hubs[0])
+    .eq('h2', hubs[1]);
   const { data: matches, error } = await query.limit(1);
   let guess: ShortestRouteGuess;
   if (error) {
