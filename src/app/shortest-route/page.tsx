@@ -52,6 +52,15 @@ export default function ShortestRoutePage() {
     return `shortest-route-${challenge.id}-${today}`;
   };
 
+  // Helper to normalize hubInputs shape
+  function normalizeHubInputs(input: any, stopCount: number) {
+    return Array.from({ length: stopCount }).map((_, i) =>
+      Array.isArray(input?.[i]) && input[i].length === 3
+        ? input[i]
+        : ['', '', '']
+    );
+  }
+
   // Restore state from localStorage (only in daily mode)
   useEffect(() => {
     if (mode !== 'daily') return;
@@ -62,7 +71,7 @@ export default function ShortestRoutePage() {
       try {
         const parsed = JSON.parse(cached);
         setGuesses(parsed.guesses || []);
-        setHubInputs(parsed.hubInputs || [['', '', ''], ['', '', '']]);
+        setHubInputs(normalizeHubInputs(parsed.hubInputs, challenge.stopCount));
       } catch {}
     }
   }, [challenge, mode]);
@@ -75,7 +84,7 @@ export default function ShortestRoutePage() {
     localStorage.setItem(key, JSON.stringify({ guesses, hubInputs }));
   }, [guesses, hubInputs, challenge, mode]);
 
-  // Fetch challenge on mount or mode/stop change
+  // Always reset to correct shape
   useEffect(() => {
     fetchChallenge();
     setGuesses([]);

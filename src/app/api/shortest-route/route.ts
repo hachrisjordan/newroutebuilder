@@ -3,6 +3,7 @@ import { ShortestRouteChallenge, ShortestRouteGuess, Alliance } from '@/types/sh
 import { Path } from '@/types/route';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import Valkey from 'iovalkey';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -11,12 +12,24 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const alliances: Alliance[] = ['ST', 'SA', 'OW'];
 const STOP_TYPES = { 1: 'A-H-B', 2: 'A-H-H-B' } as const;
 
+// Valkey setup
+let valkey: any = null;
+function getValkeyClient(): any {
+  if (valkey) return valkey;
+  const host = process.env.VALKEY_HOST;
+  const port = process.env.VALKEY_PORT ? parseInt(process.env.VALKEY_PORT, 10) : 6379;
+  const password = process.env.VALKEY_PASSWORD;
+  if (!host) return null;
+  valkey = new Valkey({ host, port, password });
+  return valkey;
+}
+
 function getRandomElement<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
 // Helper: Get all (origin, destination, alliance, stopCount) combos with >10 routes
-async function getRandomChallengeFromDB(stopCount: 1 | 2) {
+async function getRandomChallengeFromDB(stopCount: 1 | 2, mode: 'daily' | 'practice') {
   for (let attempt = 0; attempt < 10; attempt++) {
     const alliance = getRandomElement(alliances);
     const type = STOP_TYPES[stopCount];
@@ -66,7 +79,7 @@ async function getRandomChallengeFromDB(stopCount: 1 | 2) {
       shortestRoute,
       shortestDistance: shortest.totalDistance,
       tries: stopCount === 1 ? 6 : 8,
-      mode: 'practice',
+      mode,
     } satisfies ShortestRouteChallenge;
   }
   throw new Error('No valid challenge found');
@@ -79,8 +92,40 @@ export async function GET(req: NextRequest) {
     let stopCount: 1 | 2 = 2;
     if (stopCountParam === '1') stopCount = 1;
     else if (stopCountParam === '2') stopCount = 2;
-    // mode param is accepted but only 'practice' is supported for now
-    const challenge = await getRandomChallengeFromDB(stopCount);
+    const mode = (url.searchParams.get('mode') === 'daily') ? 'daily' : 'practice';
+    if (mode === 'practice') {
+      const challenge = await getRandomChallengeFromDB(stopCount, 'practice');
+      return NextResponse.json({ challenge });
+    }
+    // Daily mode: use Valkey cache
+    const client = getValkeyClient();
+    const today = new Date();
+    const todayKey = `shortest_route_${stopCount}_${today.toISOString().split('T')[0]}`;
+    if (client) {
+      try {
+        const cached = await client.get(todayKey);
+        if (cached) {
+          const challenge = JSON.parse(cached);
+          return NextResponse.json({ challenge });
+        }
+      } catch (error) {
+        console.error('Valkey error:', error);
+      }
+    }
+    // Not cached: generate, cache, and return
+    const challenge = await getRandomChallengeFromDB(stopCount, 'daily');
+    if (client) {
+      try {
+        // Set TTL to expire at midnight UTC tomorrow
+        const tomorrow = new Date(today);
+        tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+        tomorrow.setUTCHours(0, 0, 0, 0);
+        const ttlSeconds = Math.floor((tomorrow.getTime() - today.getTime()) / 1000);
+        await client.setex(todayKey, ttlSeconds, JSON.stringify(challenge));
+      } catch (error) {
+        console.error('Valkey cache error:', error);
+      }
+    }
     return NextResponse.json({ challenge });
   } catch (e) {
     return NextResponse.json({ error: 'Failed to generate challenge' }, { status: 500 });
