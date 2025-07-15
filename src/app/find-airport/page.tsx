@@ -237,11 +237,29 @@ export default function FindAirportPage() {
 
   const handleShare = () => {
     if (!targetAirport) return;
-    let result = buildShareString(guesses);
+    let result = '';
+    if (mode === 'practice') {
+      // Show airport code for each guess
+      result = guesses
+        .map((g) => `${g.airport.iata}: ${formatDistance(g.distance)} ${g.distance === 0 ? '🟩🟩🟩' : (directionToEmoji[g.direction] || '') + g.direction}`)
+        .join('\n');
+    } else {
+      result = buildShareString(guesses);
+    }
     result += '\n\nTry Find the Airport Game at https://bbairtools.com/find-airport';
     navigator.clipboard.writeText(result.trim());
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Helper for new practice game
+  const handleNewPracticeGame = () => {
+    setGuesses([]);
+    setCodeLetters(['', '', '']);
+    setSelectedAirport(null);
+    setError('');
+    setGameStatus('loading');
+    fetchTargetAirport();
   };
 
   const renderGuessRow = (guess: GameGuess, index: number) => (
@@ -397,16 +415,37 @@ export default function FindAirportPage() {
           {/* Share Button & Countdown */}
           {(gameStatus === 'won' || gameStatus === 'lost') && (
             <div className="text-center space-y-2">
-              <Button onClick={handleShare} variant="secondary">
-                {copied ? 'Copied!' : 'Share Results'}
-              </Button>
-              <div className="text-muted-foreground mt-2">
-                Airport will be reset in <span className="font-mono">{formatCountdown(countdown)}</span>
+              <div className="flex justify-center gap-2">
+                <Button onClick={handleShare} variant="secondary">
+                  {copied ? 'Copied!' : 'Share Results'}
+                </Button>
+                {mode === 'practice' && (
+                  <Button onClick={handleNewPracticeGame} variant="outline">
+                    New Game
+                  </Button>
+                )}
               </div>
+              {mode === 'daily' && (
+                <div className="text-muted-foreground mt-2">
+                  Airport will be reset in <span className="font-mono">{formatCountdown(countdown)}</span>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
       </Card>
     </div>
   );
-} 
+}
+
+// Map direction to emoji
+const directionToEmoji: Record<string, string> = {
+  N: '⬆️',
+  NE: '↗️',
+  E: '➡️',
+  SE: '↘️',
+  S: '⬇️',
+  SW: '↙️',
+  W: '⬅️',
+  NW: '↖️',
+}; 
