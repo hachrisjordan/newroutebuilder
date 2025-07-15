@@ -233,7 +233,6 @@ export default function ShortestRoutePage() {
     // Validate hubs
     const invalidIdx = hubInputs.findIndex((arr) => !airportsCache[arr.join('')]);
     if (invalidIdx !== -1) {
-      setError('Not a valid airport code.');
       return;
     }
     const hubs = hubInputs.map((arr) => arr.join(''));
@@ -244,11 +243,15 @@ export default function ShortestRoutePage() {
     });
     const data = await res.json();
     const guess: ShortestRouteGuess = data.guess;
+    setError(guess.error || '');
+    if (!guess.isValid) {
+      // Do not add to guesses or clear input
+      return;
+    }
     setGuesses((prev) => [...prev, guess]);
     setHubInputs([['', '', ''], ['', '', '']]);
-    setError(guess.error || '');
-    // Win if hubs match any shortest route
-    if (guess.isValid && guess.differenceFromShortest === 0) {
+    // Win if minimal
+    if (guess.differenceFromShortest === 0) {
       setGameStatus('won');
     } else if (guesses.length + 1 >= challenge.tries) {
       setGameStatus('lost');
