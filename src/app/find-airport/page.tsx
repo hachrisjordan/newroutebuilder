@@ -262,6 +262,11 @@ export default function FindAirportPage() {
     fetchTargetAirport();
   };
 
+  // Handler for give up in practice mode
+  const handleGiveUp = () => {
+    setGameStatus('lost');
+  };
+
   const renderGuessRow = (guess: GameGuess, index: number) => (
     <div key={index} className="flex items-center gap-2 p-2 border rounded-lg bg-muted/50">
       <div className="flex-1">
@@ -402,6 +407,12 @@ export default function FindAirportPage() {
                   Submit
                 </Button>
               </div>
+              {/* Alert for invalid code */}
+              {codeLetters.every((l) => l.length === 1) && !airportsCache[codeLetters.join('').toUpperCase()] && !error && (
+                <div className="text-center mt-2">
+                  <span className="text-destructive text-sm">Not a valid airport code.</span>
+                </div>
+              )}
             </div>
           )}
 
@@ -410,6 +421,14 @@ export default function FindAirportPage() {
             <h3 className="font-medium">Your Guesses ({guesses.length}/8)</h3>
             {guesses.map(renderGuessRow)}
             {renderEmptyRows()}
+            {/* Give Up button for practice mode, only if game is not finished */}
+            {mode === 'practice' && gameStatus === 'playing' && (
+              <div className="flex justify-center mt-4">
+                <Button onClick={handleGiveUp} variant="destructive" size="sm">
+                  Give Up
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Share Button & Countdown */}
