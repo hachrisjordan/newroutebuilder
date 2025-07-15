@@ -29,8 +29,29 @@ interface Airport {
   longitude: number;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const url = new URL(request.url);
+    const isPractice = url.searchParams.get('practice') === '1' || url.searchParams.get('practice') === 'true';
+    if (isPractice) {
+      // Practice mode: always return a random airport, no cache
+      const { data, error } = await supabase
+        .from('airports')
+        .select('iata, name, city_name, country, country_code, latitude, longitude')
+        .or('name.ilike.%international%,name.ilike.%intl%')
+        .limit(1000);
+      if (error) {
+        console.error('Supabase error:', error);
+        return NextResponse.json({ error: 'Failed to fetch airports' }, { status: 500 });
+      }
+      if (!data || data.length === 0) {
+        return NextResponse.json({ error: 'No international airports found' }, { status: 404 });
+      }
+      const randomIndex = Math.floor(Math.random() * data.length);
+      const airport = data[randomIndex];
+      return NextResponse.json({ airport });
+    }
+
     const client = getValkeyClient();
     const today = new Date();
     const todayKey = `airport_game_${today.toISOString().split('T')[0]}`;

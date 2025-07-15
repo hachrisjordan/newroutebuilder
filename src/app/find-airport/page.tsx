@@ -7,6 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Airport, GameGuess, processGuess, getGameStatus, formatDistance, buildShareString } from '@/lib/airport-game';
 import { AirportGameSearch } from '@/components/airport-game-search';
 
+const MODES = [
+  { label: 'Daily', value: 'daily' },
+  { label: 'Practice', value: 'practice' },
+];
+
+type Mode = 'daily' | 'practice';
+
 function getSecondsUntilMidnightUTC() {
   const now = new Date();
   const nextMidnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0));
@@ -21,6 +28,7 @@ function formatCountdown(seconds: number) {
 }
 
 export default function FindAirportPage() {
+  const [mode, setMode] = useState<Mode>('daily');
   const [targetAirport, setTargetAirport] = useState<Airport | null>(null);
   const [guesses, setGuesses] = useState<GameGuess[]>([]);
   const [codeLetters, setCodeLetters] = useState(['', '', '']);
@@ -39,8 +47,9 @@ export default function FindAirportPage() {
     return `airport-game-${airport.iata}-${today}`;
   };
 
-  // Restore state from localStorage
+  // Restore state from localStorage (only in daily mode)
   useEffect(() => {
+    if (mode !== 'daily') return;
     if (!targetAirport) return;
     const key = getStorageKey(targetAirport);
     const cached = localStorage.getItem(key);
@@ -51,14 +60,15 @@ export default function FindAirportPage() {
         setCodeLetters(parsed.codeLetters || ['', '', '']);
       } catch {}
     }
-  }, [targetAirport]);
+  }, [targetAirport, mode]);
 
-  // Save state to localStorage after each guess
+  // Save state to localStorage after each guess (only in daily mode)
   useEffect(() => {
+    if (mode !== 'daily') return;
     if (!targetAirport) return;
     const key = getStorageKey(targetAirport);
     localStorage.setItem(key, JSON.stringify({ guesses, codeLetters }));
-  }, [guesses, codeLetters, targetAirport]);
+  }, [guesses, codeLetters, targetAirport, mode]);
 
   // Countdown timer to midnight UTC
   useEffect(() => {
@@ -68,12 +78,18 @@ export default function FindAirportPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch the target airport on component mount
+  // Fetch the target airport on component mount or mode change
   useEffect(() => {
     fetchTargetAirport();
     // Preload all airports for code validation
     fetchAllAirports();
-  }, []);
+    // Reset state on mode change
+    setGuesses([]);
+    setCodeLetters(['', '', '']);
+    setSelectedAirport(null);
+    setGameStatus('loading');
+    setError('');
+  }, [mode]);
 
   // Update game status when guesses change
   useEffect(() => {
@@ -93,7 +109,11 @@ export default function FindAirportPage() {
   const fetchTargetAirport = async () => {
     try {
       setError('');
-      const response = await fetch('/api/airport-game');
+      let url = '/api/airport-game';
+      if (mode === 'practice') {
+        url += '?practice=1';
+      }
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error('Failed to fetch target airport');
       }
@@ -102,29 +122,31 @@ export default function FindAirportPage() {
       setTargetAirport(backendAirport);
       setGameStatus('playing');
 
-      // --- True reset logic ---
-      const today = new Date().toISOString().split('T')[0];
-      const localKey = `airport-game-${backendAirport.iata}-${today}`;
-      const allKeys = Object.keys(localStorage);
-      // Find any airport-game-*-{today} key that does not match backendAirport.iata
-      allKeys.forEach((key) => {
-        if (key.startsWith('airport-game-') && key.endsWith(today) && key !== localKey) {
-          localStorage.removeItem(key);
-        }
-      });
-      // If the current localStorage key exists but is for a different airport, clear it
-      const cached = localStorage.getItem(localKey);
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          if (parsed && parsed.guesses && parsed.guesses[0] && parsed.guesses[0].airport && parsed.guesses[0].airport.iata !== backendAirport.iata) {
-            localStorage.removeItem(localKey);
-            setGuesses([]);
-            setCodeLetters(['', '', '']);
+      if (mode === 'daily') {
+        // --- True reset logic ---
+        const today = new Date().toISOString().split('T')[0];
+        const localKey = `airport-game-${backendAirport.iata}-${today}`;
+        const allKeys = Object.keys(localStorage);
+        // Find any airport-game-*-{today} key that does not match backendAirport.iata
+        allKeys.forEach((key) => {
+          if (key.startsWith('airport-game-') && key.endsWith(today) && key !== localKey) {
+            localStorage.removeItem(key);
           }
-        } catch {}
+        });
+        // If the current localStorage key exists but is for a different airport, clear it
+        const cached = localStorage.getItem(localKey);
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            if (parsed && parsed.guesses && parsed.guesses[0] && parsed.guesses[0].airport && parsed.guesses[0].airport.iata !== backendAirport.iata) {
+              localStorage.removeItem(localKey);
+              setGuesses([]);
+              setCodeLetters(['', '', '']);
+            }
+          } catch {}
+        }
+        // --- End true reset logic ---
       }
-      // --- End true reset logic ---
     } catch (err) {
       setError('Failed to load the game. Please try again.');
       setGameStatus('playing'); // Allow retry
@@ -283,6 +305,27 @@ export default function FindAirportPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
+      <div className="flex justify-center mb-4">
+        <fieldset className="flex gap-4 items-center" aria-label="Game Mode">
+          {MODES.map((m) => (
+            <label key={m.value} className="flex items-center gap-1 cursor-pointer select-none">
+              <input
+                type="radio"
+                name="game-mode"
+                value={m.value}
+                checked={mode === m.value}
+                onChange={() => setMode(m.value as Mode)}
+                className="accent-primary h-4 w-4 border-gray-300 focus:ring-primary"
+                aria-checked={mode === m.value}
+              />
+              <span className={`text-sm font-medium ${mode === m.value ? 'text-primary' : 'text-muted-foreground'}`}>{m.label}</span>
+            </label>
+          ))}
+        </fieldset>
+      </div>
+      <div className="text-center mb-2">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{mode === 'daily' ? 'Daily Mode' : 'Practice Mode'}</span>
+      </div>
       <Card>
         <CardHeader>
           <CardTitle className="text-center">Find the Airport</CardTitle>
