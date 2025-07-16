@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Large data files (moved to external storage)
+/data/
+example.json
+
+# Bundle analysis
+.next/analyze/
+bundle-analyzer-report.html
+
+# Performance monitoring
+performance-logs/

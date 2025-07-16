@@ -9,7 +9,8 @@
     "lint": "next lint",
     "analyze": "ANALYZE=true npm run build",
     "prisma:seed": "ts-node prisma/seed.ts",
-    "db:reset": "npx prisma db push --force-reset && npm run prisma:seed"
+    "db:reset": "npx prisma db push --force-reset && npm run prisma:seed",
+    "perf-check": "node scripts/performance-check.js"
   },
   "dependencies": {
     "@geist-ui/core": "^2.3.8",

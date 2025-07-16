@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -5,6 +6,17 @@ import { AwardFinderSearch } from '@/components/award-finder/award-finder-search
 import AwardFinderResultsCard from '@/components/award-finder/award-finder-results-card';
 import type { AwardFinderResults } from '@/types/award-finder-results';
 import { getTotalDuration, getClassPercentages } from '@/lib/utils';
+
+export const metadata: Metadata = {
+  title: 'Award Finder - Find Flight Award Availability',
+  description: 'Search for flight award availability across multiple airlines. Find the best award redemption opportunities with comprehensive filtering and real-time data.',
+  keywords: ['award flights', 'airline awards', 'flight redemption', 'award search', 'frequent flyer'],
+  openGraph: {
+    title: 'Award Finder - Find Flight Award Availability',
+    description: 'Search for flight award availability across multiple airlines.',
+    type: 'website',
+  },
+}
 
 const PAGE_SIZE = 10;
 
