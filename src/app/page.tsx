@@ -1,4 +1,15 @@
 import Image from "next/image";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Flight Route Planning & Airport Tools",
+  description: "Professional flight route planning tools and comprehensive airport database. Plan routes, find airports, analyze delays, and optimize your flying experience.",
+  openGraph: {
+    title: "bbairtools - Professional Flight Planning Tools",
+    description: "Plan routes, find airports, analyze delays, and optimize your flying experience with advanced aviation tools.",
+    images: ['/og-image.png'],
+  },
+};
 
 export default function Home() {
   return (

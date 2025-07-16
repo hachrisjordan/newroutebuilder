@@ -5,12 +5,27 @@ import { getAirportTimezone } from '@/lib/airport-tz-map';
 import Image from 'next/image';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import React, { useState } from 'react';
-import EtihadItineraryCard from '@/components/jetblue/etihad/etihad-itinerary-card';
 import { Suspense } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { Pagination } from '@/components/ui/pagination';
-import EtihadFiltersControls from '@/components/jetblue/etihad/etihad-filters-controls';
+
+// Dynamic imports for heavy components to reduce initial bundle size
+const EtihadItineraryCard = dynamic(
+  () => import('@/components/jetblue/etihad/etihad-itinerary-card'),
+  {
+    loading: () => <div className="animate-pulse h-24 bg-gray-200 rounded-lg" />,
+    ssr: true
+  }
+);
+
+const EtihadFiltersControls = dynamic(
+  () => import('@/components/jetblue/etihad/etihad-filters-controls'),
+  {
+    loading: () => <div className="animate-pulse h-16 bg-gray-200 rounded-lg" />,
+    ssr: true
+  }
+);
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { parseISO } from 'date-fns';
 

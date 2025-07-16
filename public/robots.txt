@@ -1,3 +1,17 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Allow: /
+
+# Disallow API routes from being crawled
+Disallow: /api/
+
+# Allow search engines to crawl important pages
+Allow: /
+Allow: /find-airport
+Allow: /award-finder
+Allow: /shortest-route
+Allow: /live-search
+Allow: /seat-type-delay
+
+# Sitemap location
+Sitemap: https://bbairtools.com/sitemap.xml

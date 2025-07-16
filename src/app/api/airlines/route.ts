@@ -2,6 +2,10 @@ import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { z, ZodError } from 'zod';
 
+// Enable caching for this route
+export const revalidate = 3600; // 1 hour cache
+export const dynamic = 'force-dynamic'; // This route needs to be dynamic due to search params
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
