@@ -17,7 +17,16 @@ const nextConfig = {
   
   // Bundle optimization
   experimental: {
-    optimizePackageImports: ['antd', 'lucide-react', '@radix-ui/react-icons'],
+    optimizePackageImports: [
+      'antd',
+      'lucide-react', 
+      '@radix-ui/react-icons',
+      'react-icons',
+      'date-fns',
+      'date-fns-tz',
+      '@tanstack/react-query'
+    ],
+    serverComponentsExternalPackages: ['ioredis', 'iovalkey'],
   },
   
   // Webpack optimizations
