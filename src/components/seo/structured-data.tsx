@@ -14,9 +14,9 @@ export default function StructuredData({ data }: StructuredDataProps) {
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "bbairtools",
-    "description": "Professional flight route planning tools and comprehensive airport database",
+    "description": "Award flight route planning tools. Plan routes and optimize your flying experience.",
     "url": "https://bbairtools.com",
-    "logo": "https://bbairtools.com/logo.png",
+    "logo": "https://bbairtools.com/rblogo.png",
     "sameAs": []
   }
 
@@ -25,7 +25,7 @@ export default function StructuredData({ data }: StructuredDataProps) {
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "bbairtools",
-    "description": "Professional flight route planning tools and comprehensive airport database",
+    "description": "Award flight route planning tools. Plan routes and optimize your flying experience.",
     "url": "https://bbairtools.com",
     "potentialAction": {
       "@type": "SearchAction",
@@ -40,7 +40,7 @@ export default function StructuredData({ data }: StructuredDataProps) {
     "@type": "SoftwareApplication",
     "name": "bbairtools",
     "applicationCategory": "Business",
-    "description": "Professional flight route planning tools and comprehensive airport database. Plan routes, find airports, analyze delays, and optimize your flying experience.",
+    "description": "Award flight route planning tools. Plan routes and optimize your flying experience.",
     "url": "https://bbairtools.com",
     "operatingSystem": "Any",
     "offers": {

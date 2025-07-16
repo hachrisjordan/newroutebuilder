@@ -3,11 +3,11 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Flight Route Planning & Airport Tools",
-  description: "Professional flight route planning tools and comprehensive airport database. Plan routes, find airports, analyze delays, and optimize your flying experience.",
+  description: "Award flight route planning tools. Plan routes and optimize your flying experience.",
   openGraph: {
-    title: "bbairtools - Professional Flight Planning Tools",
-    description: "Plan routes, find airports, analyze delays, and optimize your flying experience with advanced aviation tools.",
-    images: ['/og-image.png'],
+    title: "bbairtools - Award Flight Planning Tools",
+    description: "Award flight route planning tools. Plan routes and optimize your flying experience.",
+    images: ['/rblogo.png'],
   },
 };
 
