@@ -58,8 +58,43 @@ export default function StructuredData({ data }: StructuredDataProps) {
   }
 
   // Combine all structured data
-  const allData = [organizationData, websiteData, softwareData]
+  const allData: any[] = [organizationData, websiteData, softwareData]
   
+  // Add WebPage + ItemList for homepage sitelinks
+  if (pathname === '/') {
+    const webPageData = {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "bbairtools - Award Flight Route Planning Tools",
+      "url": "https://bbairtools.com/",
+      "description": "Award flight route planning tools. Plan routes and optimize your flying experience.",
+      "mainEntity": {
+        "@type": "ItemList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Seat Type / Delay",
+            "url": "https://bbairtools.com/seat-type-delay"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Award Finder",
+            "url": "https://bbairtools.com/award-finder"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Live Search",
+            "url": "https://bbairtools.com/live-search"
+          }
+        ]
+      }
+    }
+    allData.push(webPageData)
+  }
+
   // Add custom data if provided
   if (data) {
     allData.push(data)
