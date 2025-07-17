@@ -179,7 +179,7 @@ const LiveSearchForm = ({ onSearch }: LiveSearchFormProps) => {
             className="h-9"
           />
         </div>
-        <div className="flex items-center justify-center pt-6 md:pt-8">
+        <div className="flex items-center justify-center md:pt-8">
           <Button
             type="button"
             variant="ghost"

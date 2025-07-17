@@ -36,6 +36,7 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent }: AwardFind
   const [maxStopsError, setMaxStopsError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [seats, setSeats] = useState<number>(1);
 
   const combinationCount = origin.length * destination.length;
 
@@ -105,7 +106,7 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent }: AwardFind
     const cached = typeof window !== 'undefined' ? localStorage.getItem(SEARCH_CACHE_KEY) : null;
     if (cached) {
       try {
-        const { origin, destination, date, maxStops } = JSON.parse(cached);
+        const { origin, destination, date, maxStops, seats } = JSON.parse(cached);
         if (Array.isArray(origin)) setOrigin(origin);
         if (Array.isArray(destination)) setDestination(destination);
         if (date) {
@@ -115,17 +116,18 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent }: AwardFind
           });
         }
         if (typeof maxStops === 'number') setMaxStops(maxStops);
+        if (typeof seats === 'number') setSeats(seats);
       } catch {}
     }
   }, []);
 
   useEffect(() => {
     // Cache params (except apiKey) on change
-    const toCache = { origin, destination, date, maxStops };
+    const toCache = { origin, destination, date, maxStops, seats };
     if (typeof window !== 'undefined') {
       localStorage.setItem(SEARCH_CACHE_KEY, JSON.stringify(toCache));
     }
-  }, [origin, destination, date, maxStops]);
+  }, [origin, destination, date, maxStops, seats]);
 
   const getDateLabel = () => {
     if (date?.from && date?.to) {
@@ -205,6 +207,7 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent }: AwardFind
       endDate,
       apiKey: apiKey.trim() ? apiKey.trim() : null,
       minReliabilityPercent: typeof minReliabilityPercent === 'number' ? minReliabilityPercent : 85,
+      seats,
     };
     // Validate with Zod (will update schema next)
     // const parseResult = awardFinderSearchRequestSchema.safeParse(requestBody);
@@ -243,7 +246,7 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent }: AwardFind
             className="h-9"
           />
         </div>
-        <div className="flex items-center justify-center pt-6 md:pt-8">
+        <div className="flex items-center justify-center md:pt-8">
           <Button
             type="button"
             variant="ghost"
@@ -379,18 +382,37 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent }: AwardFind
             {apiKeyError && <span className="text-xs text-red-600 mt-1">{apiKeyError}</span>}
           </div>
           <div className="flex flex-col gap-2">
-            <label htmlFor="max-stops" className="block text-sm font-medium text-foreground mb-1">Max Stops</label>
-            <Select value={String(maxStops)} onValueChange={handleMaxStopsChange}>
-              <SelectTrigger id="max-stops" className="h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from({ length: allowedMaxStops + 1 }, (_, n) => (
-                  <SelectItem key={n} value={String(n)}>{n}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {maxStopsError && <span className="text-xs text-red-600 mt-1">{maxStopsError}</span>}
+            <div className="flex gap-4">
+              <div className="flex flex-col gap-2 w-1/2">
+                <label htmlFor="max-stops" className="block text-sm font-medium text-foreground mb-1">Max Stops</label>
+                <Select value={String(maxStops)} onValueChange={handleMaxStopsChange}>
+                  <SelectTrigger id="max-stops" className="h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: allowedMaxStops + 1 }, (_, n) => (
+                      <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {maxStopsError && <span className="text-xs text-red-600 mt-1">{maxStopsError}</span>}
+              </div>
+              <div className="flex flex-col gap-2 w-1/2">
+                <label htmlFor="seats" className="block text-sm font-medium text-foreground mb-1">Seats</label>
+                <Input
+                  id="seats"
+                  type="number"
+                  min={1}
+                  max={9}
+                  value={seats}
+                  onChange={e => {
+                    const val = Number(e.target.value);
+                    if (val >= 1 && val <= 9) setSeats(val);
+                  }}
+                  className="h-9 w-full"
+                />
+              </div>
+            </div>
           </div>
         </div>
       )}
