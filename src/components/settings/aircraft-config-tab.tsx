@@ -349,7 +349,7 @@ const AircraftConfigTab = () => {
           .update({
             airline: tailForm.airline,
             tail: tailForm.tail,
-            type: tailForm.type,
+            type: tailForm.variant,
             variant: tailForm.variant,
             name: tailForm.name,
             effective_date: tailForm.effective_date,
@@ -370,7 +370,7 @@ const AircraftConfigTab = () => {
           .insert([{
             airline: tailForm.airline,
             tail: tailForm.tail,
-            type: tailForm.type,
+            type: tailForm.variant,
             variant: tailForm.variant,
             name: tailForm.name,
             effective_date: tailForm.effective_date,
