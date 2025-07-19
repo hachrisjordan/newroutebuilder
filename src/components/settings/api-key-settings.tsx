@@ -99,31 +99,37 @@ const ApiKeySettings = () => {
   }
 
   return (
-    <div className="space-y-2 mt-6">
-      <label htmlFor="api-key" className="block text-sm font-medium">
-        seats.aero API Key
-      </label>
-      <input
-        id="api-key"
-        type="password"
-        className="w-full px-3 py-2 border rounded bg-background text-foreground"
-        value={apiKey}
-        onChange={(e) => setApiKey(e.target.value)}
-        disabled={isSaving}
-        autoComplete="off"
-      />
-      <label htmlFor="min-reliability-percent" className="block text-sm font-medium mt-4">Min Reliability %</label>
-      <input
-        id="min-reliability-percent"
-        type="number"
-        min={0}
-        max={100}
-        step={1}
-        className="w-full px-3 py-2 border rounded bg-background text-foreground"
-        value={minReliabilityPercent}
-        onChange={e => setMinReliabilityPercent(Math.max(0, Math.min(100, Number(e.target.value))))}
-        disabled={isSaving}
-      />
+    <div className="space-y-4 pt-4 border-t">
+      <div>
+        <label htmlFor="api-key" className="block text-sm font-medium mb-2">
+          seats.aero API Key
+        </label>
+        <input
+          id="api-key"
+          type="password"
+          className="w-full px-3 py-2 border rounded bg-background text-foreground"
+          value={apiKey}
+          onChange={(e) => setApiKey(e.target.value)}
+          disabled={isSaving}
+          autoComplete="off"
+        />
+      </div>
+      <div>
+        <label htmlFor="min-reliability-percent" className="block text-sm font-medium mb-2">
+          Min Reliability %
+        </label>
+        <input
+          id="min-reliability-percent"
+          type="number"
+          min={0}
+          max={100}
+          step={1}
+          className="w-full px-3 py-2 border rounded bg-background text-foreground"
+          value={minReliabilityPercent}
+          onChange={e => setMinReliabilityPercent(Math.max(0, Math.min(100, Number(e.target.value))))}
+          disabled={isSaving}
+        />
+      </div>
       <Button
         onClick={handleSaveApiKey}
         className="w-full"
