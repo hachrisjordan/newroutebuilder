@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { AwardFinderSearch } from '@/components/award-finder/award-finder-search';
+import AwardFinderSearch from '@/components/award-finder/award-finder-search';
 import AwardFinderResultsCard from '@/components/award-finder/award-finder-results-card';
 import type { AwardFinderResults } from '@/types/award-finder-results';
 import { getTotalDuration, getClassPercentages } from '@/lib/utils';
