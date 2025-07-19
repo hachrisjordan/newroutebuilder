@@ -9,7 +9,16 @@ interface SeatMapTooltipProps {
   children: React.ReactNode;
 }
 
-const CLOUD_STORAGE_BASE_URL = 'https://storage.googleapis.com/routebuilder_storage';
+// Use NEXT_PUBLIC_SUPABASE_URL from environment variables
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+if (!supabaseUrl && typeof window !== 'undefined') {
+  // Warn in development if env variable is missing
+  // eslint-disable-next-line no-console
+  console.warn('NEXT_PUBLIC_SUPABASE_URL is not set. Supabase storage URLs will be invalid.');
+}
+const SUPABASE_STORAGE_BASE_URL = supabaseUrl
+  ? `${supabaseUrl.replace(/\/$/, '')}/storage/v1/object/public/bbairtools/seatmap`
+  : '';
 
 function isDoubleDecker(aircraftType?: string) {
   return aircraftType && (aircraftType.includes('747') || aircraftType.includes('380'));
@@ -27,9 +36,16 @@ export default function SeatMapTooltip({ airline, variant, aircraftType, childre
   const [isPortrait, setIsPortrait] = useState(false);
 
   const doubleDecker = isDoubleDecker(aircraftType);
-  const url = `${CLOUD_STORAGE_BASE_URL}/seatmap/${airline}_${variant}.png`;
-  const url1 = `${CLOUD_STORAGE_BASE_URL}/seatmap/${airline}_${variant}-1.png`;
-  const url2 = `${CLOUD_STORAGE_BASE_URL}/seatmap/${airline}_${variant}-2.png`;
+  const url = `${SUPABASE_STORAGE_BASE_URL}/${airline}_${variant}.png`;
+  const url1 = `${SUPABASE_STORAGE_BASE_URL}/${airline}_${variant}-1.png`;
+  const url2 = `${SUPABASE_STORAGE_BASE_URL}/${airline}_${variant}-2.png`;
+
+  // Debug logging
+  useEffect(() => {
+    if (airline && variant) {
+      // console.log('SeatMapTooltip URLs:', { url, url1, url2, airline, variant, doubleDecker });
+    }
+  }, [airline, variant, url, url1, url2, doubleDecker]);
 
   // Single deck logic
   useEffect(() => {
@@ -39,10 +55,12 @@ export default function SeatMapTooltip({ airline, variant, aircraftType, childre
     const img = new window.Image();
     img.src = url;
     img.onload = () => {
+      console.log('Single deck image loaded successfully:', url);
       setImgExists(true);
       setChecked(true);
     };
     img.onerror = () => {
+      console.log('Single deck image failed to load:', url);
       setImgExists(false);
       setChecked(true);
     };
@@ -56,14 +74,32 @@ export default function SeatMapTooltip({ airline, variant, aircraftType, childre
     setImg2Exists(false);
     let loaded = 0;
     const done = () => { loaded++; if (loaded === 2) setCheckedDouble(true); };
+    
     const img1 = new window.Image();
     img1.src = url1;
-    img1.onload = () => { setImg1Exists(true); done(); };
-    img1.onerror = () => { setImg1Exists(false); done(); };
+    img1.onload = () => { 
+      console.log('Double deck image 1 loaded successfully:', url1);
+      setImg1Exists(true); 
+      done(); 
+    };
+    img1.onerror = () => { 
+      console.log('Double deck image 1 failed to load:', url1);
+      setImg1Exists(false); 
+      done(); 
+    };
+    
     const img2 = new window.Image();
     img2.src = url2;
-    img2.onload = () => { setImg2Exists(true); done(); };
-    img2.onerror = () => { setImg2Exists(false); done(); };
+    img2.onload = () => { 
+      console.log('Double deck image 2 loaded successfully:', url2);
+      setImg2Exists(true); 
+      done(); 
+    };
+    img2.onerror = () => { 
+      console.log('Double deck image 2 failed to load:', url2);
+      setImg2Exists(false); 
+      done(); 
+    };
   }, [airline, variant, doubleDecker, url1, url2]);
 
   // Responsive image size logic

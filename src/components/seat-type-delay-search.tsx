@@ -91,7 +91,7 @@ export function SeatTypeDelaySearch({ onSearch }: SeatTypeDelaySearchProps) {
     
     setIsSearching(true);
     try {
-      let url = `https://rbbackend-fzkmdxllwa-uc.a.run.app/api/flightradar24/${selectedAirline}${flightNumber}`;
+      let url = `https://api.bbairtools.com/api/flightradar24/${selectedAirline}${flightNumber}`;
       
       // Add query parameters if origin and arrival airports are provided
       const queryParams = new URLSearchParams();

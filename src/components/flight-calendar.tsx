@@ -126,7 +126,7 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
   useEffect(() => {
     if (!airline) return;
     setConfigLoading(true);
-    fetch(`https://rbbackend-fzkmdxllwa-uc.a.run.app/api/aircraft-config/${airline}`)
+    fetch(`/api/aircraft-config/${airline}`)
       .then(res => res.json())
       .then(data => setSeatConfigData(data))
       .catch(() => setSeatConfigData(null))
