@@ -108,12 +108,23 @@ export function SeatTypeDelaySearch({ onSearch }: SeatTypeDelaySearchProps) {
       }
       
       const data = await response.json();
+      
+      // Transform the data to match the expected interface
+      const transformedData = data.map((flight: any) => ({
+        flightNumber: flight.flightNumber,
+        date: flight.date,
+        registration: flight.registration,
+        origin: flight.originIata,
+        destination: flight.destinationIata,
+        ontime: flight.ontime
+      }));
+      
       onSearch({
         airline: selectedAirline,
         flightNumber,
         originAirport,
         arrivalAirport,
-        flightData: data
+        flightData: transformedData
       });
     } catch (error) {
       console.error('Error fetching flight data:', error);
