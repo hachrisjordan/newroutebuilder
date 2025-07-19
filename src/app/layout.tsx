@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import 'flag-icons/css/flag-icons.min.css';
 import { Header } from "@/components/layout/header";
@@ -8,7 +9,21 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import StructuredData from "@/components/seo/structured-data";
 
+// Font optimization
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
+  metadataBase: new URL('https://bbairtools.com'),
   title: {
     default: "bbairtools - Flight Route Planning & Airport Tools",
     template: "%s | bbairtools"
@@ -50,17 +65,28 @@ export const metadata: Metadata = {
     title: 'bbairtools - Professional Flight Planning Tools',
     description: 'Professional flight route planning tools and comprehensive airport database.',
     images: ['/og-image.png'],
+    creator: '@bbairtools',
   },
-  metadataBase: new URL('https://bbairtools.com'),
+  alternates: {
+    canonical: 'https://bbairtools.com',
+  },
   verification: {
     google: process.env.GOOGLE_SITE_VERIFICATION,
+  },
+  other: {
+    'theme-color': '#ffffff',
   },
 };
 
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#000000' },
+  ],
 };
 
 export default function RootLayout({
@@ -69,8 +95,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="font-mono" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${jetbrainsMono.variable}`}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://storage.googleapis.com" />
+        <link rel="dns-prefetch" href="https://dbaixrvzmfwhhbgyoebt.supabase.co" />
+      </head>
+      <body className={`font-mono ${inter.className}`} suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -82,8 +114,8 @@ export default function RootLayout({
             <main className="flex-1">{children}</main>
             <Footer />
           </div>
+          <StructuredData />
         </ThemeProvider>
-        <StructuredData />
         <SpeedInsights />
         <Analytics />
       </body>

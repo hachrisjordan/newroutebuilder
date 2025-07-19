@@ -59,4 +59,5 @@ const HeaderUserMenu = () => {
   );
 };
 
-export default HeaderUserMenu; 
+export default HeaderUserMenu;
+export { HeaderUserMenu }; 

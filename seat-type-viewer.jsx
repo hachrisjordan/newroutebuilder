@@ -1,5 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Select, Input, Button, Space, message, Typography, Modal, Row, Col, Tooltip } from 'antd';
+import Select from 'antd/es/select';
+import Input from 'antd/es/input';
+import Button from 'antd/es/button';
+import Space from 'antd/es/space';
+import { message } from 'antd/es/message';
+import Typography from 'antd/es/typography';
+import Modal from 'antd/es/modal';
+import Row from 'antd/es/row';
+import Col from 'antd/es/col';
+import Tooltip from 'antd/es/tooltip';
 import { LeftOutlined, RightOutlined, FilterOutlined, BarChartOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
 import airlines from '../data/airlines_full';
 import dayjs from 'dayjs';
