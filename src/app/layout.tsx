@@ -1,12 +1,24 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import 'flag-icons/css/flag-icons.min.css';
+import dynamic from 'next/dynamic';
+import { Suspense } from 'react';
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { ThemeProvider } from "@/components/theme-provider";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Analytics } from "@vercel/analytics/next";
-import StructuredData from "@/components/seo/structured-data";
+
+// Dynamically import analytics components
+const Analytics = dynamic(() => import('@vercel/analytics/next').then(mod => mod.Analytics), {
+  ssr: true,
+});
+
+const SpeedInsights = dynamic(() => import('@vercel/speed-insights/next').then(mod => mod.SpeedInsights), {
+  ssr: true,
+});
+
+const StructuredData = dynamic(() => import('@/components/seo/structured-data'), {
+  ssr: true,
+});
 
 export const metadata: Metadata = {
   title: {
@@ -61,6 +73,10 @@ export const viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: 'white' },
+    { media: '(prefers-color-scheme: dark)', color: 'black' }
+  ],
 };
 
 export default function RootLayout({
@@ -79,13 +95,23 @@ export default function RootLayout({
         >
           <div className="relative flex min-h-screen flex-col">
             <Header />
-            <main className="flex-1">{children}</main>
+            <main className="flex-1">
+              <Suspense fallback={<div className="min-h-screen" />}>
+                {children}
+              </Suspense>
+            </main>
             <Footer />
           </div>
         </ThemeProvider>
-        <StructuredData />
-        <SpeedInsights />
-        <Analytics />
+        <Suspense fallback={null}>
+          <StructuredData />
+        </Suspense>
+        <Suspense fallback={null}>
+          <SpeedInsights />
+        </Suspense>
+        <Suspense fallback={null}>
+          <Analytics />
+        </Suspense>
       </body>
     </html>
   );
