@@ -180,22 +180,36 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { hubs, challengeId } = body;
-  const idParts = challengeId.split('-');
-  let stopCount: 1 | 2 = 2;
-  let origin = idParts[0];
-  let destination = idParts[1];
-  let alliance: string | undefined = undefined;
-  if (idParts.length === 3 && idParts[2] === '1') {
-    stopCount = 1;
-  } else if (idParts.length === 4 && idParts[3] === '2') {
-    stopCount = 2;
-    alliance = idParts[2];
-  }
-  if (stopCount === 1) {
-    // 1-stop: validate any alliance
-    let query = supabase
+  try {
+    // Create Supabase client inside the function
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseKey) {
+      return NextResponse.json(
+        { error: 'Database connection not configured' },
+        { status: 503 }
+      );
+    }
+    
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const body = await req.json();
+    const { hubs, challengeId } = body;
+    const idParts = challengeId.split('-');
+    let stopCount: 1 | 2 = 2;
+    let origin = idParts[0];
+    let destination = idParts[1];
+    let alliance: string | undefined = undefined;
+    if (idParts.length === 3 && idParts[2] === '1') {
+      stopCount = 1;
+    } else if (idParts.length === 4 && idParts[3] === '2') {
+      stopCount = 2;
+      alliance = idParts[2];
+    }
+    if (stopCount === 1) {
+      // 1-stop: validate any alliance
+      let query = supabase
       .from('path')
       .select('*')
       .eq('type', STOP_TYPES[1])
@@ -284,5 +298,12 @@ export async function POST(req: NextRequest) {
       differenceFromShortest: shortestDistance !== undefined ? totalDistance - shortestDistance : undefined,
     };
     return NextResponse.json({ guess });
+    }
+  } catch (error) {
+    console.error('Shortest route POST error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 } 
