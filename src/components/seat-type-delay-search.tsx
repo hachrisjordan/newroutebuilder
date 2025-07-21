@@ -91,7 +91,7 @@ export function SeatTypeDelaySearch({ onSearch }: SeatTypeDelaySearchProps) {
     
     setIsSearching(true);
     try {
-      let url = `https://rbbackend-fzkmdxllwa-uc.a.run.app/api/flightradar24/${selectedAirline}${flightNumber}`;
+      let url = `https://api.bbairtools.com/api/flightradar24/${selectedAirline}${flightNumber}`;
       
       // Add query parameters if origin and arrival airports are provided
       const queryParams = new URLSearchParams();
@@ -108,12 +108,23 @@ export function SeatTypeDelaySearch({ onSearch }: SeatTypeDelaySearchProps) {
       }
       
       const data = await response.json();
+      
+      // Transform the data to match the expected interface
+      const transformedData = data.map((flight: any) => ({
+        flightNumber: flight.flightNumber,
+        date: flight.date,
+        registration: flight.registration,
+        origin: flight.originIata,
+        destination: flight.destinationIata,
+        ontime: flight.ontime
+      }));
+      
       onSearch({
         airline: selectedAirline,
         flightNumber,
         originAirport,
         arrivalAirport,
-        flightData: data
+        flightData: transformedData
       });
     } catch (error) {
       console.error('Error fetching flight data:', error);

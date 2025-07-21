@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FcGoogle } from 'react-icons/fc';
 
 /**
@@ -25,25 +25,29 @@ const AuthForm = () => {
   };
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-muted px-4">
-      <Card className="w-full max-w-sm p-6 space-y-6 shadow-lg">
-        <h1 className="text-2xl font-bold text-center">Sign in or Sign up</h1>
-        <Button
-          variant="outline"
-          className="w-full flex items-center justify-center gap-2"
-          onClick={handleGoogleSignIn}
-          disabled={isLoading}
-        >
-          <FcGoogle className="h-5 w-5" />
-          {isLoading ? 'Redirecting…' : 'Continue with Google'}
-        </Button>
-        {hasError && (
-          <div className="text-sm text-red-600 text-center" role="alert">
-            {hasError}
-          </div>
-        )}
+    <main className="flex flex-1 flex-col items-center bg-background pt-8 pb-12 px-2 sm:px-4">
+      <Card className="w-full max-w-sm">
+        <CardHeader className="text-center pb-4">
+          <CardTitle className="text-xl">Sign in or Sign up</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Button
+            variant="outline"
+            className="w-full flex items-center justify-center gap-2"
+            onClick={handleGoogleSignIn}
+            disabled={isLoading}
+          >
+            <FcGoogle className="h-5 w-5" />
+            {isLoading ? 'Redirecting…' : 'Continue with Google'}
+          </Button>
+          {hasError && (
+            <div className="text-sm text-red-600 text-center" role="alert">
+              {hasError}
+            </div>
+          )}
+        </CardContent>
       </Card>
-    </div>
+    </main>
   );
 };
 

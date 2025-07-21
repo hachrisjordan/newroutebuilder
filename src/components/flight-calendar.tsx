@@ -33,6 +33,14 @@ interface FlightCalendarProps {
 }
 
 export function FlightCalendar({ flightData }: FlightCalendarProps) {
+  // All hooks must be called first, before any early returns
+  const [seatConfigData, setSeatConfigData] = useState<any | null>(null);
+  const [configLoading, setConfigLoading] = useState(false);
+  const { resolvedTheme } = useTheme();
+  const [selectedVariants, setSelectedVariants] = useState<string[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [currentMonthIndex, setCurrentMonthIndex] = useState(0);
+
   // Early return: no data
   if (!flightData || flightData.length === 0) {
     return <div className="text-center text-muted-foreground py-8">No flight data available.</div>;
@@ -69,7 +77,13 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
     const idx = months.findIndex(m => m === latestValidMonth);
     return idx !== -1 ? idx : (months.length > 0 ? months.length - 1 : 0);
   }, [months, latestValidMonth]);
-  const [currentMonthIndex, setCurrentMonthIndex] = useState(defaultMonthIndex);
+
+  // Set the current month index if it hasn't been set yet
+  React.useEffect(() => {
+    if (currentMonthIndex === 0 && defaultMonthIndex !== 0) {
+      setCurrentMonthIndex(defaultMonthIndex);
+    }
+  }, [defaultMonthIndex, currentMonthIndex]);
 
   const currentMonthKey = months[currentMonthIndex];
   const [year, month] = currentMonthKey.split('-');
@@ -119,14 +133,10 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
   const totalDays = lastDay.getDate();
   const startingDay = firstDay.getDay();
 
-  // Dynamic seat config state
-  const [seatConfigData, setSeatConfigData] = useState<any | null>(null);
-  const [configLoading, setConfigLoading] = useState(false);
-  const { resolvedTheme } = useTheme();
   useEffect(() => {
     if (!airline) return;
     setConfigLoading(true);
-    fetch(`https://rbbackend-fzkmdxllwa-uc.a.run.app/api/aircraft-config/${airline}`)
+    fetch(`/api/aircraft-config/${airline}`)
       .then(res => res.json())
       .then(data => setSeatConfigData(data))
       .catch(() => setSeatConfigData(null))
@@ -239,14 +249,11 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
   }
   const variantStats = Array.from(variantCountsByDay.entries()).sort((a, b) => b[1] - a[1]);
   const allVariants = variantStats.map(([variant]) => variant);
-  const [selectedVariants, setSelectedVariants] = useState<string[]>(allVariants);
+  
   useEffect(() => {
     setSelectedVariants(allVariants);
     // eslint-disable-next-line
   }, [currentMonthKey, allVariants.join(",")]);
-
-  // Add after useEffect for selectedVariants
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   // Helper: get flight and seat config for a date
   function getFlightAndConfig(dateStr: string) {
