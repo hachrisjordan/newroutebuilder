@@ -2,67 +2,125 @@ import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { z, ZodError } from 'zod';
 
-// Enable caching for this route
-export const revalidate = 3600; // 1 hour cache
+// Caching configuration
+export const revalidate = 1800; // 30 minutes cache for airports
 export const dynamic = 'force-dynamic'; // This route needs to be dynamic due to search params
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
-
 const AirportSchema = z.object({
-  iata: z.string(),
-  name: z.string(),
-  city_name: z.string(),
-  country: z.string(),
-  country_code: z.string(),
-  latitude: z.number(),
-  longitude: z.number(),
+  code: z.string().min(3).max(4),
+  name: z.string().min(1),
+  city: z.string().optional(),
+  country: z.string().optional(),
 });
 
-export async function GET(request: Request) {
+type ValidatedAirport = z.infer<typeof AirportSchema>;
+
+// Cache for airport data
+let cachedAirports: ValidatedAirport[] | null = null;
+let cacheTimestamp: number = 0;
+const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
+
+export async function GET(req: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const search = searchParams.get('search')?.toLowerCase() || '';
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const pageSize = parseInt(searchParams.get('pageSize') || '20', 10);
-    const from = (page - 1) * pageSize;
-    const to = from + pageSize - 1;
+    // Create Supabase client inside the function
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseKey) {
+      return NextResponse.json(
+        { error: 'Database connection not configured' },
+        { status: 503 }
+      );
+    }
+    
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    let query = supabase
-      .from('airports')
-      .select('iata, name, city_name, country, country_code, latitude, longitude', { count: 'exact' })
-      .order('city_name', { ascending: true });
+    const url = new URL(req.url);
+    const search = url.searchParams.get('search');
+    const limit = parseInt(url.searchParams.get('limit') || '50');
 
-    if (search) {
-      query = query.or(`iata.ilike.%${search}%,city_name.ilike.%${search}%,country.ilike.%${search}%`);
+    // Check cache first
+    const now = Date.now();
+    if (cachedAirports && (now - cacheTimestamp) < CACHE_TTL) {
+      let airports = cachedAirports;
+      
+      if (search) {
+        const searchLower = search.toLowerCase();
+        airports = cachedAirports.filter(airport => 
+          airport.code.toLowerCase().includes(searchLower) ||
+          airport.name.toLowerCase().includes(searchLower) ||
+          airport.city?.toLowerCase().includes(searchLower) ||
+          airport.country?.toLowerCase().includes(searchLower)
+        );
+      }
+      
+      const limitedAirports = airports.slice(0, limit);
+      
+      return NextResponse.json(limitedAirports, {
+        headers: {
+          'Cache-Control': 'public, max-age=1800, stale-while-revalidate=3600',
+          'Content-Type': 'application/json',
+          'X-Cache': 'HIT',
+        },
+      });
     }
 
-    const { data, count, error } = await query.range(from, to);
-    if (error) throw error;
-    if (!data) return NextResponse.json({ airports: [], total: 0, page, pageSize });
+    // Fetch from database
+    let query = supabase
+      .from('airports')
+      .select('code, name, city, country')
+      .order('name');
 
-    // Validate data
-    const airports = z.array(AirportSchema).parse(data);
+    if (search) {
+      const searchTerm = `%${search}%`;
+      query = query.or(`code.ilike.${searchTerm},name.ilike.${searchTerm},city.ilike.${searchTerm},country.ilike.${searchTerm}`);
+    }
 
-    return NextResponse.json({
-      airports,
-      total: count ?? 0,
-      page,
-      pageSize,
-    });
-  } catch (error) {
-    if (error instanceof ZodError) {
-      console.error('Zod validation error:', error.errors);
+    const { data: airports, error } = await query.limit(limit);
+
+    if (error) {
+      console.error('Supabase error:', error);
       return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
+        { error: 'Failed to fetch airports' },
         { status: 500 }
       );
     }
-    console.error('Failed to fetch airports:', error);
-    const message = typeof error === 'object' && error && 'message' in error ? (error.message as string) : String(error);
+
+    // Validate data
+    const validatedAirports: ValidatedAirport[] = airports?.map(airport => {
+      try {
+        return AirportSchema.parse(airport);
+      } catch (validationError) {
+        console.warn('Invalid airport data:', airport, validationError);
+        return null;
+      }
+    }).filter((airport): airport is ValidatedAirport => airport !== null) || [];
+
+    // Update cache only for non-search requests
+    if (!search) {
+      cachedAirports = validatedAirports;
+      cacheTimestamp = now;
+    }
+
+    return NextResponse.json(validatedAirports, {
+      headers: {
+        'Cache-Control': 'public, max-age=1800, stale-while-revalidate=3600',
+        'Content-Type': 'application/json',
+        'X-Cache': 'MISS',
+      },
+    });
+
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid request parameters', details: error.errors },
+        { status: 400 }
+      );
+    }
+
+    console.error('Airports API error:', error);
     return NextResponse.json(
-      { error: message || 'Failed to fetch airports' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

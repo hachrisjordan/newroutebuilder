@@ -5,9 +5,9 @@ import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import Valkey from 'iovalkey';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Route configuration
+export const revalidate = 3600; // 1 hour cache for shortest route
+export const dynamic = 'force-dynamic'; // This route needs to be dynamic due to search params
 
 const alliances: Alliance[] = ['ST', 'SA', 'OW'];
 const STOP_TYPES = { 1: 'A-H-B', 2: 'A-H-H-B' } as const;
@@ -30,6 +30,16 @@ function getRandomElement<T>(arr: T[]): T {
 
 // Helper: Get random challenge for 1-stop or 2-stop
 async function getRandomChallengeFromDB(mode: 'daily' | 'practice', stopCount: 1 | 2) {
+  // Create Supabase client inside the function
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Database connection not configured');
+  }
+  
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
   if (stopCount === 1) {
     // 1-stop: no alliance restriction
     for (let attempt = 0; attempt < 10; attempt++) {
@@ -174,22 +184,36 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { hubs, challengeId } = body;
-  const idParts = challengeId.split('-');
-  let stopCount: 1 | 2 = 2;
-  let origin = idParts[0];
-  let destination = idParts[1];
-  let alliance: string | undefined = undefined;
-  if (idParts.length === 3 && idParts[2] === '1') {
-    stopCount = 1;
-  } else if (idParts.length === 4 && idParts[3] === '2') {
-    stopCount = 2;
-    alliance = idParts[2];
-  }
-  if (stopCount === 1) {
-    // 1-stop: validate any alliance
-    let query = supabase
+  try {
+    // Create Supabase client inside the function
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseKey) {
+      return NextResponse.json(
+        { error: 'Database connection not configured' },
+        { status: 503 }
+      );
+    }
+    
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const body = await req.json();
+    const { hubs, challengeId } = body;
+    const idParts = challengeId.split('-');
+    let stopCount: 1 | 2 = 2;
+    let origin = idParts[0];
+    let destination = idParts[1];
+    let alliance: string | undefined = undefined;
+    if (idParts.length === 3 && idParts[2] === '1') {
+      stopCount = 1;
+    } else if (idParts.length === 4 && idParts[3] === '2') {
+      stopCount = 2;
+      alliance = idParts[2];
+    }
+    if (stopCount === 1) {
+      // 1-stop: validate any alliance
+      let query = supabase
       .from('path')
       .select('*')
       .eq('type', STOP_TYPES[1])
@@ -278,5 +302,12 @@ export async function POST(req: NextRequest) {
       differenceFromShortest: shortestDistance !== undefined ? totalDistance - shortestDistance : undefined,
     };
     return NextResponse.json({ guess });
+    }
+  } catch (error) {
+    console.error('Shortest route POST error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 } 

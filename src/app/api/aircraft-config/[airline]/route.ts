@@ -1,101 +1,86 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { NextResponse } from 'next/server';
+import { z, ZodError } from 'zod';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+// Caching configuration
+export const revalidate = 7200; // 2 hours cache for aircraft config
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+const AircraftConfigSchema = z.object({
+  aircraft_type: z.string(),
+  configuration: z.string(),
+  // Add other fields as needed
+});
 
 export async function GET(
-  request: NextRequest,
+  request: Request,
   { params }: { params: { airline: string } }
 ) {
   try {
-    const { airline } = params;
+    // Create Supabase client inside the function
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseKey) {
+      return NextResponse.json(
+        { error: 'Database connection not configured' },
+        { status: 503 }
+      );
+    }
+    
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const airline = params.airline?.toUpperCase();
 
     if (!airline) {
-      return NextResponse.json({ error: 'Airline parameter is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Airline parameter is required' },
+        { status: 400 }
+      );
     }
 
-    // Fetch tail number distribution with effective dates
-    const { data: tailData, error: tailError } = await supabase
-      .from('tail')
+    // Fetch aircraft configurations for the specific airline
+    const { data, error } = await supabase
+      .from('aircraft_configurations')
       .select('*')
-      .eq('airline', airline)
-      .order('tail', { ascending: true })
-      .order('effective_date', { ascending: true });
+      .eq('airline_code', airline)
+      .order('aircraft_type');
 
-    if (tailError) {
-      console.error('Error fetching tail data:', tailError);
-      return NextResponse.json({ error: 'Failed to fetch tail data' }, { status: 500 });
+    if (error) {
+      console.error('Supabase error:', error);
+      return NextResponse.json(
+        { error: 'Failed to fetch aircraft configurations' },
+        { status: 500 }
+      );
     }
 
-    // Fetch configuration data
-    const { data: configData, error: configError } = await supabase
-      .from('config')
-      .select('*')
-      .eq('airline', airline);
-
-    if (configError) {
-      console.error('Error fetching config data:', configError);
-      return NextResponse.json({ error: 'Failed to fetch config data' }, { status: 500 });
-    }
-
-    // Process tail data to create the distribution structure
-    const tailDistribution: Record<string, any> = {};
-    
-    tailData?.forEach(record => {
-      const tail = record.tail;
-      if (!tail) return;
-
-      if (!tailDistribution[tail]) {
-        tailDistribution[tail] = {
-          default: record.type,
-          changes: []
-        };
+    // Validate and return data
+    const validatedConfigs = data?.map(config => {
+      try {
+        return AircraftConfigSchema.parse(config);
+      } catch (validationError) {
+        console.warn('Invalid aircraft config data:', config, validationError);
+        return null;
       }
+    }).filter(Boolean) || [];
 
-      // If there's an effective date, it's a change
-      if (record.effective_date && record.effective_date !== '') {
-        tailDistribution[tail].changes.push({
-          date: record.effective_date,
-          variant: record.type
-        });
-      } else if (record.end_date && record.end_date !== '') {
-        // This is the "before" configuration
-        tailDistribution[tail].default = record.type;
-      }
+    return NextResponse.json(validatedConfigs, {
+      headers: {
+        'Cache-Control': 'public, max-age=7200, stale-while-revalidate=14400',
+        'Content-Type': 'application/json',
+      },
     });
-
-    // Process config data to create the configurations_by_type structure
-    const configurationsByType: Record<string, any[]> = {};
-    
-    configData?.forEach(record => {
-      const type = record.type;
-      if (!type) return;
-
-      if (!configurationsByType[type]) {
-        configurationsByType[type] = [];
-      }
-
-      configurationsByType[type].push({
-        variant: record.variant,
-        config: record.config,
-        note: record.note,
-        color: record.color
-      });
-    });
-
-    // Return the data in the expected format
-    const response = {
-      tail_number_distribution: tailDistribution,
-      configurations_by_type: configurationsByType
-    };
-
-    return NextResponse.json(response);
 
   } catch (error) {
-    console.error('Error in aircraft config API:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid request parameters', details: error.errors },
+        { status: 400 }
+      );
+    }
+
+    console.error('Aircraft config API error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 } 

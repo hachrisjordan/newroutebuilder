@@ -1,8 +1,7 @@
 import React from 'react';
-import Image from 'next/image';
 import { X, Check, AlertTriangle, DollarSign } from 'lucide-react';
 import { TooltipTouch } from '@/components/ui/tooltip-touch';
-import { getAirlineLogoSrc } from '@/lib/utils';
+import { AirlineLogo } from '@/components/ui/airline-logo';
 import type { Flight } from '@/types/award-finder-results';
 import PricingValue from './pricing-value';
 
@@ -141,13 +140,12 @@ const FlightCard: React.FC<FlightCardProps> = ({
         </div>
         <div className="flex flex-row items-center justify-between w-full mt-1">
           <div className="flex items-center gap-2">
-            <Image
-              src={getAirlineLogoSrc(code, isDark)}
-              alt={code}
+            <AirlineLogo
+              code={code}
               width={20}
               height={20}
               className="inline-block align-middle rounded-md"
-              style={{ objectFit: 'contain' }}
+              priority={false}
             />
             <span className="font-mono text-sm">{f.FlightNumbers}</span>
             <span className="text-xs text-muted-foreground ml-1">({f.Aircraft})</span>

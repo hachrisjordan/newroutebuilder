@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import Image from 'next/image';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import FlightCard from './flight-card';
 import { TooltipTouch } from '@/components/ui/tooltip-touch';
-import { getAirlineLogoSrc, getTotalDuration } from '@/lib/utils';
+import { getAirlineLogoSrc, getTotalDuration, batchPreloadAirlineLogos } from '@/lib/utils';
 import { useTheme } from 'next-themes';
+import { AirlineLogo } from '@/components/ui/airline-logo';
 import LiveSearchFlightCard from './live-search-flight-card';
 
 /**
@@ -111,6 +111,18 @@ const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itinera
     F: 'First',
   };
 
+  // Preload airline logos for better performance
+  useEffect(() => {
+    if (itineraries.length > 0) {
+      const airlineCodes = Array.from(new Set(
+        itineraries.flatMap(itin => 
+          itin.segments.map(seg => seg.flightnumber.slice(0, 2).toUpperCase())
+        )
+      ));
+      batchPreloadAirlineLogos(airlineCodes, isDark);
+    }
+  }, [itineraries, isDark]);
+
   return (
     <div className="flex flex-col gap-4 w-full max-w-[1000px] mx-auto">
       {itineraries.map((itin, idx) => {
@@ -129,13 +141,13 @@ const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itinera
             {/* Mobile: logo top right, absolute */}
             {program && (
               <div className={"absolute top-6 right-2 block md:hidden rounded" + (isDark ? " bg-white" : "")} style={isDark ? { padding: '4px', width: '75px', height: '30px' } : { width: '75px', height: '30px' }}>
-                <Image
-                  src={`/${program}_P.png`}
+                <AirlineLogo
+                  code={`${program}_P`}
                   alt={`${program} logo`}
                   width={75}
                   height={30}
-                  style={{ objectFit: 'contain' }}
-                  unoptimized
+                  className="object-contain"
+                  priority={false}
                 />
               </div>
             )}
@@ -153,13 +165,13 @@ const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itinera
                         }
                         style={isDark ? { padding: '4px', width: '75px', height: '30px' } : { width: '75px', height: '30px' }}
                       >
-                        <Image
-                          src={`/${program}_P.png`}
+                        <AirlineLogo
+                          code={`${program}_P`}
                           alt={`${program} logo`}
                           width={75}
                           height={30}
-                          style={{ objectFit: 'contain' }}
-                          unoptimized
+                          className="object-contain"
+                          priority={false}
                         />
                       </span>
                     )}
@@ -192,19 +204,17 @@ const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itinera
               <div className="flex flex-wrap gap-2 items-center">
                 {itin.segments.map((seg, i) => {
                   const code = seg.flightnumber.slice(0, 2).toUpperCase();
-                  const logoSrc = getAirlineLogoSrc(code, isDark);
                   // For each segment, get aircraft name
                   let aircraftName = aircraftMap[seg.aircraft] || seg.aircraft;
                   if (typeof aircraftName === 'string') aircraftName = aircraftName.trimEnd();
                   return (
                     <span key={seg.flightnumber + i} className="flex items-center gap-1">
-                      <Image
-                        src={logoSrc}
-                        alt={code}
+                      <AirlineLogo
+                        code={code}
                         width={24}
                         height={24}
                         className="inline-block align-middle rounded-md"
-                        style={{ objectFit: 'contain' }}
+                        priority={false}
                       />
                       <span className="font-mono">{seg.flightnumber}</span>
                       {i < itin.segments.length - 1 && <span className="mx-1 text-muted-foreground">/</span>}
