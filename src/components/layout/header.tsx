@@ -12,7 +12,7 @@ import HeaderUserMenu from '@/components/auth-wizard/header-user-menu';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
 const navigation = [
-  { name: 'Home', href: '/' },
+  // { name: 'Home', href: '/' }, // Removed Home link
   { name: 'Seat Type / Delay', href: '/seat-type-delay' },
   { name: 'Award Finder', href: '/award-finder' },
   { name: 'Live Search', href: '/live-search' },

@@ -487,27 +487,36 @@ export default function ShortestRoutePage() {
           <div className="space-y-2">
             <h3 className="font-medium">Your Guesses ({guesses.length}/{challenge.tries})</h3>
             {guesses.map((g, i) => {
-              // Compute feedback for each hub
-              const correctHubs = challenge.shortestRoute.slice(1, -1); // [hub1, hub2]
-              // Track which correct hubs have been matched (for yellow logic)
-              const matched = [false, false];
-              // First pass: mark greens
+              // Compute feedback for each hub using all shortest routes
+              const allShortestRoutes = challenge.shortestRoutes; // Array of [hub1, hub2]
+              const hubCount = g.hubs.length;
+              // Track which hubs in which routes have been matched (for yellow logic)
+              const greenMatched: boolean[][] = allShortestRoutes.map(() => Array(hubCount).fill(false));
+              // First pass: mark greens (correct position in any shortest route)
               const feedback: ("green" | "yellow" | "red")[] = g.hubs.map((hub, idx) => {
-                if (hub === correctHubs[idx]) {
-                  matched[idx] = true;
-                  return "green";
+                for (let routeIdx = 0; routeIdx < allShortestRoutes.length; routeIdx++) {
+                  if (hub === allShortestRoutes[routeIdx][idx]) {
+                    greenMatched[routeIdx][idx] = true;
+                    return "green";
+                  }
                 }
                 return undefined as unknown as "green" | "yellow" | "red";
               });
-              // Second pass: mark yellows
+              // Second pass: mark yellows (wrong position but present in any shortest route, not already matched as green)
               g.hubs.forEach((hub, idx) => {
                 if (feedback[idx] === undefined) {
-                  // Find if this hub exists in correctHubs at a different index and not already matched
-                  const otherIdx = correctHubs.findIndex((h, j) => h === hub && !matched[j] && j !== idx);
-                  if (otherIdx !== -1) {
-                    matched[otherIdx] = true;
-                    feedback[idx] = "yellow";
-                  } else {
+                  let found = false;
+                  for (let routeIdx = 0; routeIdx < allShortestRoutes.length && !found; routeIdx++) {
+                    for (let pos = 0; pos < hubCount; pos++) {
+                      if (hub === allShortestRoutes[routeIdx][pos] && !greenMatched[routeIdx][pos]) {
+                        greenMatched[routeIdx][pos] = true; // Mark as matched for yellow
+                        feedback[idx] = "yellow";
+                        found = true;
+                        break;
+                      }
+                    }
+                  }
+                  if (!found) {
                     feedback[idx] = "red";
                   }
                 }

@@ -10,11 +10,11 @@ import StructuredData from "@/components/seo/structured-data";
 
 export const metadata: Metadata = {
   title: {
-    default: "bbairtools - Flight Route Planning & Airport Tools",
+    default: "bbairtools - Award Flight Route Planning",
     template: "%s | bbairtools"
   },
-  description: "Professional flight route planning tools and comprehensive airport database. Plan routes, find airports, analyze delays, and optimize your flying experience with advanced aviation tools.",
-  keywords: ["flight planning", "route builder", "airport search", "aviation tools", "flight routes", "airline planning", "airport database"],
+  description: "Award flight route planning tools. Plan routes and optimize your flying experience.",
+  keywords: ["award flight planning", "award flight", "award route builder", "award airport search", "award aviation tools", "award flight routes", "award airline planning", "award airport database"],
   authors: [{ name: "bbairtools" }],
   creator: "bbairtools",
   publisher: "bbairtools",
@@ -33,22 +33,22 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: 'https://bbairtools.com',
-    title: 'bbairtools - Professional Flight Planning Tools',
-    description: 'Professional flight route planning tools and comprehensive airport database. Plan routes, find airports, and optimize your flying experience.',
+    title: 'bbairtools - Award Flight Route Planning Tools',
+    description: 'Award flight route planning tools. Plan routes and optimize your flying experience.',
     siteName: 'bbairtools',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'bbairtools - Flight Planning Tools',
+        alt: 'bbairtools - Award Flight Planning Tools',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'bbairtools - Professional Flight Planning Tools',
-    description: 'Professional flight route planning tools and comprehensive airport database.',
+    title: 'bbairtools - Award Flight Planning Tools',
+    description: 'Award flight route planning tools. Plan routes and optimize your flying experience.',
     images: ['/og-image.png'],
   },
   metadataBase: new URL('https://bbairtools.com'),
