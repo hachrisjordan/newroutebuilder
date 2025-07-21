@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 export const revalidate = 3600; // 1 hour cache
+export const dynamic = 'force-dynamic'; // This route needs to be dynamic due to search params
 
 export async function GET(req: Request) {
   try {

@@ -5,6 +5,10 @@ import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import Valkey from 'iovalkey';
 
+// Route configuration
+export const revalidate = 3600; // 1 hour cache for shortest route
+export const dynamic = 'force-dynamic'; // This route needs to be dynamic due to search params
+
 const alliances: Alliance[] = ['ST', 'SA', 'OW'];
 const STOP_TYPES = { 1: 'A-H-B', 2: 'A-H-H-B' } as const;
 

@@ -4,6 +4,7 @@ import { z, ZodError } from 'zod';
 
 // Caching configuration
 export const revalidate = 1800; // 30 minutes cache for airports
+export const dynamic = 'force-dynamic'; // This route needs to be dynamic due to search params
 
 const AirportSchema = z.object({
   code: z.string().min(3).max(4),

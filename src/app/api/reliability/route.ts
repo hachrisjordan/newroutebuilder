@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 
 // Caching configuration
 export const revalidate = 7200; // 2 hours cache for reliability data
+export const dynamic = 'force-dynamic'; // This route needs to be dynamic due to search params
 
 export async function GET(req: Request) {
   try {

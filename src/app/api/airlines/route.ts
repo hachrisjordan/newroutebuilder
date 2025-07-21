@@ -4,6 +4,7 @@ import { z, ZodError } from 'zod';
 
 // Enhanced caching for this route
 export const revalidate = 3600; // 1 hour cache
+export const dynamic = 'force-dynamic'; // This route needs to be dynamic due to search params
 
 const AirlineSchema = z.object({
   code: z.string().min(1).max(5),
