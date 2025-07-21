@@ -5,10 +5,6 @@ import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import Valkey from 'iovalkey';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
-
 const alliances: Alliance[] = ['ST', 'SA', 'OW'];
 const STOP_TYPES = { 1: 'A-H-B', 2: 'A-H-H-B' } as const;
 
@@ -30,6 +26,16 @@ function getRandomElement<T>(arr: T[]): T {
 
 // Helper: Get random challenge for 1-stop or 2-stop
 async function getRandomChallengeFromDB(mode: 'daily' | 'practice', stopCount: 1 | 2) {
+  // Create Supabase client inside the function
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Database connection not configured');
+  }
+  
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
   if (stopCount === 1) {
     // 1-stop: no alliance restriction
     for (let attempt = 0; attempt < 10; attempt++) {

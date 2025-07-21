@@ -157,15 +157,20 @@ export function formatDivertedOntime(ontime: string): string {
 }
 
 /**
- * Returns the correct airline logo path, using the -white variant for certain airlines in dark mode.
+ * Returns the correct airline logo path, using WebP format when supported
+ * and the -white variant for certain airlines in dark mode.
  * @param code Airline IATA code (e.g., 'LH')
  * @param isDarkMode Whether dark mode is active (SSR) or undefined for client-side detection
+ * @param preferWebP Whether to prefer WebP format for smaller file sizes
  */
 const AIRLINES_DARK_LOGO = ['LH', 'AM', 'NZ','LO'];
+const WEBP_SUPPORTED_AIRLINES = new Set(); // Will be populated dynamically
 
-export function getAirlineLogoSrc(code: string, isDarkMode?: boolean): string {
+export function getAirlineLogoSrc(code: string, isDarkMode?: boolean, preferWebP = true): string {
   if (!code) return '';
   const upperCode = code.toUpperCase();
+  
+  // Check for dark mode variants first
   if (AIRLINES_DARK_LOGO.includes(upperCode) && isDarkMode) {
     // Prefer PNG, fallback to JPG for AM
     if (upperCode === 'AM') {
@@ -173,7 +178,52 @@ export function getAirlineLogoSrc(code: string, isDarkMode?: boolean): string {
     }
     return `/${upperCode}-white.png`;
   }
+  
+  // For regular logos, prefer WebP if supported and available
+  if (preferWebP && typeof window !== 'undefined') {
+    const webpSupported = document.createElement('canvas').toDataURL('image/webp').indexOf('data:image/webp') === 0;
+    if (webpSupported && WEBP_SUPPORTED_AIRLINES.has(upperCode)) {
+      return `/${upperCode}.webp`;
+    }
+  }
+  
   return `/${upperCode}.png`;
+}
+
+/**
+ * Preload airline logo for better performance
+ * @param code Airline IATA code
+ * @param isDarkMode Whether dark mode is active
+ */
+export function preloadAirlineLogo(code: string, isDarkMode?: boolean): void {
+  if (typeof window === 'undefined') return;
+  
+  const logoSrc = getAirlineLogoSrc(code, isDarkMode);
+  const link = document.createElement('link');
+  link.rel = 'preload';
+  link.as = 'image';
+  link.href = logoSrc;
+  document.head.appendChild(link);
+}
+
+/**
+ * Batch preload multiple airline logos
+ * @param codes Array of airline IATA codes
+ * @param isDarkMode Whether dark mode is active
+ */
+export function batchPreloadAirlineLogos(codes: string[], isDarkMode?: boolean): void {
+  if (typeof window === 'undefined') return;
+  
+  // Use requestIdleCallback for non-blocking preloading
+  const preloadBatch = () => {
+    codes.forEach(code => preloadAirlineLogo(code, isDarkMode));
+  };
+  
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(preloadBatch);
+  } else {
+    setTimeout(preloadBatch, 1);
+  }
 }
 
 /**
