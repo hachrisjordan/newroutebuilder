@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import StructuredData from "@/components/seo/structured-data";
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: {
