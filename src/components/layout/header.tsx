@@ -11,6 +11,7 @@ import Image from 'next/image';
 import HeaderUserMenu from '@/components/auth-wizard/header-user-menu';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const navigation = [
   // { name: 'Home', href: '/' }, // Removed Home link
@@ -61,18 +62,21 @@ export function Header() {
             <Image src="/rblogo.png" alt="RouteBuilder Logo" height={40} width={40} className="h-10 w-auto" priority />
           </Link>
         </div>
-        <nav className="flex items-center space-x-6 text-sm font-medium">
+        <nav className="flex items-center space-x-6 text-sm font-medium relative">
           {navigation.map((item) => (
             pathname === item.href ? (
-              <span
-                key={item.href}
-                className="bg-primary/10 rounded-lg px-3 py-1.5 font-semibold text-primary transition-colors dark:bg-primary/20 dark:text-primary"
-              >
+              <span key={item.href} className="relative inline-flex items-center">
+                <AnimatePresence>
+                  <motion.div
+                    layoutId="nav-highlight"
+                    className="absolute inset-0 bg-primary/10 dark:bg-primary/20 rounded-lg z-0"
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  />
+                </AnimatePresence>
                 <Link
                   href={item.href}
                   className={cn(
-                    'transition-colors',
-                    'text-primary dark:text-primary'
+                    'relative z-10 px-3 py-1.5 font-semibold text-primary transition-colors dark:text-primary',
                   )}
                 >
                   {item.name}
