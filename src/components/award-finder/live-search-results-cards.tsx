@@ -8,6 +8,7 @@ import { TooltipTouch } from '@/components/ui/tooltip-touch';
 import { getAirlineLogoSrc, getTotalDuration } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 import LiveSearchFlightCard from './live-search-flight-card';
+import ExpandFade from '../ui/expand-fade';
 
 /**
  * Props for LiveSearchResultsCards
@@ -298,7 +299,7 @@ const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itinera
                   })}
               </div>
             </div>
-            {isOpen && (
+            <ExpandFade show={isOpen}>
               <>
                 <div className="w-full flex justify-center my-2">
                   <div className="h-px w-full bg-muted" />
@@ -360,7 +361,7 @@ const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itinera
                   </div>
                 </div>
               </>
-            )}
+            </ExpandFade>
           </Card>
         );
       })}

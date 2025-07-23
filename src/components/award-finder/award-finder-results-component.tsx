@@ -11,6 +11,7 @@ import { useTheme } from 'next-themes';
 import { getAirlineLogoSrc, getTotalDuration, getClassPercentages } from '@/lib/utils';
 import FlightCard from './flight-card';
 import { TooltipTouch } from '@/components/ui/tooltip-touch';
+import ExpandFade from '../ui/expand-fade';
 
 interface AwardFinderResultsFlatCard {
   route: string;
@@ -289,7 +290,7 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                   <ClassBar label="F" percent={f} />
                 </div>
               </div>
-              {isOpen && (
+              <ExpandFade show={isOpen}>
                 <>
                   <div className="w-full flex justify-center my-2">
                     <div className="h-px w-full bg-muted" />
@@ -363,7 +364,7 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                     </div>
                   </div>
                 </>
-              )}
+              </ExpandFade>
             </Card>
           );
         })}

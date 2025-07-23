@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { differenceInCalendarDays } from 'date-fns';
 import { getAirlineLogoSrc } from '@/lib/utils';
 import { Link as LinkIcon } from 'lucide-react';
+import ExpandFade from '@/components/ui/expand-fade';
 
 interface Itinerary {
   id: string;
@@ -191,7 +192,7 @@ const EtihadItineraryCard: React.FC<EtihadItineraryCardProps> = ({ itinerary, se
           </span>
         </div>
       </div>
-      {expanded && (
+      <ExpandFade show={!!expanded}>
         <>
           <div className="w-full flex justify-center my-2">
             <div className="h-px w-full bg-muted" />
@@ -268,7 +269,7 @@ const EtihadItineraryCard: React.FC<EtihadItineraryCardProps> = ({ itinerary, se
             </div>
           </div>
         </>
-      )}
+      </ExpandFade>
     </Card>
   );
 };
