@@ -5,6 +5,8 @@ import { createHash } from 'crypto';
 import Valkey from 'iovalkey';
 import { parseISO, isBefore, isEqual, startOfDay, endOfDay } from 'date-fns';
 import { createClient } from '@supabase/supabase-js';
+import { getCompressed, setCompressed } from '@/lib/redis';
+import { getTotalDuration, getClassPercentages } from '@/lib/utils';
 
 // Input validation schema
 const buildItinerariesSchema = z.object({
@@ -281,7 +283,7 @@ function filterReliableItineraries(
  * Orchestrates route finding and availability composition.
  */
 export async function POST(req: NextRequest) {
-  const startTime = Date.now(); // Track start time
+  const startTime = Date.now();
   let usedProKey: string | null = null;
   let usedProKeyRowId: string | null = null;
   try {
@@ -294,6 +296,151 @@ export async function POST(req: NextRequest) {
     let { origin, destination, maxStop, startDate, endDate, apiKey, cabin, carriers, minReliabilityPercent } = parseResult.data;
     if (typeof minReliabilityPercent !== 'number' || isNaN(minReliabilityPercent)) {
       minReliabilityPercent = 85;
+    }
+
+    // --- NEW: Accept filter/sort/search/pagination params ---
+    const {
+      sortBy = 'default',
+      page = 0,
+      pageSize = 50,
+      searchQuery = '',
+      selectedStops = [],
+      selectedIncludeAirlines = [],
+      selectedExcludeAirlines = [],
+      yPercent = 0,
+      wPercent = 0,
+      jPercent = 0,
+      fPercent = 0,
+      duration,
+      depTime,
+      arrTime,
+      airportFilter = { include: { origin: [], destination: [], connection: [] }, exclude: { origin: [], destination: [], connection: [] } },
+      reliableOnly = false,
+    } = body;
+
+    // --- REDIS CACHE KEY ---
+    const cacheKey = `itins:${origin}:${destination}:${maxStop}:${startDate}:${endDate}:${cabin || ''}:${carriers || ''}`;
+    let cached = await getCompressed<any>(cacheKey);
+    if (cached) {
+      // Server-side filtering/sorting/pagination
+      let results = cached;
+      // Optionally filter reliable only
+      if (reliableOnly && results.filterReliable) {
+        results = results.filterReliable;
+      }
+      let cards: Array<{ route: string; date: string; itinerary: string[] }> = results.cards;
+      // Apply all filters (same as client logic, but here)
+      if (selectedStops.length > 0) {
+        cards = cards.filter((card: { route: string }) => selectedStops.includes(card.route.split('-').length - 2));
+      }
+      if (selectedIncludeAirlines.length > 0) {
+        cards = cards.filter((card: { itinerary: string[] }) => {
+          const airlineCodes = card.itinerary.map((fid: string) => results.flights[fid]?.FlightNumbers.slice(0, 2).toUpperCase());
+          return airlineCodes.some((code: string) => selectedIncludeAirlines.includes(code));
+        });
+      }
+      if (selectedExcludeAirlines.length > 0) {
+        cards = cards.filter((card: { itinerary: string[] }) => {
+          const airlineCodes = card.itinerary.map((fid: string) => results.flights[fid]?.FlightNumbers.slice(0, 2).toUpperCase());
+          return !airlineCodes.some((code: string) => selectedExcludeAirlines.includes(code));
+        });
+      }
+      if (typeof duration === 'number') {
+        cards = cards.filter((card: { itinerary: string[] }) => {
+          const flightsArr = card.itinerary.map((fid: string) => results.flights[fid]).filter(Boolean);
+          const total = getTotalDuration(flightsArr);
+          return total <= duration;
+        });
+      }
+      if (yPercent > 0 || wPercent > 0 || jPercent > 0 || fPercent > 0) {
+        cards = cards.filter((card: { itinerary: string[] }) => {
+          const flightsArr = card.itinerary.map((fid: string) => results.flights[fid]).filter(Boolean);
+          if (flightsArr.length === 0) return false;
+          const { y, w, j, f } = getClassPercentages(flightsArr, results.reliability, minReliabilityPercent);
+          return (
+            y >= yPercent &&
+            w >= wPercent &&
+            j >= jPercent &&
+            f >= fPercent
+          );
+        });
+      }
+      if (depTime && Array.isArray(depTime)) {
+        cards = cards.filter((card: { itinerary: string[] }) => {
+          const flightsArr = card.itinerary.map((fid: string) => results.flights[fid]).filter(Boolean);
+          if (!flightsArr.length) return false;
+          const dep = new Date(flightsArr[0].DepartsAt).getTime();
+          return dep >= depTime[0] && dep <= depTime[1];
+        });
+      }
+      if (arrTime && Array.isArray(arrTime)) {
+        cards = cards.filter((card: { itinerary: string[] }) => {
+          const flightsArr = card.itinerary.map((fid: string) => results.flights[fid]).filter(Boolean);
+          if (!flightsArr.length) return false;
+          const arr = new Date(flightsArr[flightsArr.length - 1].ArrivesAt).getTime();
+          return arr >= arrTime[0] && arr <= arrTime[1];
+        });
+      }
+      if (airportFilter.include.origin.length || airportFilter.include.destination.length || airportFilter.include.connection.length) {
+        cards = cards.filter((card: { route: string }) => {
+          const segs = card.route.split('-');
+          const origin = segs[0];
+          const destination = segs[segs.length-1];
+          const connections = segs.slice(1, -1);
+          let match = true;
+          if (airportFilter.include.origin.length) match = match && airportFilter.include.origin.includes(origin);
+          if (airportFilter.include.destination.length) match = match && airportFilter.include.destination.includes(destination);
+          if (airportFilter.include.connection.length) match = match && connections.some((c: string) => airportFilter.include.connection.includes(c));
+          return match;
+        });
+      }
+      if (airportFilter.exclude.origin.length || airportFilter.exclude.destination.length || airportFilter.exclude.connection.length) {
+        cards = cards.filter((card: { route: string }) => {
+          const segs = card.route.split('-');
+          const origin = segs[0];
+          const destination = segs[segs.length-1];
+          const connections = segs.slice(1, -1);
+          let match = true;
+          if (airportFilter.exclude.origin.length) match = match && !airportFilter.exclude.origin.includes(origin);
+          if (airportFilter.exclude.destination.length) match = match && !airportFilter.exclude.destination.includes(destination);
+          if (airportFilter.exclude.connection.length) match = match && !connections.some((c: string) => airportFilter.exclude.connection.includes(c));
+          return match;
+        });
+      }
+      if (searchQuery) {
+        const terms = searchQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
+        cards = cards.filter((card: { route: string; date: string; itinerary: string[] }) => {
+          return terms.every((term: string) => {
+            if (card.route.toLowerCase().includes(term)) return true;
+            if (card.date.toLowerCase().includes(term)) return true;
+            return card.itinerary.some((fid: string) => {
+              const flight = results.flights[fid];
+              return flight && flight.FlightNumbers.toLowerCase().includes(term);
+            });
+          });
+        });
+      }
+      // Sorting
+      if (sortBy && sortBy !== 'default') {
+        cards = cards.sort((a: any, b: any) => {
+          // Implement sort logic based on sortBy param
+          // Example: sort by duration, arrival, etc.
+          // You may need to replicate getSortValue logic here
+          return 0; // TODO: implement
+        });
+      }
+      // Pagination
+      const total = Math.ceil(cards.length / pageSize);
+      const pagedCards = cards.slice(page * pageSize, (page + 1) * pageSize);
+      return NextResponse.json({
+        cards: pagedCards,
+        totalPages: total,
+        flights: results.flights,
+        reliability: results.reliability,
+        minRateLimitRemaining: results.minRateLimitRemaining,
+        minRateLimitReset: results.minRateLimitReset,
+        totalSeatsAeroHttpRequests: results.totalSeatsAeroHttpRequests,
+      });
     }
 
     // If apiKey is null, fetch pro_key with largest remaining from Supabase
