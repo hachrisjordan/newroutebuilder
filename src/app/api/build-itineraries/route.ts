@@ -764,6 +764,9 @@ export async function POST(req: NextRequest) {
       flightUUIDs.forEach(uuid => {
         if (flights[uuid]) flightsPage[uuid] = flights[uuid];
       });
+      // Extract filter metadata from cached data
+      const filterMetadata = extractFilterMetadata(itineraries, flights);
+      
       return NextResponse.json({
         itineraries: data,
         flights: flightsPage,
@@ -773,6 +776,7 @@ export async function POST(req: NextRequest) {
         minRateLimitRemaining,
         minRateLimitReset,
         totalSeatsAeroHttpRequests,
+        filterMetadata,
       });
     }
 
@@ -1070,6 +1074,10 @@ export async function POST(req: NextRequest) {
       minRateLimitReset,
       totalSeatsAeroHttpRequests,
     };
+    
+    // Extract filter metadata from the full response
+    const filterMetadata = extractFilterMetadata(filteredOutput, Object.fromEntries(flightMap));
+    
     // Cache the full result in Redis (compressed)
     await cacheItineraries(cacheKey, responseObj);
     // After building and caching, do the same filtering/sorting/searching/pagination
@@ -1180,9 +1188,117 @@ export async function POST(req: NextRequest) {
       minRateLimitRemaining,
       minRateLimitReset,
       totalSeatsAeroHttpRequests,
+      filterMetadata,
     });
   } catch (err) {
     console.error('Error in /api/build-itineraries:', err);
     return NextResponse.json({ error: 'Internal server error', details: (err as Error).message }, { status: 500 });
   }
+}
+
+// --- Helper: Extract filter metadata from full response ---
+function extractFilterMetadata(
+  itineraries: Record<string, Record<string, string[][]>>,
+  flights: Record<string, AvailabilityFlight>
+) {
+  const metadata = {
+    stops: new Set<number>(),
+    airlines: new Set<string>(),
+    airports: {
+      origins: new Set<string>(),
+      destinations: new Set<string>(),
+      connections: new Set<string>(),
+    },
+    duration: {
+      min: Infinity,
+      max: -Infinity,
+    },
+    departure: {
+      min: Infinity,
+      max: -Infinity,
+    },
+    arrival: {
+      min: Infinity,
+      max: -Infinity,
+    },
+    cabinClasses: {
+      y: { min: 0, max: 100 },
+      w: { min: 0, max: 100 },
+      j: { min: 0, max: 100 },
+      f: { min: 0, max: 100 },
+    },
+  };
+
+  // Process all itineraries to extract metadata
+  for (const routeKey of Object.keys(itineraries)) {
+    const routeSegments = routeKey.split('-');
+    const stopCount = routeSegments.length - 2;
+    metadata.stops.add(stopCount);
+
+    // Extract airports
+    metadata.airports.origins.add(routeSegments[0]);
+    metadata.airports.destinations.add(routeSegments[routeSegments.length - 1]);
+    for (let i = 1; i < routeSegments.length - 1; i++) {
+      metadata.airports.connections.add(routeSegments[i]);
+    }
+
+    for (const date of Object.keys(itineraries[routeKey])) {
+      for (const itinerary of itineraries[routeKey][date]) {
+        const flightObjs = itinerary.map(uuid => flights[uuid]).filter(Boolean);
+        if (flightObjs.length === 0) continue;
+
+        // Extract airline codes
+        flightObjs.forEach(flight => {
+          const airlineCode = flight.FlightNumbers.slice(0, 2).toUpperCase();
+          metadata.airlines.add(airlineCode);
+        });
+
+        // Calculate total duration (including layovers)
+        let totalDuration = 0;
+        for (let i = 0; i < flightObjs.length; i++) {
+          totalDuration += flightObjs[i].TotalDuration;
+          if (i > 0) {
+            const prevArrive = new Date(flightObjs[i - 1].ArrivesAt).getTime();
+            const currDepart = new Date(flightObjs[i].DepartsAt).getTime();
+            const layover = Math.max(0, Math.round((currDepart - prevArrive) / (1000 * 60)));
+            totalDuration += layover;
+          }
+        }
+        metadata.duration.min = Math.min(metadata.duration.min, totalDuration);
+        metadata.duration.max = Math.max(metadata.duration.max, totalDuration);
+
+        // Extract departure/arrival times
+        const depTime = new Date(flightObjs[0].DepartsAt).getTime();
+        const arrTime = new Date(flightObjs[flightObjs.length - 1].ArrivesAt).getTime();
+        metadata.departure.min = Math.min(metadata.departure.min, depTime);
+        metadata.departure.max = Math.max(metadata.departure.max, depTime);
+        metadata.arrival.min = Math.min(metadata.arrival.min, arrTime);
+        metadata.arrival.max = Math.max(metadata.arrival.max, arrTime);
+      }
+    }
+  }
+
+  // Convert sets to sorted arrays and handle edge cases
+  return {
+    stops: Array.from(metadata.stops).sort((a, b) => a - b),
+    airlines: Array.from(metadata.airlines).sort(),
+    airports: {
+      origins: Array.from(metadata.airports.origins).sort(),
+      destinations: Array.from(metadata.airports.destinations).sort(),
+      connections: Array.from(metadata.airports.connections).sort(),
+    },
+    duration: {
+      min: metadata.duration.min === Infinity ? 0 : metadata.duration.min,
+      max: metadata.duration.max === -Infinity ? 0 : metadata.duration.max,
+    },
+    departure: {
+      min: metadata.departure.min === Infinity ? Date.now() : metadata.departure.min,
+      max: metadata.departure.max === -Infinity ? Date.now() : metadata.departure.max,
+    },
+    arrival: {
+      min: metadata.arrival.min === Infinity ? Date.now() : metadata.arrival.min,
+      max: metadata.arrival.max === -Infinity ? Date.now() : metadata.arrival.max,
+    },
+    cabinClasses: metadata.cabinClasses, // These will be calculated based on reliability rules
+  };
 } 
