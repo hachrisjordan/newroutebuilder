@@ -9,6 +9,11 @@ import { getTotalDuration, getClassPercentages } from '@/lib/utils';
 const PAGE_SIZE = 10;
 
 const flattenItineraries = (results: AwardFinderResults) => {
+  // If already flat array (new API), just return it
+  if (Array.isArray(results.itineraries)) {
+    return results.itineraries;
+  }
+  // Old structure fallback
   const cards: Array<{
     route: string;
     date: string;
@@ -61,6 +66,22 @@ export default function AwardFinderPage() {
   const [minReliabilityPercent, setMinReliabilityPercent] = useState<number>(85);
   const [resetFiltersSignal, setResetFiltersSignal] = useState(0);
 
+  // --- Advanced filter/search state ---
+  const [selectedStops, setSelectedStops] = useState<number[]>([]);
+  const [selectedIncludeAirlines, setSelectedIncludeAirlines] = useState<string[]>([]);
+  const [selectedExcludeAirlines, setSelectedExcludeAirlines] = useState<string[]>([]);
+  const [airlineList, setAirlineList] = useState<{ code: string; name: string }[]>([]);
+  const [yPercent, setYPercent] = useState(0);
+  const [wPercent, setWPercent] = useState(0);
+  const [jPercent, setJPercent] = useState(0);
+  const [fPercent, setFPercent] = useState(0);
+  const [duration, setDuration] = useState<number | undefined>(undefined);
+  const [depTime, setDepTime] = useState<[number, number] | undefined>(undefined);
+  const [arrTime, setArrTime] = useState<[number, number] | undefined>(undefined);
+  const [airportFilter, setAirportFilter] = useState<any>({ include: { origin: [], destination: [], connection: [] }, exclude: { origin: [], destination: [], connection: [] } });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
   useEffect(() => {
     if (!reliableOnly) return;
     setReliabilityLoading(true);
@@ -80,6 +101,54 @@ export default function AwardFinderPage() {
       }
     });
   }, []);
+
+  // Fetch airline list for dropdowns
+  useEffect(() => {
+    fetch('/api/airlines')
+      .then(res => res.json())
+      .then(data => setAirlineList(Array.isArray(data) ? data : []));
+  }, []);
+
+  // Handler to build query params from filter state
+  const buildQueryParams = () => {
+    const params = new URLSearchParams();
+    if (selectedStops.length) params.set('stops', selectedStops.join(','));
+    if (selectedIncludeAirlines.length) params.set('includeAirlines', selectedIncludeAirlines.join(','));
+    if (selectedExcludeAirlines.length) params.set('excludeAirlines', selectedExcludeAirlines.join(','));
+    if (yPercent > 0) params.set('minYPercent', String(yPercent));
+    if (wPercent > 0) params.set('minWPercent', String(wPercent));
+    if (jPercent > 0) params.set('minJPercent', String(jPercent));
+    if (fPercent > 0) params.set('minFPercent', String(fPercent));
+    if (typeof duration === 'number') params.set('maxDuration', String(duration));
+    if (depTime) { params.set('depTimeMin', String(depTime[0])); params.set('depTimeMax', String(depTime[1])); }
+    if (arrTime) { params.set('arrTimeMin', String(arrTime[0])); params.set('arrTimeMax', String(arrTime[1])); }
+    if (airportFilter.include.origin.length) params.set('includeOrigin', airportFilter.include.origin.join(','));
+    if (airportFilter.include.destination.length) params.set('includeDestination', airportFilter.include.destination.join(','));
+    if (airportFilter.include.connection.length) params.set('includeConnection', airportFilter.include.connection.join(','));
+    if (airportFilter.exclude.origin.length) params.set('excludeOrigin', airportFilter.exclude.origin.join(','));
+    if (airportFilter.exclude.destination.length) params.set('excludeDestination', airportFilter.exclude.destination.join(','));
+    if (airportFilter.exclude.connection.length) params.set('excludeConnection', airportFilter.exclude.connection.join(','));
+    if (searchQuery) params.set('search', searchQuery);
+    if (sortBy) params.set('sortBy', sortBy);
+    if (sortOrder) params.set('sortOrder', sortOrder);
+    return params.toString();
+  };
+
+  // Handler for search
+  const handleSearch = async (body: any) => {
+    const query = buildQueryParams();
+    const url = `http://localhost:3000/api/build-itineraries${query ? '?' + query : ''}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error('API error');
+    const data = await res.json();
+    setResults(data);
+    setPage(0);
+    setResetFiltersSignal(s => s + 1);
+  };
 
   const filterReliable = useCallback((results: AwardFinderResults): AwardFinderResults => {
     if (!reliableOnly || !Object.keys(reliability).length) return results;
@@ -104,6 +173,25 @@ export default function AwardFinderPage() {
       );
     };
 
+    // NEW: If itineraries is already an array (new API), filter directly
+    if (Array.isArray(results.itineraries)) {
+      const filteredItineraries = results.itineraries.filter(itinObj => {
+        const itin = itinObj.itinerary;
+        if (!itin.every(flightId => filteredFlights[flightId])) return false;
+        const flights = itin.map(flightId => filteredFlights[flightId]);
+        const totalDuration = flights.reduce((sum, f) => sum + f.TotalDuration, 0);
+        const unreliableDuration = flights
+          .filter(isUnreliable)
+          .reduce((sum, f) => sum + f.TotalDuration, 0);
+        if (unreliableDuration === 0) return true;
+        if (totalDuration === 0) return false;
+        const unreliablePct = (unreliableDuration / totalDuration) * 100;
+        return unreliablePct <= (100 - minReliabilityPercent);
+      });
+      return { itineraries: filteredItineraries, flights: filteredFlights };
+    }
+
+    // Old structure fallback
     const filteredItineraries: typeof results.itineraries = {};
     for (const [route, dates] of Object.entries(results.itineraries)) {
       filteredItineraries[route] = {};
@@ -127,11 +215,37 @@ export default function AwardFinderPage() {
 
   return (
     <main className="flex flex-1 flex-col items-center bg-background pt-8 pb-12 px-2 sm:px-4">
-      <AwardFinderSearch onSearch={data => {
-        setResults(data);
-        setPage(0);
-        setResetFiltersSignal(s => s + 1);
-      }} minReliabilityPercent={minReliabilityPercent} />
+      <AwardFinderSearch
+        onSearch={handleSearch}
+        minReliabilityPercent={minReliabilityPercent}
+        selectedStops={selectedStops}
+        setSelectedStops={setSelectedStops}
+        selectedIncludeAirlines={selectedIncludeAirlines}
+        setSelectedIncludeAirlines={setSelectedIncludeAirlines}
+        selectedExcludeAirlines={selectedExcludeAirlines}
+        setSelectedExcludeAirlines={setSelectedExcludeAirlines}
+        yPercent={yPercent}
+        setYPercent={setYPercent}
+        wPercent={wPercent}
+        setWPercent={setWPercent}
+        jPercent={jPercent}
+        setJPercent={setJPercent}
+        fPercent={fPercent}
+        setFPercent={setFPercent}
+        duration={duration}
+        setDuration={setDuration}
+        depTime={depTime}
+        setDepTime={setDepTime}
+        arrTime={arrTime}
+        setArrTime={setArrTime}
+        airportFilter={airportFilter}
+        setAirportFilter={setAirportFilter}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        sortOrder={sortOrder}
+        setSortOrder={setSortOrder}
+        airlineList={airlineList}
+      />
       {results && (
         <AwardFinderResultsCard
           results={results}
@@ -150,6 +264,33 @@ export default function AwardFinderPage() {
           sortOptions={sortOptions}
           minReliabilityPercent={minReliabilityPercent}
           resetFiltersSignal={resetFiltersSignal}
+          selectedStops={selectedStops}
+          setSelectedStops={setSelectedStops}
+          selectedIncludeAirlines={selectedIncludeAirlines}
+          setSelectedIncludeAirlines={setSelectedIncludeAirlines}
+          selectedExcludeAirlines={selectedExcludeAirlines}
+          setSelectedExcludeAirlines={setSelectedExcludeAirlines}
+          yPercent={yPercent}
+          setYPercent={setYPercent}
+          wPercent={wPercent}
+          setWPercent={setWPercent}
+          jPercent={jPercent}
+          setJPercent={setJPercent}
+          fPercent={fPercent}
+          setFPercent={setFPercent}
+          duration={duration}
+          setDuration={setDuration}
+          depTime={depTime}
+          setDepTime={setDepTime}
+          arrTime={arrTime}
+          setArrTime={setArrTime}
+          airportFilter={airportFilter}
+          setAirportFilter={setAirportFilter}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          sortOrder={sortOrder}
+          setSortOrder={setSortOrder}
+          airlineList={airlineList}
         />
       )}
     </main>

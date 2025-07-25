@@ -255,131 +255,16 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
 
   // Data processing effect
   React.useEffect(() => {
-    let cancelled = false;
-    setIsProcessing(true);
-    setTimeout(() => {
-      let filteredResults = reliableOnly ? filterReliable(results) : results;
-      let cards = flattenItineraries(filteredResults);
-      // Filter by number of stops if selected
-      if (selectedStops.length > 0) {
-        cards = cards.filter(card => selectedStops.includes(card.route.split('-').length - 2));
-      }
-      // Filter by airlines (include/exclude)
-      if (selectedIncludeAirlines.length > 0) {
-        cards = cards.filter(card => {
-          // Get all airline codes in this itinerary
-          const airlineCodes = card.itinerary.map(fid => filteredResults.flights[fid]?.FlightNumbers.slice(0, 2).toUpperCase());
-          // Include if any segment matches any selected include airline
-          return airlineCodes.some(code => selectedIncludeAirlines.includes(code));
-        });
-      }
-      if (selectedExcludeAirlines.length > 0) {
-        cards = cards.filter(card => {
-          const airlineCodes = card.itinerary.map(fid => filteredResults.flights[fid]?.FlightNumbers.slice(0, 2).toUpperCase());
-          // Exclude if any segment matches any selected exclude airline
-          return !airlineCodes.some(code => selectedExcludeAirlines.includes(code));
-        });
-      }
-      // Filter by duration
-      if (duration < maxDuration) {
-        cards = cards.filter(card => {
-          const flightsArr = card.itinerary.map(fid => filteredResults.flights[fid]).filter(Boolean);
-          const total = getTotalDuration(flightsArr);
-          return total <= duration;
-        });
-      }
-      // Filter by Y, W, J, F percent
-      if (yPercent > 0 || wPercent > 0 || jPercent > 0 || fPercent > 0) {
-        cards = cards.filter(card => {
-          const flightsArr = card.itinerary.map(fid => filteredResults.flights[fid]).filter(Boolean);
-          if (flightsArr.length === 0) return false;
-          const { y, w, j, f } = getClassPercentages(flightsArr, reliability, minReliabilityPercent);
-          return (
-            y >= yPercent &&
-            w >= wPercent &&
-            j >= jPercent &&
-            f >= fPercent
-          );
-        });
-      }
-      // Filter by departs/arrives time
-      cards = cards.filter(card => {
-        const flightsArr = card.itinerary.map(fid => filteredResults.flights[fid]).filter(Boolean);
-        if (!flightsArr.length) return false;
-        const dep = new Date(flightsArr[0].DepartsAt).getTime();
-        const arr = new Date(flightsArr[flightsArr.length - 1].ArrivesAt).getTime();
-        return dep >= depTime[0] && dep <= depTime[1] && arr >= arrTime[0] && arr <= arrTime[1];
-      });
-      // Filter by airport filter
-      if (airportFilter.include.origin.length || airportFilter.include.destination.length || airportFilter.include.connection.length) {
-        cards = cards.filter(card => {
-          const segs = card.route.split('-');
-          const origin = segs[0];
-          const destination = segs[segs.length-1];
-          const connections = segs.slice(1, -1);
-          let match = true;
-          if (airportFilter.include.origin.length) match = match && airportFilter.include.origin.includes(origin);
-          if (airportFilter.include.destination.length) match = match && airportFilter.include.destination.includes(destination);
-          if (airportFilter.include.connection.length) match = match && connections.some(c => airportFilter.include.connection.includes(c));
-          return match;
-        });
-      }
-      if (airportFilter.exclude.origin.length || airportFilter.exclude.destination.length || airportFilter.exclude.connection.length) {
-        cards = cards.filter(card => {
-          const segs = card.route.split('-');
-          const origin = segs[0];
-          const destination = segs[segs.length-1];
-          const connections = segs.slice(1, -1);
-          let match = true;
-          if (airportFilter.exclude.origin.length) match = match && !airportFilter.exclude.origin.includes(origin);
-          if (airportFilter.exclude.destination.length) match = match && !airportFilter.exclude.destination.includes(destination);
-          if (airportFilter.exclude.connection.length) match = match && !connections.some(c => airportFilter.exclude.connection.includes(c));
-          return match;
-        });
-      }
-      const query = debouncedSearchQuery.trim().toLowerCase();
-      if (query) {
-        const terms = query.split(/\s+/).filter(Boolean);
-        cards = cards.filter(card => {
-          // For each term, it must match route, date, or any flight number
-          return terms.every(term => {
-            if (card.route.toLowerCase().includes(term)) return true;
-            if (card.date.toLowerCase().includes(term)) return true;
-            return card.itinerary.some(fid => {
-              const flight = filteredResults.flights[fid];
-              return flight && flight.FlightNumbers.toLowerCase().includes(term);
-            });
-          });
-        });
-      }
-      cards = cards.sort((a, b) => {
-        const aVal = getSortValue(a, filteredResults, sortBy);
-        const bVal = getSortValue(b, filteredResults, sortBy);
-        if (aVal !== bVal) {
-          if (["arrival", "y", "w", "j", "f"].includes(sortBy)) {
-            return bVal - aVal;
-          }
-          return aVal - bVal;
-        }
-        const aFlights = a.itinerary.map(fid => filteredResults.flights[fid]).filter(Boolean);
-        const bFlights = b.itinerary.map(fid => filteredResults.flights[fid]).filter(Boolean);
-        const aDur = getTotalDuration(aFlights);
-        const bDur = getTotalDuration(bFlights);
-        return aDur - bDur;
-      });
-      const total = Math.ceil(cards.length / PAGE_SIZE);
-      const pagedCards = cards.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-      if (!cancelled) {
-        setProcessedCards(pagedCards);
-        setTotalPages(total);
-        setIsProcessing(false);
-      }
-    }, 0);
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [results, sortBy, page, reliableOnly, debouncedSearchQuery, filterReliable, flattenItineraries, getSortValue, PAGE_SIZE, selectedStops, selectedIncludeAirlines, selectedExcludeAirlines, yPercent, wPercent, jPercent, fPercent, duration, depTime, arrTime, airportFilter]);
+    // Bypass all client-side filtering/sorting: just use API results
+    const cards = flattenItineraries(results);
+    setProcessedCards(cards);
+    if (typeof results.total === 'number' && typeof results.pageSize === 'number' && results.pageSize > 0) {
+      setTotalPages(Math.ceil(results.total / results.pageSize));
+    } else {
+      setTotalPages(1);
+    }
+    setIsProcessing(false);
+  }, [results, flattenItineraries]);
 
   React.useEffect(() => {
     // Extract unique airline codes from results.flights
@@ -529,12 +414,16 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
           <div className="text-muted-foreground flex items-center gap-2"><span className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-primary"></span>Processing results...</div>
         ) : (
           <>
-            <AwardFinderResultsComponent
-              cards={processedCards}
-              flights={(reliableOnly ? filterReliable(results) : results).flights}
-              reliability={reliability}
-              minReliabilityPercent={minReliabilityPercent}
-            />
+            {processedCards.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">No results found for your search/filter criteria.</div>
+            ) : (
+              <AwardFinderResultsComponent
+                cards={processedCards}
+                flights={(reliableOnly ? filterReliable(results) : results).flights}
+                reliability={reliability}
+                minReliabilityPercent={minReliabilityPercent}
+              />
+            )}
             <Pagination
               currentPage={page}
               totalPages={totalPages}

@@ -19,11 +19,38 @@ import { TooltipTouch } from '@/components/ui/tooltip-touch';
 interface AwardFinderSearchProps {
   onSearch: (results: AwardFinderResults) => void;
   minReliabilityPercent?: number;
+  selectedStops: string[];
+  setSelectedStops: (stops: string[]) => void;
+  selectedIncludeAirlines: string[];
+  setSelectedIncludeAirlines: (airlines: string[]) => void;
+  selectedExcludeAirlines: string[];
+  setSelectedExcludeAirlines: (airlines: string[]) => void;
+  yPercent: number;
+  setYPercent: (percent: number) => void;
+  wPercent: number;
+  setWPercent: (percent: number) => void;
+  jPercent: number;
+  setJPercent: (percent: number) => void;
+  fPercent: number;
+  setFPercent: (percent: number) => void;
+  duration: number;
+  setDuration: (duration: number) => void;
+  depTime: string;
+  setDepTime: (time: string) => void;
+  arrTime: string;
+  setArrTime: (time: string) => void;
+  airportFilter: string;
+  setAirportFilter: (filter: string) => void;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  sortOrder: string;
+  setSortOrder: (order: string) => void;
+  airlineList: string[];
 }
 
 const SEARCH_CACHE_KEY = 'awardFinderSearchParams';
 
-export function AwardFinderSearch({ onSearch, minReliabilityPercent }: AwardFinderSearchProps) {
+export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedStops, setSelectedStops, selectedIncludeAirlines, setSelectedIncludeAirlines, selectedExcludeAirlines, setSelectedExcludeAirlines, yPercent, setYPercent, wPercent, setWPercent, jPercent, setJPercent, fPercent, setFPercent, duration, setDuration, depTime, setDepTime, arrTime, setArrTime, airportFilter, setAirportFilter, searchQuery, setSearchQuery, sortOrder, setSortOrder, airlineList }) {
   const [origin, setOrigin] = useState<string[]>([]);
   const [destination, setDestination] = useState<string[]>([]);
   const [date, setDate] = useState<DateRange | undefined>(undefined);
@@ -209,24 +236,9 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent }: AwardFind
       minReliabilityPercent: typeof minReliabilityPercent === 'number' ? minReliabilityPercent : 85,
       seats,
     };
-    // Validate with Zod (will update schema next)
-    // const parseResult = awardFinderSearchRequestSchema.safeParse(requestBody);
-    // if (!parseResult.success) {
-    //   setError('Invalid input: ' + parseResult.error.errors.map(e => e.message).join(', '));
-    //   return;
-    // }
     setIsLoading(true);
     try {
-      const res = await fetch('https://api.bbairtools.com/api/build-itineraries', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-      });
-      if (!res.ok) {
-        throw new Error(`API error: ${res.status} ${res.statusText}`);
-      }
-      const data = await res.json();
-      onSearch(data as AwardFinderResults);
+      await onSearch(requestBody);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch results');
     } finally {
