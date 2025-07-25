@@ -260,6 +260,14 @@ export default function AwardFinderPage() {
     return { itineraries: filteredItineraries, flights: filteredFlights };
   }, [reliableOnly, reliability, minReliabilityPercent]);
 
+  useEffect(() => {
+    if (lastSearchBody) {
+      setPage(1);
+      handleSearch(lastSearchBody, 1, pageSize);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
+
   return (
     <main className="flex flex-1 flex-col items-center bg-background pt-8 pb-12 px-2 sm:px-4">
       <AwardFinderSearch
@@ -315,6 +323,8 @@ export default function AwardFinderPage() {
           minReliabilityPercent={minReliabilityPercent}
           resetFiltersSignal={resetFiltersSignal}
           isLoading={isLoading}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
         />
       )}
     </main>

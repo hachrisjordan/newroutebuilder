@@ -32,7 +32,9 @@ interface AwardFinderResultsCardProps {
   sortOptions: { value: string; label: string }[];
   minReliabilityPercent: number;
   resetFiltersSignal?: number | string;
-  isLoading: boolean;
+  isLoading?: boolean;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
 }
 
 // Debounce hook
@@ -65,106 +67,13 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
   sortOptions,
   minReliabilityPercent,
   resetFiltersSignal,
-  isLoading,
+  isLoading = false,
+  searchQuery,
+  setSearchQuery,
 }) => {
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
-  const [isProcessing, setIsProcessing] = React.useState(false);
-  const [processedCards, setProcessedCards] = React.useState<Array<{ route: string; date: string; itinerary: string[] }>>([]);
-  const [totalPages, setTotalPages] = React.useState(0);
-  const [selectedStops, setSelectedStops] = React.useState<number[]>([]);
-  const [selectedIncludeAirlines, setSelectedIncludeAirlines] = React.useState<string[]>([]);
-  const [selectedExcludeAirlines, setSelectedExcludeAirlines] = React.useState<string[]>([]);
-  const [airlineMeta, setAirlineMeta] = React.useState<{ code: string; name: string }[]>([]);
-  const visibleAirlineCodes = React.useMemo(() => Array.from(new Set(Object.values(results.flights).map(f => f.FlightNumbers.slice(0, 2).toUpperCase()))), [results.flights]);
-  const [yPercent, setYPercent] = React.useState(0);
-  const [wPercent, setWPercent] = React.useState(0);
-  const [jPercent, setJPercent] = React.useState(0);
-  const [fPercent, setFPercent] = React.useState(0);
-  // Duration filter state
-  const allDurations = React.useMemo(() => {
-    const cards = flattenItineraries(results);
-    return cards.map(card => {
-      const flightsArr = card.itinerary.map(fid => results.flights[fid]).filter(Boolean);
-      return getTotalDuration(flightsArr);
-    }).filter(Boolean);
-  }, [results, flattenItineraries]);
-  const minDuration = allDurations.length ? Math.min(...allDurations) : 0;
-  const maxDuration = allDurations.length ? Math.max(...allDurations) : 1440;
-  const [duration, setDuration] = React.useState(maxDuration);
-  // Keep duration in sync with maxDuration
-  React.useEffect(() => {
-    setDuration(maxDuration);
-  }, [maxDuration]);
-
-  // Compute min/max departs/arrives
-  const allDepTimes = React.useMemo(() => {
-    const cards = flattenItineraries(results);
-    return cards.map(card => {
-      const flightsArr = card.itinerary.map(fid => results.flights[fid]).filter(Boolean);
-      return flightsArr.length ? new Date(flightsArr[0].DepartsAt).getTime() : null;
-    }).filter((v): v is number => v !== null);
-  }, [results, flattenItineraries]);
-  const allArrTimes = React.useMemo(() => {
-    const cards = flattenItineraries(results);
-    return cards.map(card => {
-      const flightsArr = card.itinerary.map(fid => results.flights[fid]).filter(Boolean);
-      return flightsArr.length ? new Date(flightsArr[flightsArr.length - 1].ArrivesAt).getTime() : null;
-    }).filter((v): v is number => v !== null);
-  }, [results, flattenItineraries]);
-  const depMin = allDepTimes.length ? Math.min(...allDepTimes) : Date.now();
-  const depMax = allDepTimes.length ? Math.max(...allDepTimes) : Date.now() + 24*60*60*1000;
-  const arrMin = allArrTimes.length ? Math.min(...allArrTimes) : Date.now();
-  const arrMax = allArrTimes.length ? Math.max(...allArrTimes) : Date.now() + 24*60*60*1000;
-  const [depTime, setDepTime] = React.useState<[number, number]>([depMin, depMax]);
-  const [arrTime, setArrTime] = React.useState<[number, number]>([arrMin, arrMax]);
-  React.useEffect(() => {
-    setDepTime([depMin, depMax]);
-    setArrTime([arrMin, arrMax]);
-  }, [depMin, depMax, arrMin, arrMax, resetFiltersSignal]);
-  const handleDepTimeChange = (v: [number, number]) => { setDepTime(v); onPageChange(0); };
-  const handleArrTimeChange = (v: [number, number]) => { setArrTime(v); onPageChange(0); };
-  const handleResetDepTime = () => { setDepTime([depMin, depMax]); onPageChange(0); };
-  const handleResetArrTime = () => { setArrTime([arrMin, arrMax]); onPageChange(0); };
-
-  // --- Pagination reset wrappers ---
-  const handleChangeStops = (stops: number[]) => {
-    setSelectedStops(stops);
-    onPageChange(0);
-  };
-  const handleChangeIncludeAirlines = (codes: string[]) => {
-    setSelectedIncludeAirlines(codes);
-    onPageChange(0);
-  };
-  const handleChangeExcludeAirlines = (codes: string[]) => {
-    setSelectedExcludeAirlines(codes);
-    onPageChange(0);
-  };
-  const handleYPercentChange = (value: number) => {
-    setYPercent(value);
-    onPageChange(0);
-  };
-  const handleWPercentChange = (value: number) => {
-    setWPercent(value);
-    onPageChange(0);
-  };
-  const handleJPercentChange = (value: number) => {
-    setJPercent(value);
-    onPageChange(0);
-  };
-  const handleFPercentChange = (value: number) => {
-    setFPercent(value);
-    onPageChange(0);
-  };
-  const handleDurationChange = (value: number) => {
-    setDuration(value);
-    onPageChange(0);
-  };
-  const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-    onPageChange(0);
-  };
-  // --- End wrappers ---
+  // Remove all local sorting, search, and pagination state and handlers
+  // Remove the search bar and sort dropdown from the render
+  // Only render the results as received from the API, and the Pagination component to trigger API fetches
 
   // Helper to get unique stop counts from results
   const getStopCounts = React.useCallback(() => {
@@ -179,7 +88,6 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
   // Default: all stops selected
   React.useEffect(() => {
     const allStops = getStopCounts();
-    setSelectedStops(allStops);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [results]);
 
@@ -264,100 +172,104 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
   // Data processing effect
   React.useEffect(() => {
     // Bypass all client-side filtering/sorting: just use API results
-    const cards = flattenItineraries(results);
-    setProcessedCards(cards);
-    setIsProcessing(false);
+    // const cards = flattenItineraries(results); // This line is removed
+    // setProcessedCards(cards); // This line is removed
   }, [results, flattenItineraries]);
 
   React.useEffect(() => {
     // Extract unique airline codes from results.flights
-    const codes = Array.from(new Set(Object.values(results.flights).map(f => f.FlightNumbers.slice(0, 2).toUpperCase())));
-    if (codes.length === 0) {
-      setAirlineMeta([]);
-      return;
-    }
-    // Fetch only metadata for these codes
-    fetch(`/api/airlines?codes=${codes.join(',')}`)
-      .then(res => res.json())
-      .then(data => setAirlineMeta(Array.isArray(data) ? data : []))
-      .catch(() => setAirlineMeta([]));
+    // const codes = Array.from(new Set(Object.values(results.flights).map(f => f.FlightNumbers.slice(0, 2).toUpperCase()))); // This line is removed
+    // if (codes.length === 0) { // This line is removed
+    //   setAirlineMeta([]); // This line is removed
+    //   return; // This line is removed
+    // } // This line is removed
+    // // Fetch only metadata for these codes // This line is removed
+    // fetch(`/api/airlines?codes=${codes.join(',')}`) // This line is removed
+    //   .then(res => res.json()) // This line is removed
+    //   .then(data => setAirlineMeta(Array.isArray(data) ? data : [])) // This line is removed
+    //   .catch(() => setAirlineMeta([])); // This line is removed
   }, [results.flights]);
 
   const handleResetStops = () => {
-    setSelectedStops(getStopCounts());
+    // setSelectedStops(getStopCounts()); // This line is removed
     onPageChange(0);
   };
   const handleResetAirlines = () => {
-    setSelectedIncludeAirlines([]);
-    setSelectedExcludeAirlines([]);
+    // setSelectedIncludeAirlines([]); // This line is removed
+    // setSelectedExcludeAirlines([]); // This line is removed
     onPageChange(0);
   };
   const handleResetY = () => {
-    setYPercent(0);
+    // setYPercent(0); // This line is removed
     onPageChange(0);
   };
   const handleResetW = () => {
-    setWPercent(0);
+    // setWPercent(0); // This line is removed
     onPageChange(0);
   };
   const handleResetJ = () => {
-    setJPercent(0);
+    // setJPercent(0); // This line is removed
     onPageChange(0);
   };
   const handleResetF = () => {
-    setFPercent(0);
+    // setFPercent(0); // This line is removed
     onPageChange(0);
   };
   const handleResetDuration = () => {
-    setDuration(maxDuration);
+    // setDuration(maxDuration); // This line is removed
     onPageChange(0);
   };
 
   // Reset all filters/search when resetFiltersSignal changes
   React.useEffect(() => {
     // Reset all filter/search state to initial values
-    setSearchQuery('');
-    setSelectedIncludeAirlines([]);
-    setSelectedExcludeAirlines([]);
-    setYPercent(0);
-    setWPercent(0);
-    setJPercent(0);
-    setFPercent(0);
-    setDuration(maxDuration);
-    setSelectedStops(getStopCounts());
-    setDepTime([depMin, depMax]);
-    setArrTime([arrMin, arrMax]);
+    // setSelectedIncludeAirlines([]); // This line is removed
+    // setSelectedExcludeAirlines([]); // This line is removed
+    // setYPercent(0); // This line is removed
+    // setWPercent(0); // This line is removed
+    // setJPercent(0); // This line is removed
+    // setFPercent(0); // This line is removed
+    // setDuration(maxDuration); // This line is removed
+    // setSelectedStops(getStopCounts()); // This line is removed
+    // setDepTime([depMin, depMax]); // This line is removed
+    // setArrTime([arrMin, arrMax]); // This line is removed
     setAirportFilter({ include: { origin: [], destination: [], connection: [] }, exclude: { origin: [], destination: [], connection: [] } });
     // Optionally, reset other local state if needed
-  }, [resetFiltersSignal, maxDuration, getStopCounts, depMin, depMax, arrMin, arrMax]);
+  }, [resetFiltersSignal, results.flights]); // Modified dependency array
 
   return (
     <TooltipProvider>
-      <div className="mt-8 w-full flex flex-col items-center">
+      <div className="mt-8 w-full flex flex-col items-center relative">
+        {/* Loading overlay */}
+        {isLoading && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/80">
+            <span className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary" aria-label="Loading" />
+          </div>
+        )}
         {/* Filters at the very top, separated from controls */}
         <div className="w-full max-w-[1000px] mb-4 ml-auto mr-auto">
           <Filters
             stopCounts={getStopCounts()}
-            selectedStops={selectedStops}
-            onChangeStops={handleChangeStops}
-            airlineMeta={airlineMeta || []}
-            visibleAirlineCodes={visibleAirlineCodes}
-            selectedIncludeAirlines={selectedIncludeAirlines}
-            selectedExcludeAirlines={selectedExcludeAirlines}
-            onChangeIncludeAirlines={handleChangeIncludeAirlines}
-            onChangeExcludeAirlines={handleChangeExcludeAirlines}
-            yPercent={yPercent}
-            wPercent={wPercent}
-            jPercent={jPercent}
-            fPercent={fPercent}
-            onYPercentChange={handleYPercentChange}
-            onWPercentChange={handleWPercentChange}
-            onJPercentChange={handleJPercentChange}
-            onFPercentChange={handleFPercentChange}
-            minDuration={minDuration}
-            maxDuration={maxDuration}
-            duration={duration}
-            onDurationChange={handleDurationChange}
+            selectedStops={[]} // No longer needed
+            onChangeStops={() => {}} // No longer needed
+            airlineMeta={[]} // No longer needed
+            visibleAirlineCodes={[]} // No longer needed
+            selectedIncludeAirlines={[]} // No longer needed
+            selectedExcludeAirlines={[]} // No longer needed
+            onChangeIncludeAirlines={() => {}} // No longer needed
+            onChangeExcludeAirlines={() => {}} // No longer needed
+            yPercent={0} // No longer needed
+            wPercent={0} // No longer needed
+            jPercent={0} // No longer needed
+            fPercent={0} // No longer needed
+            onYPercentChange={() => {}} // No longer needed
+            onWPercentChange={() => {}} // No longer needed
+            onJPercentChange={() => {}} // No longer needed
+            onFPercentChange={() => {}} // No longer needed
+            minDuration={0} // No longer needed
+            maxDuration={1440} // No longer needed
+            duration={1440} // No longer needed
+            onDurationChange={() => {}} // No longer needed
             onResetStops={handleResetStops}
             onResetAirlines={handleResetAirlines}
             onResetY={handleResetY}
@@ -365,16 +277,16 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
             onResetJ={handleResetJ}
             onResetF={handleResetF}
             onResetDuration={handleResetDuration}
-            depMin={depMin}
-            depMax={depMax}
-            depTime={depTime}
-            arrMin={arrMin}
-            arrMax={arrMax}
-            arrTime={arrTime}
-            onDepTimeChange={handleDepTimeChange}
-            onArrTimeChange={handleArrTimeChange}
-            onResetDepTime={handleResetDepTime}
-            onResetArrTime={handleResetArrTime}
+            depMin={Date.now()} // No longer needed
+            depMax={Date.now() + 24*60*60*1000} // No longer needed
+            depTime={[Date.now(), Date.now() + 24*60*60*1000]} // No longer needed
+            arrMin={Date.now()} // No longer needed
+            arrMax={Date.now() + 24*60*60*1000} // No longer needed
+            arrTime={[Date.now(), Date.now() + 24*60*60*1000]} // No longer needed
+            onDepTimeChange={() => {}} // No longer needed
+            onArrTimeChange={() => {}} // No longer needed
+            onResetDepTime={() => {}} // No longer needed
+            onResetArrTime={() => {}} // No longer needed
             airportMeta={airportMeta}
             selectedAirportFilter={airportFilter}
             onChangeAirportFilter={handleChangeAirportFilter}
@@ -383,72 +295,58 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
             cityError={cityError}
           />
         </div>
-        <div className="w-full max-w-4xl mx-auto flex flex-col gap-2 mb-4">
-          <div className="flex flex-row items-center justify-between gap-2 w-full">
-            <div className="flex flex-1 justify-end items-center gap-2">
-              <Input
-                type="text"
-                value={searchQuery}
-                onChange={handleSearchQueryChange}
-                placeholder="Search path, date, or flight number..."
-                className="w-64 md:w-72 lg:w-80 max-w-full ml-auto"
-                aria-label="Search results"
-              />
-            </div>
-          </div>
-          <div className="flex items-center w-full justify-end gap-2">
-            <label htmlFor="sort" className="text-sm text-muted-foreground mr-2">Sort:</label>
-            <Select value={sortBy} onValueChange={onSortByChange}>
-              <SelectTrigger className="w-56" id="sort">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {sortOptions.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              {/* Restore search bar and sort dropdown */}
+      <div className="w-full max-w-[1000px] flex flex-col gap-1 mb-4 ml-auto mr-auto">
+        <div className="flex justify-end">
+          <Input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Search path, date, or flight number..."
+            className="w-64 md:w-72 lg:w-80 max-w-full"
+            aria-label="Search results"
+          />
         </div>
+        <div className="flex items-center gap-2 justify-end">
+          <span className="text-sm font-medium">Sort by:</span>
+          <Select value={sortBy} onValueChange={onSortByChange}>
+            <SelectTrigger className="w-56" id="sort">
+              <SelectValue placeholder="Sort by..." />
+            </SelectTrigger>
+            <SelectContent>
+              {sortOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
         {/* Results Table with Pagination */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <span className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></span>
-            <span className="ml-4 text-lg text-muted-foreground">Loading...</span>
-          </div>
-        ) : reliableOnly && reliabilityLoading ? (
-          <div className="text-muted-foreground flex items-center gap-2"><span className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-primary"></span>Loading results...</div>
-        ) : isProcessing ? (
-          <div className="text-muted-foreground flex items-center gap-2"><span className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-primary"></span>Processing results...</div>
+        {results.flights.length === 0 ? (
+          <div className="text-center text-muted-foreground py-8">No results found for your search/filter criteria.</div>
         ) : (
-          <>
-            {processedCards.length === 0 ? (
-              <div className="text-center text-muted-foreground py-8">No results found for your search/filter criteria.</div>
-            ) : (
-              <AwardFinderResultsComponent
-                cards={processedCards}
-                flights={(reliableOnly ? filterReliable(results) : results).flights}
-                reliability={reliability}
-                minReliabilityPercent={minReliabilityPercent}
-              />
-            )}
-            <Pagination
-              currentPage={page - 1}
-              totalPages={Math.ceil(total / pageSize)}
-              onPageChange={p => onPageChange(p + 1)}
-            />
-            {/* API call info line */}
-            {typeof results.totalSeatsAeroHttpRequests === 'number' && typeof results.minRateLimitRemaining === 'number' && typeof results.minRateLimitReset === 'number' && (
-              <div className="w-full text-center text-xs text-muted-foreground mt-2 mx-auto">
-                {(() => {
-                  const resetSec = results.minRateLimitReset || 0;
-                  const h = Math.floor(resetSec / 3600);
-                  const m = Math.floor((resetSec % 3600) / 60);
-                  return `seats.aero API call: ${results.totalSeatsAeroHttpRequests} (${results.minRateLimitRemaining} remaining, reset in ${h}h ${m}m)`;
-                })()}
-              </div>
-            )}
-          </>
+          <AwardFinderResultsComponent
+            cards={flattenItineraries(results)}
+            flights={results.flights}
+            reliability={reliability}
+            minReliabilityPercent={minReliabilityPercent}
+          />
+        )}
+        <Pagination
+          currentPage={page - 1}
+          totalPages={Math.ceil(total / pageSize)}
+          onPageChange={p => onPageChange(p + 1)}
+        />
+        {/* API call info line */}
+        {typeof results.totalSeatsAeroHttpRequests === 'number' && typeof results.minRateLimitRemaining === 'number' && typeof results.minRateLimitReset === 'number' && (
+          <div className="w-full text-center text-xs text-muted-foreground mt-2 mx-auto">
+            {(() => {
+              const resetSec = results.minRateLimitReset || 0;
+              const h = Math.floor(resetSec / 3600);
+              const m = Math.floor((resetSec % 3600) / 60);
+              return `seats.aero API call: ${results.totalSeatsAeroHttpRequests} (${results.minRateLimitRemaining} remaining, reset in ${h}h ${m}m)`;
+            })()}
+          </div>
         )}
       </div>
     </TooltipProvider>
