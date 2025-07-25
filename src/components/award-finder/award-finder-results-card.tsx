@@ -32,7 +32,7 @@ interface AwardFinderResultsCardProps {
   sortOptions: { value: string; label: string }[];
   minReliabilityPercent: number;
   resetFiltersSignal?: number | string;
-  isLoading?: boolean;
+  isLoading: boolean;
 }
 
 // Debounce hook
@@ -65,7 +65,7 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
   sortOptions,
   minReliabilityPercent,
   resetFiltersSignal,
-  isLoading = false,
+  isLoading,
 }) => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
@@ -333,13 +333,7 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
 
   return (
     <TooltipProvider>
-      <div className="mt-8 w-full flex flex-col items-center relative">
-        {/* Loading overlay */}
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
-            <span className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></span>
-          </div>
-        )}
+      <div className="mt-8 w-full flex flex-col items-center">
         {/* Filters at the very top, separated from controls */}
         <div className="w-full max-w-[1000px] mb-4 ml-auto mr-auto">
           <Filters
@@ -417,7 +411,12 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
           </div>
         </div>
         {/* Results Table with Pagination */}
-        {reliableOnly && reliabilityLoading ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <span className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></span>
+            <span className="ml-4 text-lg text-muted-foreground">Loading...</span>
+          </div>
+        ) : reliableOnly && reliabilityLoading ? (
           <div className="text-muted-foreground flex items-center gap-2"><span className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-primary"></span>Loading results...</div>
         ) : isProcessing ? (
           <div className="text-muted-foreground flex items-center gap-2"><span className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-primary"></span>Processing results...</div>

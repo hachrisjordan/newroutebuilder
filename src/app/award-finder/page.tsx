@@ -8,20 +8,16 @@ import { getTotalDuration, getClassPercentages } from '@/lib/utils';
 
 const PAGE_SIZE = 10;
 
-const flattenItineraries = (results: AwardFinderResults) => {
+const flattenItineraries = (results: AwardFinderResults): Array<{ route: string; date: string; itinerary: string[] }> => {
   // If already flat array (new API), just return it
   if (Array.isArray(results.itineraries)) {
-    return results.itineraries;
+    return results.itineraries as Array<{ route: string; date: string; itinerary: string[] }>;
   }
   // Old structure fallback
-  const cards: Array<{
-    route: string;
-    date: string;
-    itinerary: string[];
-  }> = [];
+  const cards: Array<{ route: string; date: string; itinerary: string[] }> = [];
   Object.entries(results.itineraries).forEach(([route, dates]) => {
-    Object.entries(dates).forEach(([date, itineraries]) => {
-      itineraries.forEach((itinerary) => {
+    Object.entries(dates as Record<string, string[][]>).forEach(([date, itineraries]) => {
+      (itineraries as string[][]).forEach((itinerary: string[]) => {
         cards.push({ route, date, itinerary });
       });
     });
@@ -151,7 +147,10 @@ export default function AwardFinderPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    if (!res.ok) throw new Error('API error');
+    if (!res.ok) {
+      setIsLoading(false);
+      throw new Error('API error');
+    }
     const data = await res.json();
     setResults(data);
     setTotal(data.total || 0);
@@ -160,6 +159,14 @@ export default function AwardFinderPage() {
     setResetFiltersSignal(s => s + 1);
     setIsLoading(false);
   }, [buildQueryParams, page, pageSize]);
+
+  // When user changes sortBy or sortOrder, trigger a new search with the latest values
+  useEffect(() => {
+    if (lastSearchBody) {
+      handleSearch(lastSearchBody, 1, pageSize);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortBy, sortOrder]);
 
   // When user changes page
   const handlePageChange = (newPage: number) => {
@@ -176,6 +183,17 @@ export default function AwardFinderPage() {
     if (lastSearchBody) {
       handleSearch(lastSearchBody, 1, newPageSize);
     }
+  };
+
+  // Handler for sort change
+  const handleSortByChange = (newSortBy: string) => {
+    setSortBy(newSortBy);
+    setPage(1);
+  };
+  // Handler for sort order change
+  const handleSortOrderChange = (newSortOrder: 'asc' | 'desc') => {
+    setSortOrder(newSortOrder);
+    setPage(1);
   };
 
   const filterReliable = useCallback((results: AwardFinderResults): AwardFinderResults => {
@@ -203,34 +221,35 @@ export default function AwardFinderPage() {
 
     // NEW: If itineraries is already an array (new API), filter directly
     if (Array.isArray(results.itineraries)) {
-      const filteredItineraries = results.itineraries.filter(itinObj => {
+      const filteredItineraries = (results.itineraries as Array<{ route: string; date: string; itinerary: string[] }>).filter(itinObj => {
         const itin = itinObj.itinerary;
-        if (!itin.every(flightId => filteredFlights[flightId])) return false;
-        const flights = itin.map(flightId => filteredFlights[flightId]);
-        const totalDuration = flights.reduce((sum, f) => sum + f.TotalDuration, 0);
+        if (!itin.every((flightId: string) => filteredFlights[flightId])) return false;
+        const flights = itin.map((flightId: string) => filteredFlights[flightId]);
+        const totalDuration = flights.reduce((sum: number, f: any) => sum + f.TotalDuration, 0);
         const unreliableDuration = flights
           .filter(isUnreliable)
-          .reduce((sum, f) => sum + f.TotalDuration, 0);
+          .reduce((sum: number, f: any) => sum + f.TotalDuration, 0);
         if (unreliableDuration === 0) return true;
         if (totalDuration === 0) return false;
         const unreliablePct = (unreliableDuration / totalDuration) * 100;
         return unreliablePct <= (100 - minReliabilityPercent);
       });
-      return { itineraries: filteredItineraries, flights: filteredFlights };
+      // Return as AwardFinderResults type (array form)
+      return { itineraries: filteredItineraries, flights: filteredFlights } as unknown as AwardFinderResults;
     }
 
     // Old structure fallback
     const filteredItineraries: typeof results.itineraries = {};
     for (const [route, dates] of Object.entries(results.itineraries)) {
       filteredItineraries[route] = {};
-      for (const [date, itineraries] of Object.entries(dates)) {
-        filteredItineraries[route][date] = itineraries.filter(itin => {
-          if (!itin.every(flightId => filteredFlights[flightId])) return false;
-          const flights = itin.map(flightId => filteredFlights[flightId]);
-          const totalDuration = flights.reduce((sum, f) => sum + f.TotalDuration, 0);
+      for (const [date, itineraries] of Object.entries(dates as Record<string, string[][]>)) {
+        filteredItineraries[route][date] = (itineraries as string[][]).filter((itin: string[]) => {
+          if (!itin.every((flightId: string) => filteredFlights[flightId])) return false;
+          const flights = itin.map((flightId: string) => filteredFlights[flightId]);
+          const totalDuration = flights.reduce((sum: number, f: any) => sum + f.TotalDuration, 0);
           const unreliableDuration = flights
             .filter(isUnreliable)
-            .reduce((sum, f) => sum + f.TotalDuration, 0);
+            .reduce((sum: number, f: any) => sum + f.TotalDuration, 0);
           if (unreliableDuration === 0) return true;
           if (totalDuration === 0) return false;
           const unreliablePct = (unreliableDuration / totalDuration) * 100;
@@ -271,14 +290,14 @@ export default function AwardFinderPage() {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         sortOrder={sortOrder}
-        setSortOrder={setSortOrder}
+        setSortOrder={handleSortOrderChange}
         airlineList={airlineList}
       />
       {results && (
         <AwardFinderResultsCard
           results={results}
           sortBy={sortBy}
-          onSortByChange={setSortBy}
+          onSortByChange={handleSortByChange}
           page={page}
           onPageChange={handlePageChange}
           total={total}
