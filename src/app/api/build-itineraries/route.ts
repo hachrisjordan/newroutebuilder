@@ -528,10 +528,16 @@ export async function POST(req: NextRequest) {
     // Search
     const search = searchParams.get('search') || undefined;
     // Sort
-    const sortBy = searchParams.get('sortBy') || undefined;
-    const sortOrder = (searchParams.get('sortOrder') as 'asc' | 'desc') || 'asc';
+    let sortBy = searchParams.get('sortBy') || undefined;
+    let sortOrder = (searchParams.get('sortOrder') as 'asc' | 'desc') || 'asc';
+    // Set default sort to duration if not provided
+    if (!sortBy) {
+      sortBy = 'duration';
+      sortOrder = 'asc';
+    }
     // Pagination
-    const page = parseInt(searchParams.get('page') || '1', 10);
+    let page = parseInt(searchParams.get('page') || '1', 10);
+    page = isNaN(page) || page < 1 ? 1 : page;
     const pageSize = parseInt(searchParams.get('pageSize') || '10', 10);
 
     // --- Generate cache key ---
@@ -580,7 +586,19 @@ export async function POST(req: NextRequest) {
           // Implement getSortValue logic (duration, arrival, y, w, j, f, etc.)
           if (sortBy === 'duration') {
             const flightsArr = card.itinerary.map((fid: string) => flights[fid]).filter(Boolean);
-            return flightsArr.reduce((sum: number, f: any) => sum + (f?.TotalDuration || 0), 0);
+            let total = 0;
+            for (let i = 0; i < flightsArr.length; i++) {
+              const flight = flightsArr[i];
+              if (!flight) continue;
+              total += flight.TotalDuration;
+              if (i > 0 && flightsArr[i - 1]) {
+                const prevArrive = new Date(flightsArr[i - 1].ArrivesAt).getTime();
+                const currDepart = new Date(flight.DepartsAt).getTime();
+                const layover = Math.max(0, Math.round((currDepart - prevArrive) / (1000 * 60)));
+                total += layover;
+              }
+            }
+            return total;
           }
           if (sortBy === 'arrival') {
             const flightsArr = card.itinerary.map((fid: string) => flights[fid]).filter(Boolean);
@@ -589,7 +607,21 @@ export async function POST(req: NextRequest) {
           // Add more sort fields as needed (y, w, j, f)
           return 0;
         },
-        (flightsArr: any[]) => flightsArr.reduce((sum, f) => sum + (f?.TotalDuration || 0), 0),
+        (flightsArr: any[]) => {
+          let total = 0;
+          for (let i = 0; i < flightsArr.length; i++) {
+            const flight = flightsArr[i];
+            if (!flight) continue;
+            total += flight.TotalDuration;
+            if (i > 0 && flightsArr[i - 1]) {
+              const prevArrive = new Date(flightsArr[i - 1].ArrivesAt).getTime();
+              const currDepart = new Date(flight.DepartsAt).getTime();
+              const layover = Math.max(0, Math.round((currDepart - prevArrive) / (1000 * 60)));
+              total += layover;
+            }
+          }
+          return total;
+        },
         (flightsArr: any[], reliability: any, minReliabilityPercent: number) => {
           // Dummy: always return 100 for all
           return { y: 100, w: 100, j: 100, f: 100 };
@@ -952,7 +984,19 @@ export async function POST(req: NextRequest) {
       (card, flights, sortBy) => {
         if (sortBy === 'duration') {
           const flightsArr = card.itinerary.map((fid: string) => flights[fid]).filter(Boolean);
-          return flightsArr.reduce((sum: number, f: any) => sum + (f?.TotalDuration || 0), 0);
+          let total = 0;
+          for (let i = 0; i < flightsArr.length; i++) {
+            const flight = flightsArr[i];
+            if (!flight) continue;
+            total += flight.TotalDuration;
+            if (i > 0 && flightsArr[i - 1]) {
+              const prevArrive = new Date(flightsArr[i - 1].ArrivesAt).getTime();
+              const currDepart = new Date(flight.DepartsAt).getTime();
+              const layover = Math.max(0, Math.round((currDepart - prevArrive) / (1000 * 60)));
+              total += layover;
+            }
+          }
+          return total;
         }
         if (sortBy === 'arrival') {
           const flightsArr = card.itinerary.map((fid: string) => flights[fid]).filter(Boolean);
@@ -960,7 +1004,21 @@ export async function POST(req: NextRequest) {
         }
         return 0;
       },
-      (flightsArr: any[]) => flightsArr.reduce((sum, f) => sum + (f?.TotalDuration || 0), 0),
+      (flightsArr: any[]) => {
+        let total = 0;
+        for (let i = 0; i < flightsArr.length; i++) {
+          const flight = flightsArr[i];
+          if (!flight) continue;
+          total += flight.TotalDuration;
+          if (i > 0 && flightsArr[i - 1]) {
+            const prevArrive = new Date(flightsArr[i - 1].ArrivesAt).getTime();
+            const currDepart = new Date(flight.DepartsAt).getTime();
+            const layover = Math.max(0, Math.round((currDepart - prevArrive) / (1000 * 60)));
+            total += layover;
+          }
+        }
+        return total;
+      },
       (flightsArr: any[], reliability: any, minReliabilityPercent: number) => {
         return { y: 100, w: 100, j: 100, f: 100 };
       }

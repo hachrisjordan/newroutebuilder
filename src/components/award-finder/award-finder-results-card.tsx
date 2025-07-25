@@ -18,6 +18,9 @@ interface AwardFinderResultsCardProps {
   onSortByChange: (value: string) => void;
   page: number;
   onPageChange: (page: number) => void;
+  total: number;
+  pageSize: number;
+  onPageSizeChange: (size: number) => void;
   reliableOnly: boolean;
   onReliableOnlyChange: (checked: boolean) => void;
   reliability: Record<string, { min_count: number; exemption?: string }>;
@@ -29,6 +32,7 @@ interface AwardFinderResultsCardProps {
   sortOptions: { value: string; label: string }[];
   minReliabilityPercent: number;
   resetFiltersSignal?: number | string;
+  isLoading?: boolean;
 }
 
 // Debounce hook
@@ -47,6 +51,9 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
   onSortByChange,
   page,
   onPageChange,
+  total,
+  pageSize,
+  onPageSizeChange,
   reliableOnly,
   onReliableOnlyChange,
   reliability,
@@ -58,6 +65,7 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
   sortOptions,
   minReliabilityPercent,
   resetFiltersSignal,
+  isLoading = false,
 }) => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
@@ -258,11 +266,6 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
     // Bypass all client-side filtering/sorting: just use API results
     const cards = flattenItineraries(results);
     setProcessedCards(cards);
-    if (typeof results.total === 'number' && typeof results.pageSize === 'number' && results.pageSize > 0) {
-      setTotalPages(Math.ceil(results.total / results.pageSize));
-    } else {
-      setTotalPages(1);
-    }
     setIsProcessing(false);
   }, [results, flattenItineraries]);
 
@@ -330,7 +333,13 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
 
   return (
     <TooltipProvider>
-      <div className="mt-8 w-full flex flex-col items-center">
+      <div className="mt-8 w-full flex flex-col items-center relative">
+        {/* Loading overlay */}
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
+            <span className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></span>
+          </div>
+        )}
         {/* Filters at the very top, separated from controls */}
         <div className="w-full max-w-[1000px] mb-4 ml-auto mr-auto">
           <Filters
@@ -425,9 +434,9 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
               />
             )}
             <Pagination
-              currentPage={page}
-              totalPages={totalPages}
-              onPageChange={onPageChange}
+              currentPage={page - 1}
+              totalPages={Math.ceil(total / pageSize)}
+              onPageChange={p => onPageChange(p + 1)}
             />
             {/* API call info line */}
             {typeof results.totalSeatsAeroHttpRequests === 'number' && typeof results.minRateLimitRemaining === 'number' && typeof results.minRateLimitReset === 'number' && (

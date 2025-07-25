@@ -59,12 +59,15 @@ const sortOptions = [
 export default function AwardFinderPage() {
   const [results, setResults] = useState<AwardFinderResults | null>(null);
   const [sortBy, setSortBy] = useState<string>('duration');
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1); // Start at 1 for API
+  const [total, setTotal] = useState(0);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const [reliableOnly, setReliableOnly] = useState(true);
   const [reliability, setReliability] = useState<Record<string, { min_count: number; exemption?: string }>>({});
   const [reliabilityLoading, setReliabilityLoading] = useState(false);
   const [minReliabilityPercent, setMinReliabilityPercent] = useState<number>(85);
   const [resetFiltersSignal, setResetFiltersSignal] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   // --- Advanced filter/search state ---
   const [selectedStops, setSelectedStops] = useState<number[]>([]);
@@ -81,6 +84,7 @@ export default function AwardFinderPage() {
   const [airportFilter, setAirportFilter] = useState<any>({ include: { origin: [], destination: [], connection: [] }, exclude: { origin: [], destination: [], connection: [] } });
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [lastSearchBody, setLastSearchBody] = useState<any>(null);
 
   useEffect(() => {
     if (!reliableOnly) return;
@@ -135,9 +139,13 @@ export default function AwardFinderPage() {
   };
 
   // Handler for search
-  const handleSearch = async (body: any) => {
+  const handleSearch = useCallback(async (body: any, pageOverride?: number, pageSizeOverride?: number) => {
+    setIsLoading(true);
+    setLastSearchBody(body); // Store the last search body
     const query = buildQueryParams();
-    const url = `http://localhost:3000/api/build-itineraries${query ? '?' + query : ''}`;
+    const pageParam = pageOverride ?? page;
+    const pageSizeParam = pageSizeOverride ?? pageSize;
+    const url = `http://localhost:3000/api/build-itineraries${query ? '?' + query : ''}&page=${pageParam}&pageSize=${pageSizeParam}`;
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -146,8 +154,28 @@ export default function AwardFinderPage() {
     if (!res.ok) throw new Error('API error');
     const data = await res.json();
     setResults(data);
-    setPage(0);
+    setTotal(data.total || 0);
+    setPage(data.page || 1);
+    setPageSize(data.pageSize || PAGE_SIZE);
     setResetFiltersSignal(s => s + 1);
+    setIsLoading(false);
+  }, [buildQueryParams, page, pageSize]);
+
+  // When user changes page
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    if (lastSearchBody) {
+      handleSearch(lastSearchBody, newPage, pageSize);
+    }
+  };
+
+  // When user changes page size
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setPage(1);
+    if (lastSearchBody) {
+      handleSearch(lastSearchBody, 1, newPageSize);
+    }
   };
 
   const filterReliable = useCallback((results: AwardFinderResults): AwardFinderResults => {
@@ -252,7 +280,10 @@ export default function AwardFinderPage() {
           sortBy={sortBy}
           onSortByChange={setSortBy}
           page={page}
-          onPageChange={setPage}
+          onPageChange={handlePageChange}
+          total={total}
+          pageSize={pageSize}
+          onPageSizeChange={handlePageSizeChange}
           reliableOnly={reliableOnly}
           onReliableOnlyChange={checked => setReliableOnly(!!checked)}
           reliability={reliability}
@@ -264,33 +295,7 @@ export default function AwardFinderPage() {
           sortOptions={sortOptions}
           minReliabilityPercent={minReliabilityPercent}
           resetFiltersSignal={resetFiltersSignal}
-          selectedStops={selectedStops}
-          setSelectedStops={setSelectedStops}
-          selectedIncludeAirlines={selectedIncludeAirlines}
-          setSelectedIncludeAirlines={setSelectedIncludeAirlines}
-          selectedExcludeAirlines={selectedExcludeAirlines}
-          setSelectedExcludeAirlines={setSelectedExcludeAirlines}
-          yPercent={yPercent}
-          setYPercent={setYPercent}
-          wPercent={wPercent}
-          setWPercent={setWPercent}
-          jPercent={jPercent}
-          setJPercent={setJPercent}
-          fPercent={fPercent}
-          setFPercent={setFPercent}
-          duration={duration}
-          setDuration={setDuration}
-          depTime={depTime}
-          setDepTime={setDepTime}
-          arrTime={arrTime}
-          setArrTime={setArrTime}
-          airportFilter={airportFilter}
-          setAirportFilter={setAirportFilter}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          sortOrder={sortOrder}
-          setSortOrder={setSortOrder}
-          airlineList={airlineList}
+          isLoading={isLoading}
         />
       )}
     </main>
