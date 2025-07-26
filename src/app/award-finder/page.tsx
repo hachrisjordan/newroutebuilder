@@ -386,9 +386,9 @@ export default function AwardFinderPage() {
           duration={duration}
           setDuration={setDuration}
           depTime={memoizedDepTimeRange}
-          setDepTime={setDepTimeRange}
+          setDepTime={(time) => time && setDepTimeRange(time)}
           arrTime={memoizedArrTimeRange}
-          setArrTime={setArrTimeRange}
+          setArrTime={(time) => time && setArrTimeRange(time)}
           airportFilter={memoizedAirportFilterObj}
           setAirportFilter={setAirportFilterObj}
         />
