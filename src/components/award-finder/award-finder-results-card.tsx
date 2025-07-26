@@ -135,6 +135,18 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
     return Array.from(stopSet).sort((a, b) => a - b);
   }, [results]);
 
+  // Initialize time ranges from filter metadata when available
+  React.useEffect(() => {
+    if (results.filterMetadata?.departure && results.filterMetadata?.arrival) {
+      if (!depTime) {
+        setDepTime([results.filterMetadata.departure.min, results.filterMetadata.departure.max]);
+      }
+      if (!arrTime) {
+        setArrTime([results.filterMetadata.arrival.min, results.filterMetadata.arrival.max]);
+      }
+    }
+  }, [results.filterMetadata, depTime, arrTime, setDepTime, setArrTime]);
+
   // Default: all stops selected
   React.useEffect(() => {
     const allStops = getStopCounts();

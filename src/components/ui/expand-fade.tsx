@@ -50,7 +50,6 @@ const ExpandFade: React.FC<ExpandFadeProps> = ({ show, children, durationMs = 30
         opacity: show ? 1 : 0,
         transform: show ? 'translateY(0)' : 'translateY(-8px)',
         transition: `max-height ${durationMs}ms cubic-bezier(0.4,0,0.2,1), opacity ${durationMs}ms, transform ${durationMs}ms`,
-        overflow: 'hidden',
         willChange: 'max-height, opacity, transform',
       }}
       aria-hidden={!show}

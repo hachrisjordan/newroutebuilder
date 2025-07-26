@@ -84,16 +84,16 @@ export default function AwardFinderPage() {
   
   // Additional state for AwardFinderResultsCard (different types)
   const [selectedStopsNumbers, setSelectedStopsNumbers] = useState<number[]>([]);
-  const [depTimeRange, setDepTimeRange] = useState<[number, number]>([Date.now(), Date.now() + 24*60*60*1000]);
-  const [arrTimeRange, setArrTimeRange] = useState<[number, number]>([Date.now(), Date.now() + 24*60*60*1000]);
+  const [depTimeRange, setDepTimeRange] = useState<[number, number] | null>(null);
+  const [arrTimeRange, setArrTimeRange] = useState<[number, number] | null>(null);
   const [airportFilterObj, setAirportFilterObj] = useState<any>({ include: { origin: [], destination: [], connection: [] }, exclude: { origin: [], destination: [], connection: [] } });
   
   // Flag to track if filters have been initialized
   const [filtersInitialized, setFiltersInitialized] = useState(false);
   
   // Memoize objects to prevent unnecessary re-renders
-  const memoizedDepTimeRange = useMemo(() => depTimeRange, [depTimeRange[0], depTimeRange[1]]);
-  const memoizedArrTimeRange = useMemo(() => arrTimeRange, [arrTimeRange[0], arrTimeRange[1]]);
+  const memoizedDepTimeRange = useMemo(() => depTimeRange, [depTimeRange?.[0], depTimeRange?.[1]]);
+  const memoizedArrTimeRange = useMemo(() => arrTimeRange, [arrTimeRange?.[0], arrTimeRange?.[1]]);
   const memoizedAirportFilterObj = useMemo(() => airportFilterObj, [
     JSON.stringify(airportFilterObj.include.origin),
     JSON.stringify(airportFilterObj.include.destination),
@@ -141,11 +141,11 @@ export default function AwardFinderPage() {
     if (jPercent > 0) params.set('minJPercent', String(jPercent));
     if (fPercent > 0) params.set('minFPercent', String(fPercent));
     if (duration > 0) params.set('maxDuration', String(duration));
-    if (memoizedDepTimeRange[0] !== Date.now() || memoizedDepTimeRange[1] !== Date.now() + 24*60*60*1000) {
+    if (memoizedDepTimeRange) {
       params.set('depTimeMin', String(memoizedDepTimeRange[0]));
       params.set('depTimeMax', String(memoizedDepTimeRange[1]));
     }
-    if (memoizedArrTimeRange[0] !== Date.now() || memoizedArrTimeRange[1] !== Date.now() + 24*60*60*1000) {
+    if (memoizedArrTimeRange) {
       params.set('arrTimeMin', String(memoizedArrTimeRange[0]));
       params.set('arrTimeMax', String(memoizedArrTimeRange[1]));
     }
@@ -385,9 +385,9 @@ export default function AwardFinderPage() {
           setFPercent={setFPercent}
           duration={duration}
           setDuration={setDuration}
-          depTime={memoizedDepTimeRange}
+          depTime={memoizedDepTimeRange || undefined}
           setDepTime={(time) => time && setDepTimeRange(time)}
-          arrTime={memoizedArrTimeRange}
+          arrTime={memoizedArrTimeRange || undefined}
           setArrTime={(time) => time && setArrTimeRange(time)}
           airportFilter={memoizedAirportFilterObj}
           setAirportFilter={setAirportFilterObj}
