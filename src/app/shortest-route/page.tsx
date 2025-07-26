@@ -288,7 +288,7 @@ export default function ShortestRoutePage() {
       return;
     }
     const hubs = Array.from({ length: challenge.stopCount }).map((_, i) => hubInputs[i].join(''));
-    const res = await fetch('/api/shortest-route', {
+    const res = await fetch('https://api.bbairtools.com/api/shortest-route', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ hubs, challengeId: challenge.id }),

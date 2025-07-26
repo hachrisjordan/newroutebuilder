@@ -257,7 +257,7 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
       const fetchAirlineNames = async () => {
         setIsLoadingAirlineNames(true);
         try {
-          const response = await fetch(`/api/airlines?codes=${results.filterMetadata!.airlines.join(',')}`);
+                      const response = await fetch(`https://api.bbairtools.com/api/airlines?codes=${results.filterMetadata!.airlines.join(',')}`);
           const airlines = await response.json();
           const nameMap: Record<string, string> = {};
           airlines.forEach((airline: { code: string; name: string }) => {
@@ -289,7 +289,7 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
           const uniqueAirports = [...new Set(allAirports)];
           
           if (uniqueAirports.length > 0) {
-            const response = await fetch(`/api/airports?codes=${uniqueAirports.join(',')}`);
+            const response = await fetch(`https://api.bbairtools.com/api/airports?codes=${uniqueAirports.join(',')}`);
             const data = await response.json();
             const nameMap: Record<string, string> = {};
             // Handle the API response structure: { airports: [...] }

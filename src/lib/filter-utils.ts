@@ -15,7 +15,7 @@ export async function fetchFilterMetadata(params: {
   minReliabilityPercent?: number;
 }): Promise<FilterMetadata> {
   try {
-    const response = await fetch('/api/filter-metadata', {
+    const response = await fetch('https://api.bbairtools.com/api/filter-metadata', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params),

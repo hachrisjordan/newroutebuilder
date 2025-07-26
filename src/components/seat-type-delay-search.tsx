@@ -56,7 +56,7 @@ export function SeatTypeDelaySearch({ onSearch }: SeatTypeDelaySearchProps) {
     const fetchData = async () => {
       try {
         const [airlinesRes] = await Promise.all([
-          fetch('/api/airlines')
+          fetch('https://api.bbairtools.com/api/airlines')
         ]);
     
         const [airlinesData] = await Promise.all([

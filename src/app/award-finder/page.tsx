@@ -106,7 +106,7 @@ export default function AwardFinderPage() {
   useEffect(() => {
     if (!reliableOnly) return;
     setReliabilityLoading(true);
-    fetch('/api/reliability')
+    fetch('https://api.bbairtools.com/api/reliability')
       .then(res => res.json())
       .then(data => {
         const map = Object.fromEntries(data.map((r: { code: string, min_count: number, exemption?: string }) => [r.code, r]));
@@ -116,7 +116,7 @@ export default function AwardFinderPage() {
   }, [reliableOnly]);
 
   useEffect(() => {
-    fetch('/api/profile').then(res => res.json()).then(data => {
+    fetch('https://api.bbairtools.com/api/profile').then(res => res.json()).then(data => {
       if (typeof data.min_reliability_percent === 'number') {
         setMinReliabilityPercent(data.min_reliability_percent);
       }
@@ -125,7 +125,7 @@ export default function AwardFinderPage() {
 
   // Fetch airline list for dropdowns
   useEffect(() => {
-    fetch('/api/airlines')
+    fetch('https://api.bbairtools.com/api/airlines')
       .then(res => res.json())
       .then(data => setAirlineList(Array.isArray(data) ? data : []));
   }, []);
