@@ -17,7 +17,7 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@
 import { TooltipTouch } from '@/components/ui/tooltip-touch';
 
 interface AwardFinderSearchProps {
-  onSearch: (results: AwardFinderResults) => void;
+  onSearch: (searchParams: any) => void;
   minReliabilityPercent?: number;
   selectedStops: string[];
   setSelectedStops: (stops: string[]) => void;
@@ -44,13 +44,13 @@ interface AwardFinderSearchProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   sortOrder: string;
-  setSortOrder: (order: string) => void;
+  setSortOrder: (order: 'asc' | 'desc') => void;
   airlineList: string[];
 }
 
 const SEARCH_CACHE_KEY = 'awardFinderSearchParams';
 
-export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedStops, setSelectedStops, selectedIncludeAirlines, setSelectedIncludeAirlines, selectedExcludeAirlines, setSelectedExcludeAirlines, yPercent, setYPercent, wPercent, setWPercent, jPercent, setJPercent, fPercent, setFPercent, duration, setDuration, depTime, setDepTime, arrTime, setArrTime, airportFilter, setAirportFilter, searchQuery, setSearchQuery, sortOrder, setSortOrder, airlineList }) {
+export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedStops, setSelectedStops, selectedIncludeAirlines, setSelectedIncludeAirlines, selectedExcludeAirlines, setSelectedExcludeAirlines, yPercent, setYPercent, wPercent, setWPercent, jPercent, setJPercent, fPercent, setFPercent, duration, setDuration, depTime, setDepTime, arrTime, setArrTime, airportFilter, setAirportFilter, searchQuery, setSearchQuery, sortOrder, setSortOrder, airlineList }: AwardFinderSearchProps) {
   const [origin, setOrigin] = useState<string[]>([]);
   const [destination, setDestination] = useState<string[]>([]);
   const [date, setDate] = useState<DateRange | undefined>(undefined);
