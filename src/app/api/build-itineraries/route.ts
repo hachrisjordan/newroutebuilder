@@ -683,7 +683,7 @@ export async function POST(req: NextRequest) {
       const reliabilityTable = await getReliabilityTableCached();
       const reliabilityMap = getReliabilityMap(reliabilityTable);
       // --- Flatten all itineraries into a single array for global sorting ---
-      let allItins = [];
+      let allItins: Array<{ route: string; date: string; itinerary: string[] }> = [];
       for (const routeKey of Object.keys(itineraries)) {
         for (const date of Object.keys(itineraries[routeKey])) {
           allItins.push(...itineraries[routeKey][date].map((itinerary: string[]) => ({ route: routeKey, date, itinerary })));
