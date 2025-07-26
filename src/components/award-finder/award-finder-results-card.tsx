@@ -18,6 +18,9 @@ interface AwardFinderResultsCardProps {
   onSortByChange: (value: string) => void;
   page: number;
   onPageChange: (page: number) => void;
+  total: number;
+  pageSize: number;
+  onPageSizeChange: (size: number) => void;
   reliableOnly: boolean;
   onReliableOnlyChange: (checked: boolean) => void;
   reliability: Record<string, { min_count: number; exemption?: string }>;
@@ -29,6 +32,32 @@ interface AwardFinderResultsCardProps {
   sortOptions: { value: string; label: string }[];
   minReliabilityPercent: number;
   resetFiltersSignal?: number | string;
+  isLoading?: boolean;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  // Filter state and handlers
+  selectedStops: number[];
+  setSelectedStops: (stops: number[]) => void;
+  selectedIncludeAirlines: string[];
+  setSelectedIncludeAirlines: (airlines: string[]) => void;
+  selectedExcludeAirlines: string[];
+  setSelectedExcludeAirlines: (airlines: string[]) => void;
+  yPercent: number;
+  setYPercent: (percent: number) => void;
+  wPercent: number;
+  setWPercent: (percent: number) => void;
+  jPercent: number;
+  setJPercent: (percent: number) => void;
+  fPercent: number;
+  setFPercent: (percent: number) => void;
+  duration: number;
+  setDuration: (duration: number) => void;
+  depTime: [number, number] | undefined;
+  setDepTime: (time: [number, number] | undefined) => void;
+  arrTime: [number, number] | undefined;
+  setArrTime: (time: [number, number] | undefined) => void;
+  airportFilter: any;
+  setAirportFilter: (filter: any) => void;
 }
 
 // Debounce hook
@@ -47,6 +76,9 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
   onSortByChange,
   page,
   onPageChange,
+  total,
+  pageSize,
+  onPageSizeChange,
   reliableOnly,
   onReliableOnlyChange,
   reliability,
@@ -58,108 +90,43 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
   sortOptions,
   minReliabilityPercent,
   resetFiltersSignal,
+  isLoading = false,
+  searchQuery,
+  setSearchQuery,
+  // Filter state and handlers
+  selectedStops,
+  setSelectedStops,
+  selectedIncludeAirlines,
+  setSelectedIncludeAirlines,
+  selectedExcludeAirlines,
+  setSelectedExcludeAirlines,
+  yPercent,
+  setYPercent,
+  wPercent,
+  setWPercent,
+  jPercent,
+  setJPercent,
+  fPercent,
+  setFPercent,
+  duration,
+  setDuration,
+  depTime,
+  setDepTime,
+  arrTime,
+  setArrTime,
+  airportFilter,
+  setAirportFilter,
 }) => {
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
-  const [isProcessing, setIsProcessing] = React.useState(false);
-  const [processedCards, setProcessedCards] = React.useState<Array<{ route: string; date: string; itinerary: string[] }>>([]);
-  const [totalPages, setTotalPages] = React.useState(0);
-  const [selectedStops, setSelectedStops] = React.useState<number[]>([]);
-  const [selectedIncludeAirlines, setSelectedIncludeAirlines] = React.useState<string[]>([]);
-  const [selectedExcludeAirlines, setSelectedExcludeAirlines] = React.useState<string[]>([]);
-  const [airlineMeta, setAirlineMeta] = React.useState<{ code: string; name: string }[]>([]);
-  const visibleAirlineCodes = React.useMemo(() => Array.from(new Set(Object.values(results.flights).map(f => f.FlightNumbers.slice(0, 2).toUpperCase()))), [results.flights]);
-  const [yPercent, setYPercent] = React.useState(0);
-  const [wPercent, setWPercent] = React.useState(0);
-  const [jPercent, setJPercent] = React.useState(0);
-  const [fPercent, setFPercent] = React.useState(0);
-  // Duration filter state
-  const allDurations = React.useMemo(() => {
-    const cards = flattenItineraries(results);
-    return cards.map(card => {
-      const flightsArr = card.itinerary.map(fid => results.flights[fid]).filter(Boolean);
-      return getTotalDuration(flightsArr);
-    }).filter(Boolean);
-  }, [results, flattenItineraries]);
-  const minDuration = allDurations.length ? Math.min(...allDurations) : 0;
-  const maxDuration = allDurations.length ? Math.max(...allDurations) : 1440;
-  const [duration, setDuration] = React.useState(maxDuration);
-  // Keep duration in sync with maxDuration
-  React.useEffect(() => {
-    setDuration(maxDuration);
-  }, [maxDuration]);
-
-  // Compute min/max departs/arrives
-  const allDepTimes = React.useMemo(() => {
-    const cards = flattenItineraries(results);
-    return cards.map(card => {
-      const flightsArr = card.itinerary.map(fid => results.flights[fid]).filter(Boolean);
-      return flightsArr.length ? new Date(flightsArr[0].DepartsAt).getTime() : null;
-    }).filter((v): v is number => v !== null);
-  }, [results, flattenItineraries]);
-  const allArrTimes = React.useMemo(() => {
-    const cards = flattenItineraries(results);
-    return cards.map(card => {
-      const flightsArr = card.itinerary.map(fid => results.flights[fid]).filter(Boolean);
-      return flightsArr.length ? new Date(flightsArr[flightsArr.length - 1].ArrivesAt).getTime() : null;
-    }).filter((v): v is number => v !== null);
-  }, [results, flattenItineraries]);
-  const depMin = allDepTimes.length ? Math.min(...allDepTimes) : Date.now();
-  const depMax = allDepTimes.length ? Math.max(...allDepTimes) : Date.now() + 24*60*60*1000;
-  const arrMin = allArrTimes.length ? Math.min(...allArrTimes) : Date.now();
-  const arrMax = allArrTimes.length ? Math.max(...allArrTimes) : Date.now() + 24*60*60*1000;
-  const [depTime, setDepTime] = React.useState<[number, number]>([depMin, depMax]);
-  const [arrTime, setArrTime] = React.useState<[number, number]>([arrMin, arrMax]);
-  React.useEffect(() => {
-    setDepTime([depMin, depMax]);
-    setArrTime([arrMin, arrMax]);
-  }, [depMin, depMax, arrMin, arrMax, resetFiltersSignal]);
-  const handleDepTimeChange = (v: [number, number]) => { setDepTime(v); onPageChange(0); };
-  const handleArrTimeChange = (v: [number, number]) => { setArrTime(v); onPageChange(0); };
-  const handleResetDepTime = () => { setDepTime([depMin, depMax]); onPageChange(0); };
-  const handleResetArrTime = () => { setArrTime([arrMin, arrMax]); onPageChange(0); };
-
-  // --- Pagination reset wrappers ---
-  const handleChangeStops = (stops: number[]) => {
-    setSelectedStops(stops);
-    onPageChange(0);
-  };
-  const handleChangeIncludeAirlines = (codes: string[]) => {
-    setSelectedIncludeAirlines(codes);
-    onPageChange(0);
-  };
-  const handleChangeExcludeAirlines = (codes: string[]) => {
-    setSelectedExcludeAirlines(codes);
-    onPageChange(0);
-  };
-  const handleYPercentChange = (value: number) => {
-    setYPercent(value);
-    onPageChange(0);
-  };
-  const handleWPercentChange = (value: number) => {
-    setWPercent(value);
-    onPageChange(0);
-  };
-  const handleJPercentChange = (value: number) => {
-    setJPercent(value);
-    onPageChange(0);
-  };
-  const handleFPercentChange = (value: number) => {
-    setFPercent(value);
-    onPageChange(0);
-  };
-  const handleDurationChange = (value: number) => {
-    setDuration(value);
-    onPageChange(0);
-  };
-  const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-    onPageChange(0);
-  };
-  // --- End wrappers ---
+  // Remove all local sorting, search, and pagination state and handlers
+  // Remove the search bar and sort dropdown from the render
+  // Only render the results as received from the API, and the Pagination component to trigger API fetches
 
   // Helper to get unique stop counts from results
   const getStopCounts = React.useCallback(() => {
+    // Use filterMetadata if available, otherwise fallback to calculating from results
+    if (results.filterMetadata?.stops) {
+      return results.filterMetadata.stops;
+    }
     const stopSet = new Set<number>();
     Object.keys(results.itineraries).forEach(route => {
       const stops = route.split('-').length - 2;
@@ -168,18 +135,25 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
     return Array.from(stopSet).sort((a, b) => a - b);
   }, [results]);
 
+  // Initialize time ranges from filter metadata when available
+  React.useEffect(() => {
+    if (results.filterMetadata?.departure && results.filterMetadata?.arrival) {
+      if (!depTime) {
+        setDepTime([results.filterMetadata.departure.min, results.filterMetadata.departure.max]);
+      }
+      if (!arrTime) {
+        setArrTime([results.filterMetadata.arrival.min, results.filterMetadata.arrival.max]);
+      }
+    }
+  }, [results.filterMetadata, depTime, arrTime, setDepTime, setArrTime]);
+
   // Default: all stops selected
   React.useEffect(() => {
     const allStops = getStopCounts();
-    setSelectedStops(allStops);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [results]);
 
-  // Airport filter state
-  const [airportFilter, setAirportFilter] = React.useState<AirportFilterState>({
-    include: { origin: [], destination: [], connection: [] },
-    exclude: { origin: [], destination: [], connection: [] },
-  });
+  // Airport filter handlers
   const handleChangeAirportFilter = (state: AirportFilterState) => {
     setAirportFilter(state);
     onPageChange(0);
@@ -188,305 +162,276 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
     setAirportFilter({ include: { origin: [], destination: [], connection: [] }, exclude: { origin: [], destination: [], connection: [] } });
     onPageChange(0);
   };
+  // Fetch cities for airport names
   const [iataToCity, setIataToCity] = React.useState<Record<string, string>>({});
   const [isLoadingCities, setIsLoadingCities] = React.useState(false);
   const [cityError, setCityError] = React.useState<string | null>(null);
-  // Fetch city names for all unique IATA codes in results
-  React.useEffect(() => {
-    const allIatas = new Set<string>();
-    const cards = flattenItineraries(results);
-    cards.forEach(card => {
-      const segs = card.route.split('-');
-      segs.forEach(iata => { if (iata) allIatas.add(iata); });
-    });
-    if (allIatas.size === 0) {
-      setIataToCity({});
-      return;
-    }
-    const fetchCities = async () => {
-      setIsLoadingCities(true);
-      setCityError(null);
-      try {
-        const supabase = createSupabaseBrowserClient();
-        const iataList = Array.from(allIatas);
-        const { data, error } = await supabase
-          .from('airports')
-          .select('iata, city_name')
-          .in('iata', iataList);
-        if (error) throw error;
-        const map: Record<string, string> = {};
-        data?.forEach((row: { iata: string; city_name: string }) => {
-          map[row.iata] = row.city_name;
-        });
-        setIataToCity(map);
-      } catch (err: any) {
-        setCityError(err.message || 'Failed to load city names');
-      } finally {
-        setIsLoadingCities(false);
-      }
-    };
-    fetchCities();
-  }, [results, flattenItineraries]);
-  // Helper to extract airport meta by role from cards, using CODE - CITYNAME
+  // Fetch airline names for the filter metadata
+  const [airlineNames, setAirlineNames] = React.useState<Record<string, string>>({});
+  const [isLoadingAirlineNames, setIsLoadingAirlineNames] = React.useState(false);
+
+  // Fetch airport names from Supabase airports table
+  const [airportNames, setAirportNames] = React.useState<Record<string, string>>({});
+  const [isLoadingAirportNames, setIsLoadingAirportNames] = React.useState(false);
+
+  // Helper to extract airport meta by role from cards, using IATA - CITYNAME
   const airportMeta: AirportMeta[] = React.useMemo(() => {
     const meta: AirportMeta[] = [];
     const seen = new Set<string>();
+    
+    // Use filterMetadata if available for better performance
+    if (results.filterMetadata?.airports) {
+      const { origins, destinations, connections } = results.filterMetadata.airports;
+      
+      origins.forEach((code: string) => {
+        if (!seen.has(code)) {
+          meta.push({ 
+            code, 
+            name: airportNames[code] ? `${code} - ${airportNames[code]}` : code, 
+            role: 'origin' 
+          });
+          seen.add(code);
+        }
+      });
+      
+      destinations.forEach((code: string) => {
+        if (!seen.has(code)) {
+          meta.push({ 
+            code, 
+            name: airportNames[code] ? `${code} - ${airportNames[code]}` : code, 
+            role: 'destination' 
+          });
+          seen.add(code);
+        }
+      });
+      
+      connections.forEach((code: string) => {
+        if (!seen.has(code)) {
+          meta.push({ 
+            code, 
+            name: airportNames[code] ? `${code} - ${airportNames[code]}` : code, 
+            role: 'connection' 
+          });
+          seen.add(code);
+        }
+      });
+      
+      return meta;
+    }
+    
+    // Fallback to calculating from results
     const cards = flattenItineraries(results);
     cards.forEach(card => {
       const segs = card.route.split('-');
       if (segs.length < 2) return;
       if (!seen.has(segs[0])) {
-        meta.push({ code: segs[0], name: iataToCity[segs[0]] ? `${segs[0]} - ${iataToCity[segs[0]]}` : segs[0], role: 'origin' });
+        meta.push({ code: segs[0], name: airportNames[segs[0]] ? `${segs[0]} - ${airportNames[segs[0]]}` : segs[0], role: 'origin' });
         seen.add(segs[0]);
       }
       if (!seen.has(segs[segs.length-1])) {
-        meta.push({ code: segs[segs.length-1], name: iataToCity[segs[segs.length-1]] ? `${segs[segs.length-1]} - ${iataToCity[segs[segs.length-1]]}` : segs[segs.length-1], role: 'destination' });
+        meta.push({ code: segs[segs.length-1], name: airportNames[segs[segs.length-1]] ? `${segs[segs.length-1]} - ${airportNames[segs[segs.length-1]]}` : segs[segs.length-1], role: 'destination' });
         seen.add(segs[segs.length-1]);
       }
       for (let i = 1; i < segs.length-1; ++i) {
         if (!seen.has(segs[i])) {
-          meta.push({ code: segs[i], name: iataToCity[segs[i]] ? `${segs[i]} - ${iataToCity[segs[i]]}` : segs[i], role: 'connection' });
+          meta.push({ code: segs[i], name: airportNames[segs[i]] ? `${segs[i]} - ${airportNames[segs[i]]}` : segs[i], role: 'connection' });
           seen.add(segs[i]);
         }
       }
     });
     return meta;
-  }, [results, flattenItineraries, iataToCity]);
+  }, [results, flattenItineraries, airportNames]);
 
   // Data processing effect
   React.useEffect(() => {
-    let cancelled = false;
-    setIsProcessing(true);
-    setTimeout(() => {
-      let filteredResults = reliableOnly ? filterReliable(results) : results;
-      let cards = flattenItineraries(filteredResults);
-      // Filter by number of stops if selected
-      if (selectedStops.length > 0) {
-        cards = cards.filter(card => selectedStops.includes(card.route.split('-').length - 2));
-      }
-      // Filter by airlines (include/exclude)
-      if (selectedIncludeAirlines.length > 0) {
-        cards = cards.filter(card => {
-          // Get all airline codes in this itinerary
-          const airlineCodes = card.itinerary.map(fid => filteredResults.flights[fid]?.FlightNumbers.slice(0, 2).toUpperCase());
-          // Include if any segment matches any selected include airline
-          return airlineCodes.some(code => selectedIncludeAirlines.includes(code));
-        });
-      }
-      if (selectedExcludeAirlines.length > 0) {
-        cards = cards.filter(card => {
-          const airlineCodes = card.itinerary.map(fid => filteredResults.flights[fid]?.FlightNumbers.slice(0, 2).toUpperCase());
-          // Exclude if any segment matches any selected exclude airline
-          return !airlineCodes.some(code => selectedExcludeAirlines.includes(code));
-        });
-      }
-      // Filter by duration
-      if (duration < maxDuration) {
-        cards = cards.filter(card => {
-          const flightsArr = card.itinerary.map(fid => filteredResults.flights[fid]).filter(Boolean);
-          const total = getTotalDuration(flightsArr);
-          return total <= duration;
-        });
-      }
-      // Filter by Y, W, J, F percent
-      if (yPercent > 0 || wPercent > 0 || jPercent > 0 || fPercent > 0) {
-        cards = cards.filter(card => {
-          const flightsArr = card.itinerary.map(fid => filteredResults.flights[fid]).filter(Boolean);
-          if (flightsArr.length === 0) return false;
-          const { y, w, j, f } = getClassPercentages(flightsArr, reliability, minReliabilityPercent);
-          return (
-            y >= yPercent &&
-            w >= wPercent &&
-            j >= jPercent &&
-            f >= fPercent
-          );
-        });
-      }
-      // Filter by departs/arrives time
-      cards = cards.filter(card => {
-        const flightsArr = card.itinerary.map(fid => filteredResults.flights[fid]).filter(Boolean);
-        if (!flightsArr.length) return false;
-        const dep = new Date(flightsArr[0].DepartsAt).getTime();
-        const arr = new Date(flightsArr[flightsArr.length - 1].ArrivesAt).getTime();
-        return dep >= depTime[0] && dep <= depTime[1] && arr >= arrTime[0] && arr <= arrTime[1];
-      });
-      // Filter by airport filter
-      if (airportFilter.include.origin.length || airportFilter.include.destination.length || airportFilter.include.connection.length) {
-        cards = cards.filter(card => {
-          const segs = card.route.split('-');
-          const origin = segs[0];
-          const destination = segs[segs.length-1];
-          const connections = segs.slice(1, -1);
-          let match = true;
-          if (airportFilter.include.origin.length) match = match && airportFilter.include.origin.includes(origin);
-          if (airportFilter.include.destination.length) match = match && airportFilter.include.destination.includes(destination);
-          if (airportFilter.include.connection.length) match = match && connections.some(c => airportFilter.include.connection.includes(c));
-          return match;
-        });
-      }
-      if (airportFilter.exclude.origin.length || airportFilter.exclude.destination.length || airportFilter.exclude.connection.length) {
-        cards = cards.filter(card => {
-          const segs = card.route.split('-');
-          const origin = segs[0];
-          const destination = segs[segs.length-1];
-          const connections = segs.slice(1, -1);
-          let match = true;
-          if (airportFilter.exclude.origin.length) match = match && !airportFilter.exclude.origin.includes(origin);
-          if (airportFilter.exclude.destination.length) match = match && !airportFilter.exclude.destination.includes(destination);
-          if (airportFilter.exclude.connection.length) match = match && !connections.some(c => airportFilter.exclude.connection.includes(c));
-          return match;
-        });
-      }
-      const query = debouncedSearchQuery.trim().toLowerCase();
-      if (query) {
-        const terms = query.split(/\s+/).filter(Boolean);
-        cards = cards.filter(card => {
-          // For each term, it must match route, date, or any flight number
-          return terms.every(term => {
-            if (card.route.toLowerCase().includes(term)) return true;
-            if (card.date.toLowerCase().includes(term)) return true;
-            return card.itinerary.some(fid => {
-              const flight = filteredResults.flights[fid];
-              return flight && flight.FlightNumbers.toLowerCase().includes(term);
-            });
-          });
-        });
-      }
-      cards = cards.sort((a, b) => {
-        const aVal = getSortValue(a, filteredResults, sortBy);
-        const bVal = getSortValue(b, filteredResults, sortBy);
-        if (aVal !== bVal) {
-          if (["arrival", "y", "w", "j", "f"].includes(sortBy)) {
-            return bVal - aVal;
-          }
-          return aVal - bVal;
-        }
-        const aFlights = a.itinerary.map(fid => filteredResults.flights[fid]).filter(Boolean);
-        const bFlights = b.itinerary.map(fid => filteredResults.flights[fid]).filter(Boolean);
-        const aDur = getTotalDuration(aFlights);
-        const bDur = getTotalDuration(bFlights);
-        return aDur - bDur;
-      });
-      const total = Math.ceil(cards.length / PAGE_SIZE);
-      const pagedCards = cards.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-      if (!cancelled) {
-        setProcessedCards(pagedCards);
-        setTotalPages(total);
-        setIsProcessing(false);
-      }
-    }, 0);
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [results, sortBy, page, reliableOnly, debouncedSearchQuery, filterReliable, flattenItineraries, getSortValue, PAGE_SIZE, selectedStops, selectedIncludeAirlines, selectedExcludeAirlines, yPercent, wPercent, jPercent, fPercent, duration, depTime, arrTime, airportFilter]);
+    // Bypass all client-side filtering/sorting: just use API results
+    // const cards = flattenItineraries(results); // This line is removed
+    // setProcessedCards(cards); // This line is removed
+  }, [results, flattenItineraries]);
 
   React.useEffect(() => {
     // Extract unique airline codes from results.flights
-    const codes = Array.from(new Set(Object.values(results.flights).map(f => f.FlightNumbers.slice(0, 2).toUpperCase())));
-    if (codes.length === 0) {
-      setAirlineMeta([]);
-      return;
-    }
-    // Fetch only metadata for these codes
-    fetch(`/api/airlines?codes=${codes.join(',')}`)
-      .then(res => res.json())
-      .then(data => setAirlineMeta(Array.isArray(data) ? data : []))
-      .catch(() => setAirlineMeta([]));
+    // const codes = Array.from(new Set(Object.values(results.flights).map(f => f.FlightNumbers.slice(0, 2).toUpperCase()))); // This line is removed
+    // if (codes.length === 0) { // This line is removed
+    //   setAirlineMeta([]); // This line is removed
+    //   return; // This line is removed
+    // } // This line is removed
+    // // Fetch only metadata for these codes // This line is removed
+    // fetch(`/api/airlines?codes=${codes.join(',')}`) // This line is removed
+    //   .then(res => res.json()) // This line is removed
+    //   .then(data => setAirlineMeta(Array.isArray(data) ? data : [])) // This line is removed
+    //   .catch(() => setAirlineMeta([])); // This line is removed
   }, [results.flights]);
 
+  // Fetch airline names for the filter metadata
+  React.useEffect(() => {
+    if (results.filterMetadata?.airlines && results.filterMetadata.airlines.length > 0) {
+      const fetchAirlineNames = async () => {
+        setIsLoadingAirlineNames(true);
+        try {
+                      const response = await fetch(`/api/airlines?codes=${results.filterMetadata!.airlines.join(',')}`);
+          const airlines = await response.json();
+          const nameMap: Record<string, string> = {};
+          airlines.forEach((airline: { code: string; name: string }) => {
+            nameMap[airline.code] = airline.name;
+          });
+          setAirlineNames(nameMap);
+        } catch (error) {
+          console.error('Failed to fetch airline names:', error);
+        } finally {
+          setIsLoadingAirlineNames(false);
+        }
+      };
+      fetchAirlineNames();
+    }
+  }, [results.filterMetadata?.airlines]);
+
+  // Fetch airport names from Supabase airports table
+  React.useEffect(() => {
+    if (results.filterMetadata?.airports) {
+      const fetchAirportNames = async () => {
+        setIsLoadingAirportNames(true);
+        try {
+          // Get all unique airport codes from the metadata
+          const allAirports = [
+            ...(results.filterMetadata!.airports.origins || []),
+            ...(results.filterMetadata!.airports.destinations || []),
+            ...(results.filterMetadata!.airports.connections || [])
+          ];
+          const uniqueAirports = [...new Set(allAirports)];
+          
+          if (uniqueAirports.length > 0) {
+            const response = await fetch(`/api/airports?codes=${uniqueAirports.join(',')}`);
+            const data = await response.json();
+            const nameMap: Record<string, string> = {};
+            // Handle the API response structure: { airports: [...] }
+            const airports = data.airports || data;
+            airports.forEach((airport: { iata: string; city_name: string }) => {
+              nameMap[airport.iata] = airport.city_name;
+            });
+            setAirportNames(nameMap);
+          }
+        } catch (error) {
+          console.error('Failed to fetch airport names:', error);
+        } finally {
+          setIsLoadingAirportNames(false);
+        }
+      };
+      fetchAirportNames();
+    }
+  }, [results.filterMetadata?.airports]);
+
   const handleResetStops = () => {
-    setSelectedStops(getStopCounts());
-    onPageChange(0);
+    setSelectedStops(results.filterMetadata?.stops || []);
   };
+
   const handleResetAirlines = () => {
     setSelectedIncludeAirlines([]);
     setSelectedExcludeAirlines([]);
-    onPageChange(0);
   };
+
   const handleResetY = () => {
     setYPercent(0);
-    onPageChange(0);
   };
+
   const handleResetW = () => {
     setWPercent(0);
-    onPageChange(0);
   };
+
   const handleResetJ = () => {
     setJPercent(0);
-    onPageChange(0);
   };
+
   const handleResetF = () => {
     setFPercent(0);
-    onPageChange(0);
   };
+
   const handleResetDuration = () => {
-    setDuration(maxDuration);
-    onPageChange(0);
+    setDuration(results.filterMetadata?.duration?.max || 0);
   };
 
   // Reset all filters/search when resetFiltersSignal changes
   React.useEffect(() => {
     // Reset all filter/search state to initial values
-    setSearchQuery('');
-    setSelectedIncludeAirlines([]);
-    setSelectedExcludeAirlines([]);
-    setYPercent(0);
-    setWPercent(0);
-    setJPercent(0);
-    setFPercent(0);
-    setDuration(maxDuration);
-    setSelectedStops(getStopCounts());
-    setDepTime([depMin, depMax]);
-    setArrTime([arrMin, arrMax]);
+    // setSelectedIncludeAirlines([]); // This line is removed
+    // setSelectedExcludeAirlines([]); // This line is removed
+    // setYPercent(0); // This line is removed
+    // setWPercent(0); // This line is removed
+    // setJPercent(0); // This line is removed
+    // setFPercent(0); // This line is removed
+    // setDuration(maxDuration); // This line is removed
+    // setSelectedStops(getStopCounts()); // This line is removed
+    // setDepTime([depMin, depMax]); // This line is removed
+    // setArrTime([arrMin, arrMax]); // This line is removed
     setAirportFilter({ include: { origin: [], destination: [], connection: [] }, exclude: { origin: [], destination: [], connection: [] } });
     // Optionally, reset other local state if needed
-  }, [resetFiltersSignal, maxDuration, getStopCounts, depMin, depMax, arrMin, arrMax]);
+  }, [resetFiltersSignal, results.flights]); // Modified dependency array
 
   return (
     <TooltipProvider>
-      <div className="mt-8 w-full flex flex-col items-center">
+      <div className="mt-8 w-full flex flex-col items-center relative">
+        {/* Loading overlay */}
+        {isLoading && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/80">
+            <span className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary" aria-label="Loading" />
+          </div>
+        )}
         {/* Filters at the very top, separated from controls */}
         <div className="w-full max-w-[1000px] mb-4 ml-auto mr-auto">
           <Filters
-            stopCounts={getStopCounts()}
+            stopCounts={results.filterMetadata?.stops || []}
             selectedStops={selectedStops}
-            onChangeStops={handleChangeStops}
-            airlineMeta={airlineMeta || []}
-            visibleAirlineCodes={visibleAirlineCodes}
+            onChangeStops={setSelectedStops}
+            onResetStops={handleResetStops}
+            airlineMeta={results.filterMetadata?.airlines.map((code: string) => ({ 
+              code, 
+              name: airlineNames[code] ? `${airlineNames[code]}` : code 
+            })).sort((a, b) => a.name.localeCompare(b.name)) || []}
+            visibleAirlineCodes={results.filterMetadata?.airlines || []}
             selectedIncludeAirlines={selectedIncludeAirlines}
             selectedExcludeAirlines={selectedExcludeAirlines}
-            onChangeIncludeAirlines={handleChangeIncludeAirlines}
-            onChangeExcludeAirlines={handleChangeExcludeAirlines}
+            onChangeIncludeAirlines={setSelectedIncludeAirlines}
+            onChangeExcludeAirlines={setSelectedExcludeAirlines}
+            onResetAirlines={handleResetAirlines}
             yPercent={yPercent}
             wPercent={wPercent}
             jPercent={jPercent}
             fPercent={fPercent}
-            onYPercentChange={handleYPercentChange}
-            onWPercentChange={handleWPercentChange}
-            onJPercentChange={handleJPercentChange}
-            onFPercentChange={handleFPercentChange}
-            minDuration={minDuration}
-            maxDuration={maxDuration}
-            duration={duration}
-            onDurationChange={handleDurationChange}
-            onResetStops={handleResetStops}
-            onResetAirlines={handleResetAirlines}
+            onYPercentChange={setYPercent}
+            onWPercentChange={setWPercent}
+            onJPercentChange={setJPercent}
+            onFPercentChange={setFPercent}
             onResetY={handleResetY}
             onResetW={handleResetW}
             onResetJ={handleResetJ}
             onResetF={handleResetF}
+            minDuration={results.filterMetadata?.duration?.min || 0}
+            maxDuration={results.filterMetadata?.duration?.max || 0}
+            duration={duration}
+            onDurationChange={setDuration}
             onResetDuration={handleResetDuration}
-            depMin={depMin}
-            depMax={depMax}
+            depMin={results.filterMetadata?.departure.min || 0}
+            depMax={results.filterMetadata?.departure.max || 0}
             depTime={depTime}
-            arrMin={arrMin}
-            arrMax={arrMax}
+            arrMin={results.filterMetadata?.arrival.min || 0}
+            arrMax={results.filterMetadata?.arrival.max || 0}
             arrTime={arrTime}
-            onDepTimeChange={handleDepTimeChange}
-            onArrTimeChange={handleArrTimeChange}
-            onResetDepTime={handleResetDepTime}
-            onResetArrTime={handleResetArrTime}
+            onDepTimeChange={setDepTime}
+            onArrTimeChange={setArrTime}
+            onResetDepTime={() => {
+              const min = results.filterMetadata?.departure.min;
+              const max = results.filterMetadata?.departure.max;
+              if (min && max) {
+                setDepTime([min, max]);
+              }
+            }}
+            onResetArrTime={() => {
+              const min = results.filterMetadata?.arrival.min;
+              const max = results.filterMetadata?.arrival.max;
+              if (min && max) {
+                setArrTime([min, max]);
+              }
+            }}
             airportMeta={airportMeta}
             selectedAirportFilter={airportFilter}
             onChangeAirportFilter={handleChangeAirportFilter}
@@ -495,63 +440,58 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
             cityError={cityError}
           />
         </div>
-        <div className="w-full max-w-4xl mx-auto flex flex-col gap-2 mb-4">
-          <div className="flex flex-row items-center justify-between gap-2 w-full">
-            <div className="flex flex-1 justify-end items-center gap-2">
-              <Input
-                type="text"
-                value={searchQuery}
-                onChange={handleSearchQueryChange}
-                placeholder="Search path, date, or flight number..."
-                className="w-64 md:w-72 lg:w-80 max-w-full ml-auto"
-                aria-label="Search results"
-              />
-            </div>
-          </div>
-          <div className="flex items-center w-full justify-end gap-2">
-            <label htmlFor="sort" className="text-sm text-muted-foreground mr-2">Sort:</label>
-            <Select value={sortBy} onValueChange={onSortByChange}>
-              <SelectTrigger className="w-56" id="sort">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {sortOptions.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              {/* Restore search bar and sort dropdown */}
+      <div className="w-full max-w-[1000px] flex flex-col gap-1 mb-4 ml-auto mr-auto">
+        <div className="flex justify-end">
+          <Input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Search path, date, or flight number..."
+            className="w-64 md:w-72 lg:w-80 max-w-full"
+            aria-label="Search results"
+          />
         </div>
+        <div className="flex items-center gap-2 justify-end">
+          <span className="text-sm font-medium">Sort by:</span>
+          <Select value={sortBy} onValueChange={onSortByChange}>
+            <SelectTrigger className="w-56" id="sort">
+              <SelectValue placeholder="Sort by..." />
+            </SelectTrigger>
+            <SelectContent>
+              {sortOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
         {/* Results Table with Pagination */}
-        {reliableOnly && reliabilityLoading ? (
-          <div className="text-muted-foreground flex items-center gap-2"><span className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-primary"></span>Loading results...</div>
-        ) : isProcessing ? (
-          <div className="text-muted-foreground flex items-center gap-2"><span className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-primary"></span>Processing results...</div>
+        {Object.keys(results.flights).length === 0 ? (
+          <div className="text-center text-muted-foreground py-8">No results found for your search/filter criteria.</div>
         ) : (
-          <>
-            <AwardFinderResultsComponent
-              cards={processedCards}
-              flights={(reliableOnly ? filterReliable(results) : results).flights}
-              reliability={reliability}
-              minReliabilityPercent={minReliabilityPercent}
-            />
-            <Pagination
-              currentPage={page}
-              totalPages={totalPages}
-              onPageChange={onPageChange}
-            />
-            {/* API call info line */}
-            {typeof results.totalSeatsAeroHttpRequests === 'number' && typeof results.minRateLimitRemaining === 'number' && typeof results.minRateLimitReset === 'number' && (
-              <div className="w-full text-center text-xs text-muted-foreground mt-2 mx-auto">
-                {(() => {
-                  const resetSec = results.minRateLimitReset || 0;
-                  const h = Math.floor(resetSec / 3600);
-                  const m = Math.floor((resetSec % 3600) / 60);
-                  return `seats.aero API call: ${results.totalSeatsAeroHttpRequests} (${results.minRateLimitRemaining} remaining, reset in ${h}h ${m}m)`;
-                })()}
-              </div>
-            )}
-          </>
+          <AwardFinderResultsComponent
+            cards={flattenItineraries(results)}
+            flights={results.flights}
+            reliability={reliability}
+            minReliabilityPercent={minReliabilityPercent}
+          />
+        )}
+        <Pagination
+          currentPage={page - 1}
+          totalPages={Math.ceil(total / pageSize)}
+          onPageChange={p => onPageChange(p + 1)}
+        />
+        {/* API call info line */}
+        {typeof results.totalSeatsAeroHttpRequests === 'number' && typeof results.minRateLimitRemaining === 'number' && typeof results.minRateLimitReset === 'number' && (
+          <div className="w-full text-center text-xs text-muted-foreground mt-2 mx-auto">
+            {(() => {
+              const resetSec = results.minRateLimitReset || 0;
+              const h = Math.floor(resetSec / 3600);
+              const m = Math.floor((resetSec % 3600) / 60);
+              return `seats.aero API call: ${results.totalSeatsAeroHttpRequests} (${results.minRateLimitRemaining} remaining, reset in ${h}h ${m}m)`;
+            })()}
+          </div>
         )}
       </div>
     </TooltipProvider>

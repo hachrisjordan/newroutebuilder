@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const apiRes = await fetch('http://37.60.227.164:8080/api/build-itineraries', {
+    const apiRes = await fetch('https://api.bbairtools.com/api/build-itineraries', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

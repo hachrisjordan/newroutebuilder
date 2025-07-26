@@ -108,12 +108,12 @@ interface FiltersProps {
   onResetDuration: () => void;
   depMin: number;
   depMax: number;
-  depTime: [number, number];
+  depTime: [number, number] | undefined;
   arrMin: number;
   arrMax: number;
-  arrTime: [number, number];
-  onDepTimeChange: (value: [number, number]) => void;
-  onArrTimeChange: (value: [number, number]) => void;
+  arrTime: [number, number] | undefined;
+  onDepTimeChange: (value: [number, number] | undefined) => void;
+  onArrTimeChange: (value: [number, number] | undefined) => void;
   onResetDepTime: () => void;
   onResetArrTime: () => void;
   airportMeta: AirportMeta[];
@@ -213,15 +213,15 @@ const Filters: React.FC<FiltersProps> = ({
 
   // Helper: filter active
   function isDefault(key: string) {
-    if (key === 'stops') return selectedStops.length === stopCounts.length;
+    if (key === 'stops') return selectedStops.length === 0 || selectedStops.length === stopCounts.length;
     if (key === 'airlines') return selectedIncludeAirlines.length === 0 && selectedExcludeAirlines.length === 0;
-    if (key === 'duration') return duration === maxDuration;
+    if (key === 'duration') return duration === 0 || duration === maxDuration;
     if (key === 'Y') return yPercent === 0;
     if (key === 'W') return wPercent === 0;
     if (key === 'J') return jPercent === 0;
     if (key === 'F') return fPercent === 0;
-    if (key === 'depTime') return depTime[0] === depMin && depTime[1] === depMax;
-    if (key === 'arrTime') return arrTime[0] === arrMin && arrTime[1] === arrMax;
+    if (key === 'depTime') return depTime === undefined || (depTime[0] === depMin && depTime[1] === depMax);
+    if (key === 'arrTime') return arrTime === undefined || (arrTime[0] === arrMin && arrTime[1] === arrMax);
     return true;
   }
 
@@ -251,32 +251,34 @@ const Filters: React.FC<FiltersProps> = ({
   return (
     <div className="flex flex-row gap-3 w-full flex-wrap items-center">
       {/* Stops filter */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant={isDefault('stops') ? 'outline' : 'default'} className={cn('justify-start px-4 py-2')}>
-            Stops
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-fit">
-          <div className="flex items-center justify-between pr-2">
-            <DropdownMenuLabel>Number of stops</DropdownMenuLabel>
-            <button type="button" aria-label="Reset stops" onClick={onResetStops} className="ml-2 p-1 rounded hover:bg-accent">
-              <RotateCw className="w-4 h-4" />
-            </button>
-          </div>
-          <DropdownMenuSeparator />
-          {stopCounts.map((stop) => (
-            <DropdownMenuCheckboxItem
-              key={stop}
-              checked={selectedStops.includes(stop)}
-              onCheckedChange={checked => handleToggleStop(stop, checked as boolean)}
-              onSelect={e => e.preventDefault()}
-            >
-              {stop === 0 ? "Nonstop" : stop === 1 ? "1 stop" : `${stop} stops`}
-            </DropdownMenuCheckboxItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {stopCounts.length > 0 && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant={isDefault('stops') ? 'outline' : 'default'} className={cn('justify-start px-4 py-2')}>
+              Stops
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-fit">
+            <div className="flex items-center justify-between pr-2">
+              <DropdownMenuLabel>Number of stops</DropdownMenuLabel>
+              <button type="button" aria-label="Reset stops" onClick={onResetStops} className="ml-2 p-1 rounded hover:bg-accent">
+                <RotateCw className="w-4 h-4" />
+              </button>
+            </div>
+            <DropdownMenuSeparator />
+            {stopCounts.map((stop) => (
+              <DropdownMenuCheckboxItem
+                key={stop}
+                checked={selectedStops.includes(stop)}
+                onCheckedChange={checked => handleToggleStop(stop, checked as boolean)}
+                onSelect={e => e.preventDefault()}
+              >
+                {stop === 0 ? "Nonstop" : stop === 1 ? "1 stop" : `${stop} stops`}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
       {/* Airlines filter */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -349,26 +351,28 @@ const Filters: React.FC<FiltersProps> = ({
         </DropdownMenuContent>
       </DropdownMenu>
       {/* Duration filter */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant={isDefault('duration') ? 'outline' : 'default'} className={cn('justify-start px-4 py-2')}>
-            Duration
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-fit">
-          <div className="flex items-center justify-between pr-2">
-            <DropdownMenuLabel>Max Duration</DropdownMenuLabel>
-            <button type="button" aria-label="Reset duration" onClick={onResetDuration} className="ml-2 p-1 rounded hover:bg-accent">
-              <RotateCw className="w-4 h-4" />
-            </button>
-          </div>
-          <DropdownMenuSeparator />
-          <div className="px-2 py-2 w-56 flex flex-col gap-2">
-            <Slider min={minDuration} max={maxDuration} step={5} value={[duration]} onValueChange={([v]) => onDurationChange(v)} />
-            <div className="text-xs text-center">{formatDurationMinutes(duration)}</div>
-          </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {maxDuration > 0 && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant={isDefault('duration') ? 'outline' : 'default'} className={cn('justify-start px-4 py-2')}>
+              Duration
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-fit">
+            <div className="flex items-center justify-between pr-2">
+              <DropdownMenuLabel>Max Duration</DropdownMenuLabel>
+              <button type="button" aria-label="Reset duration" onClick={onResetDuration} className="ml-2 p-1 rounded hover:bg-accent">
+                <RotateCw className="w-4 h-4" />
+              </button>
+            </div>
+            <DropdownMenuSeparator />
+            <div className="px-2 py-2 w-56 flex flex-col gap-2">
+              <Slider min={minDuration} max={maxDuration} step={5} value={[duration]} onValueChange={([v]) => onDurationChange(v)} />
+              <div className="text-xs text-center">{formatDurationMinutes(duration)}</div>
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
       {/* Y filter */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -506,47 +510,51 @@ const Filters: React.FC<FiltersProps> = ({
         </DropdownMenuContent>
       </DropdownMenu>
       {/* Departure time filter */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant={isDefault('depTime') ? 'outline' : 'default'} className={cn('justify-start px-4 py-2')}>
-            Departure
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-fit">
-          <div className="flex items-center justify-between pr-2">
-            <DropdownMenuLabel>Departure Time</DropdownMenuLabel>
-            <button type="button" aria-label="Reset Departure Time" onClick={onResetDepTime} className="ml-2 p-1 rounded hover:bg-accent">
-              <RotateCw className="w-4 h-4" />
-            </button>
-          </div>
-          <DropdownMenuSeparator />
-          <div className="px-2 py-2 w-64 flex flex-col gap-2">
-            <Slider min={depMin} max={depMax} value={depTime} onValueChange={v => onDepTimeChange(v as [number, number])} step={15 * 60 * 1000} />
-            <div className="text-xs text-center">{formatSliderIso(depTime[0])} - {formatSliderIso(depTime[1])}</div>
-          </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {depMin > 0 && depTime !== undefined && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant={isDefault('depTime') ? 'outline' : 'default'} className={cn('justify-start px-4 py-2')}>
+              Departure
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-fit">
+            <div className="flex items-center justify-between pr-2">
+              <DropdownMenuLabel>Departure Time</DropdownMenuLabel>
+              <button type="button" aria-label="Reset Departure Time" onClick={onResetDepTime} className="ml-2 p-1 rounded hover:bg-accent">
+                <RotateCw className="w-4 h-4" />
+              </button>
+            </div>
+            <DropdownMenuSeparator />
+            <div className="px-2 py-2 w-64 flex flex-col gap-2">
+              <Slider min={depMin} max={depMax} value={depTime || [depMin, depMax]} onValueChange={v => onDepTimeChange(v as [number, number])} step={15 * 60 * 1000} />
+              <div className="text-xs text-center">{formatSliderIso((depTime || [depMin, depMax])[0])} - {formatSliderIso((depTime || [depMin, depMax])[1])}</div>
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
       {/* Arrival time filter */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant={isDefault('arrTime') ? 'outline' : 'default'} className={cn('justify-start px-4 py-2')}>
-            Arrival
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-fit">
-          <div className="flex items-center justify-between pr-2">
-            <DropdownMenuLabel>Arrival Time</DropdownMenuLabel>
-            <button type="button" aria-label="Reset Arrival Time" onClick={onResetArrTime} className="ml-2 p-1 rounded hover:bg-accent">
-              <RotateCw className="w-4 h-4" />
-            </button>
-          </div>
-          <DropdownMenuSeparator />
-          <div className="px-2 py-2 w-64 flex flex-col gap-2">
-            <Slider min={arrMin} max={arrMax} value={arrTime} onValueChange={v => onArrTimeChange(v as [number, number])} step={15 * 60 * 1000} />
-            <div className="text-xs text-center">{formatSliderIso(arrTime[0])} - {formatSliderIso(arrTime[1])}</div>
-          </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {arrMin > 0 && arrTime !== undefined && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant={isDefault('arrTime') ? 'outline' : 'default'} className={cn('justify-start px-4 py-2')}>
+              Arrival
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-fit">
+            <div className="flex items-center justify-between pr-2">
+              <DropdownMenuLabel>Arrival Time</DropdownMenuLabel>
+              <button type="button" aria-label="Reset Arrival Time" onClick={onResetArrTime} className="ml-2 p-1 rounded hover:bg-accent">
+                <RotateCw className="w-4 h-4" />
+              </button>
+            </div>
+            <DropdownMenuSeparator />
+            <div className="px-2 py-2 w-64 flex flex-col gap-2">
+              <Slider min={arrMin} max={arrMax} value={arrTime || [arrMin, arrMax]} onValueChange={v => onArrTimeChange(v as [number, number])} step={15 * 60 * 1000} />
+              <div className="text-xs text-center">{formatSliderIso((arrTime || [arrMin, arrMax])[0])} - {formatSliderIso((arrTime || [arrMin, arrMax])[1])}</div>
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
       {/* Airports filter */}
       {hasAnyEligibleAirportRole && (
         <DropdownMenu>
