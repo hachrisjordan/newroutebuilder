@@ -1,4 +1,5 @@
 // Types for Award Finder Results
+import type { FilterMetadata } from './filter-metadata';
 
 export interface Flight {
   FlightNumbers: string;
@@ -28,6 +29,10 @@ export interface AwardFinderResults {
   minRateLimitRemaining?: number;
   minRateLimitReset?: number;
   totalSeatsAeroHttpRequests?: number;
+  filterMetadata?: FilterMetadata;
+  total?: number;
+  page?: number;
+  pageSize?: number;
 }
 
 export interface AwardFinderSearchParams {

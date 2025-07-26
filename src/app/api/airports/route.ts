@@ -24,6 +24,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search')?.toLowerCase() || '';
+    const codesParam = searchParams.get('codes');
     const page = parseInt(searchParams.get('page') || '1', 10);
     const pageSize = parseInt(searchParams.get('pageSize') || '20', 10);
     const from = (page - 1) * pageSize;
@@ -34,7 +35,25 @@ export async function GET(request: Request) {
       .select('iata, name, city_name, country, country_code, latitude, longitude', { count: 'exact' })
       .order('city_name', { ascending: true });
 
-    if (search) {
+    // If codes parameter is provided, filter by specific IATA codes
+    if (codesParam) {
+      const codes = codesParam.split(',').map(c => c.trim().toUpperCase());
+      query = query.in('iata', codes);
+      // Remove pagination for codes parameter to get all requested airports
+      const { data, count, error } = await query;
+      if (error) throw error;
+      if (!data) return NextResponse.json({ airports: [], total: 0, page: 1, pageSize: count ?? 0 });
+
+      // Validate data
+      const airports = z.array(AirportSchema).parse(data);
+
+      return NextResponse.json({
+        airports,
+        total: count ?? 0,
+        page: 1,
+        pageSize: count ?? 0,
+      });
+    } else if (search) {
       query = query.or(`iata.ilike.%${search}%,city_name.ilike.%${search}%,country.ilike.%${search}%`);
     }
 
