@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
       baseUrl = `${proto}://${host}`;
     }
 
-    const buildItinerariesRes = await fetch(`${baseUrl}/api/build-itineraries`, {
+    const buildItinerariesRes = await fetch(`https://api.bbairtools.com/api/build-itineraries`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ origin, destination, maxStop, startDate, endDate, apiKey, cabin, carriers, minReliabilityPercent }),
