@@ -169,7 +169,7 @@ export default function AwardFinderPage() {
     const query = buildQueryParams();
     const pageParam = pageOverride ?? page;
     const pageSizeParam = pageSizeOverride ?? pageSize;
-    const url = `/api/build-itineraries${query ? '?' + query : ''}&page=${pageParam}&pageSize=${pageSizeParam}`;
+    const url = `https://api.bbairtools.com/api/build-itineraries${query ? '?' + query : ''}&page=${pageParam}&pageSize=${pageSizeParam}`;
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
