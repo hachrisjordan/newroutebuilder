@@ -83,6 +83,19 @@ export function SeatTypeDelaySearch({ onSearch }: SeatTypeDelaySearchProps) {
   const itemsPerPage = 5;
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Helper function to detect and extract airline code from flight number
+  const detectAirlineCode = (input: string) => {
+    const match = input.match(/^([A-Z]{2})\s*(\d+)$/);
+    if (match) {
+      const [, airlineCode, flightNum] = match;
+      const foundAirline = airlines.find(a => a.code === airlineCode);
+      if (foundAirline) {
+        return { airlineCode, flightNum, foundAirline };
+      }
+    }
+    return null;
+  };
+
   // Check if both airports are filled
   useEffect(() => {
     const filled = !!(originAirport && arrivalAirport);
@@ -567,19 +580,29 @@ export function SeatTypeDelaySearch({ onSearch }: SeatTypeDelaySearchProps) {
                 </div>
               )}
             </div>
-            <div className="w-20">
+            <div className="w-24">
               <Input
                 id="flightNumber"
                 name="flightNumber"
-                type="number"
-                min={0}
-                max={9999}
-                maxLength={4}
+                type="text"
+                maxLength={7}
                 placeholder="#"
                 value={flightNumber}
                 onChange={e => {
-                  const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
+                  const input = e.target.value.toUpperCase();
+                  const val = input.replace(/[^A-Z0-9\s]/g, '').slice(0, 7);
                   setFlightNumber(val);
+                  
+                  // Auto-detect airline code in first 2 characters
+                  const detected = detectAirlineCode(val);
+                  if (detected) {
+                    setSelectedAirline(detected.airlineCode);
+                    const selectedAirlineName = detected.foundAirline.name;
+                    setDisplayValue(`${selectedAirlineName} - ${detected.airlineCode}`);
+                    setSearchTerm('');
+                    setShowDropdown(false);
+                    setFlightNumber(detected.flightNum);
+                  }
                 }}
                 required
                 className="h-8"
