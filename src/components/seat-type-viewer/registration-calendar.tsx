@@ -1,9 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface RegistrationCalendarProps {
   registrationData: any[];
@@ -21,6 +28,32 @@ export function RegistrationCalendar({
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [showFilters, setShowFilters] = useState(false);
+
+  // Get available months from registration data
+  const availableMonths = useMemo(() => {
+    const monthSet = new Set<string>();
+    
+    registrationData.forEach(flight => {
+      if (flight.date) {
+        const date = new Date(flight.date);
+        const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+        monthSet.add(monthKey);
+      }
+    });
+
+    return Array.from(monthSet)
+      .map(monthKey => {
+        const [year, month] = monthKey.split('-').map(Number);
+        return { year, month };
+      })
+      .sort((a, b) => {
+        // Sort by year first, then by month (reverse chronological)
+        if (a.year !== b.year) {
+          return b.year - a.year;
+        }
+        return b.month - a.month;
+      });
+  }, [registrationData]);
 
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -43,6 +76,12 @@ export function RegistrationCalendar({
     } else {
       setCurrentMonth(currentMonth + 1);
     }
+  };
+
+  const handleMonthSelect = (value: string) => {
+    const [year, month] = value.split('-').map(Number);
+    setCurrentYear(year);
+    setCurrentMonth(month);
   };
 
   const getFlightForDate = (date: Date) => {
@@ -104,9 +143,33 @@ export function RegistrationCalendar({
         <Button variant="outline" size="sm" onClick={goToPrevMonth}>
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <h4 className="text-md font-medium">
-          {monthNames[currentMonth]} {currentYear}
-        </h4>
+        
+        <div className="flex items-center gap-2">
+          <Select
+            value={`${currentYear}-${currentMonth}`}
+            onValueChange={handleMonthSelect}
+          >
+            <SelectTrigger className="w-[140px]">
+              <SelectValue>
+                {monthNames[currentMonth]} {currentYear}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {availableMonths.length > 0 ? (
+                availableMonths.map(({ year, month }) => (
+                  <SelectItem key={`${year}-${month}`} value={`${year}-${month}`}>
+                    {monthNames[month]} {year}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="no-data" disabled>
+                  No data available
+                </SelectItem>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+        
         <Button variant="outline" size="sm" onClick={goToNextMonth}>
           <ChevronRight className="h-4 w-4" />
         </Button>

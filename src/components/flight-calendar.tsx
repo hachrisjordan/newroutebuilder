@@ -98,6 +98,13 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
     setCurrentMonthIndex(prev => Math.min(months.length - 1, prev + 1));
   };
 
+  const handleMonthSelect = (value: string) => {
+    const index = months.findIndex(month => month === value);
+    if (index !== -1) {
+      setCurrentMonthIndex(index);
+    }
+  };
+
   // Filter flights for current month
   const currentMonthFlights = flightData.filter(flight => {
     // Extract year and month from date string (YYYY-MM-DD)
@@ -291,7 +298,30 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
               >
                 <ChevronLeft className="h-5 w-5" />
               </Button>
-              <h3 className="text-2xl font-semibold">{monthName}</h3>
+              
+              <Select
+                value={currentMonthKey}
+                onValueChange={handleMonthSelect}
+              >
+                <SelectTrigger className="w-fit text-lg font-semibold">
+                  <SelectValue>
+                    {monthName}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {months.map((monthKey) => {
+                    const [year, month] = monthKey.split('-');
+                    const date = new Date(parseInt(year), parseInt(month) - 1);
+                    const monthDisplayName = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+                    return (
+                      <SelectItem key={monthKey} value={monthKey}>
+                        {monthDisplayName}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              
               <Button
                 variant="ghost"
                 size="icon"
@@ -496,25 +526,73 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
             </DropdownMenu>
           </div>
         )}
+        
         <div className="w-full max-w-[1000px] p-1 sm:p-2 mx-auto">
-          <ShadcnCalendar
-            mode="single"
-            month={new Date(Number(year), Number(month) - 1)}
-            onMonthChange={(date: Date) => {
-              // Find the index in months array for the new month
-              const idx = months.findIndex(m => {
-                const [y, mth] = m.split('-');
-                return Number(y) === date.getFullYear() && Number(mth) === date.getMonth() + 1;
-              });
-              if (idx !== -1) setCurrentMonthIndex(idx);
-            }}
-            selected={selectedDate ? new Date(selectedDate) : undefined}
-            onSelect={(date: Date | undefined) => {
-              console.log('onSelect', date);
-              setSelectedDate(date ? date.toISOString().split('T')[0] : null);
-            }}
-            className="rounded-md border"
-            components={{
+          <div className="[&_.rdp-head]:hidden">
+            <ShadcnCalendar
+              mode="single"
+              month={new Date(Number(year), Number(month) - 1)}
+              onMonthChange={(date: Date) => {
+                // Find the index in months array for the new month
+                const idx = months.findIndex(m => {
+                  const [y, mth] = m.split('-');
+                  return Number(y) === date.getFullYear() && Number(mth) === date.getMonth() + 1;
+                });
+                if (idx !== -1) setCurrentMonthIndex(idx);
+              }}
+              selected={selectedDate ? new Date(selectedDate) : undefined}
+              onSelect={(date: Date | undefined) => {
+                console.log('onSelect', date);
+                setSelectedDate(date ? date.toISOString().split('T')[0] : null);
+              }}
+              className="rounded-md border"
+                        components={{
+              Caption: () => (
+                <div className="flex items-center justify-between mb-4">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handlePreviousMonth}
+                    disabled={currentMonthIndex === 0}
+                    className="h-8 w-8"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  
+                  <Select
+                    value={currentMonthKey}
+                    onValueChange={handleMonthSelect}
+                  >
+                    <SelectTrigger className="w-fit text-lg font-semibold">
+                      <SelectValue>
+                        {monthName}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {months.map((monthKey) => {
+                        const [year, month] = monthKey.split('-');
+                        const date = new Date(parseInt(year), parseInt(month) - 1);
+                        const monthDisplayName = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+                        return (
+                          <SelectItem key={monthKey} value={monthKey}>
+                            {monthDisplayName}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                  
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleNextMonth}
+                    disabled={currentMonthIndex === months.length - 1}
+                    className="h-8 w-8"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              ),
               Day: (props: any) => {
                 const dateObj = props.date;
                 const dateStr = dateObj.toISOString().split('T')[0];
@@ -584,6 +662,7 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
               }
             }}
           />
+            </div>
         </div>
         {/* Modal for selected date */}
         <Dialog open={!!selectedDate} onOpenChange={open => !open && setSelectedDate(null)}>
