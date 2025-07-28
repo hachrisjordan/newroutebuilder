@@ -14,6 +14,7 @@ import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { awardFinderSearchRequestSchema } from '@/lib/utils';
 import type { AwardFinderResults, AwardFinderSearchRequest } from '@/types/award-finder-results';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { TooltipTouch } from '@/components/ui/tooltip-touch';
 
 interface AwardFinderSearchProps {
@@ -64,6 +65,7 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [seats, setSeats] = useState<number>(1);
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
 
   const combinationCount = origin.length * destination.length;
 
@@ -334,9 +336,11 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
               <Calendar
                 mode="range"
                 selected={date}
+                month={currentMonth}
                 fromDate={new Date()}
                 toDate={addYears(new Date(), 1)}
                 disabled={calendarDisabled}
+                onMonthChange={setCurrentMonth}
                 onSelect={(range, selectedDay) => {
                   if (!apiKey.trim() && range?.from && range?.to) {
                     const diff = Math.ceil((range.to.getTime() - range.from.getTime()) / (1000 * 60 * 60 * 24)) + 1;
@@ -351,6 +355,69 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
                     setDate(range);
                     if (range?.from && range?.to) setOpen(false);
                   }
+                }}
+                components={{
+                  Caption: ({ displayMonth }) => (
+                    <div className="flex items-center justify-between mb-4">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          const prevMonth = new Date(displayMonth);
+                          prevMonth.setMonth(prevMonth.getMonth() - 1);
+                          setCurrentMonth(prevMonth);
+                        }}
+                        className="h-8 w-8"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      
+                      <Select
+                        value={`${displayMonth.getFullYear()}-${displayMonth.getMonth() + 1}`}
+                        onValueChange={(value) => {
+                          const [year, month] = value.split('-').map(Number);
+                          const newDate = new Date(year, month - 1);
+                          setCurrentMonth(newDate);
+                        }}
+                      >
+                        <SelectTrigger className="w-fit text-m font-semibold">
+                          <SelectValue>
+                            {displayMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(() => {
+                            const months = [];
+                            const currentDate = new Date();
+                            for (let i = 0; i < 12; i++) {
+                              const date = new Date(currentDate.getFullYear(), currentDate.getMonth() + i);
+                              const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
+                              const monthDisplayName = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+                              months.push({ monthKey, monthDisplayName });
+                            }
+                            return months.map(({ monthKey, monthDisplayName }) => (
+                              <SelectItem key={monthKey} value={monthKey}>
+                                {monthDisplayName}
+                              </SelectItem>
+                            ));
+                          })()}
+                        </SelectContent>
+                      </Select>
+                      
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          const nextMonth = new Date(displayMonth);
+                          nextMonth.setMonth(nextMonth.getMonth() + 1);
+                          setCurrentMonth(nextMonth);
+                        }}
+                        className="h-8 w-8"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ),
                 }}
                 initialFocus
               />

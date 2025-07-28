@@ -10,7 +10,8 @@ import type { DateRange } from "react-day-picker";
 import type { AwardFinderResults } from "@/types/award-finder-results";
 import { Input } from "@/components/ui/input";
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeftRight } from "lucide-react";
+import { ArrowLeftRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 
 type LiveSearchResult = {
   program: string;
@@ -58,6 +59,7 @@ const LiveSearchForm = ({ onSearch }: LiveSearchFormProps) => {
   const [seats, setSeats] = useState<number>(1);
   const [progress, setProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
   const [partialResults, setPartialResults] = useState<LiveSearchResult[]>([]);
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
 
   const combinationCount = origin.length * destination.length;
 
@@ -228,6 +230,69 @@ const LiveSearchForm = ({ onSearch }: LiveSearchFormProps) => {
                     setDate(range);
                     if (range?.from && range?.to) setOpen(false);
                   }
+                }}
+                components={{
+                  Caption: ({ displayMonth }) => (
+                    <div className="flex items-center justify-between mb-4">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          const prevMonth = new Date(displayMonth);
+                          prevMonth.setMonth(prevMonth.getMonth() - 1);
+                          // This will trigger the calendar's built-in month change
+                        }}
+                        className="h-8 w-8"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      
+                      <Select
+                        value={`${displayMonth.getFullYear()}-${displayMonth.getMonth() + 1}`}
+                        onValueChange={(value) => {
+                          const [year, month] = value.split('-').map(Number);
+                          const newDate = new Date(year, month - 1);
+                          // This will trigger the calendar's built-in month change
+                        }}
+                      >
+                        <SelectTrigger className="w-fit text-m font-semibold">
+                          <SelectValue>
+                            {displayMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(() => {
+                            const months = [];
+                            const currentDate = new Date();
+                            for (let i = 0; i < 12; i++) {
+                              const date = new Date(currentDate.getFullYear(), currentDate.getMonth() + i);
+                              const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
+                              const monthDisplayName = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+                              months.push({ monthKey, monthDisplayName });
+                            }
+                            return months.map(({ monthKey, monthDisplayName }) => (
+                              <SelectItem key={monthKey} value={monthKey}>
+                                {monthDisplayName}
+                              </SelectItem>
+                            ));
+                          })()}
+                        </SelectContent>
+                      </Select>
+                      
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          const nextMonth = new Date(displayMonth);
+                          nextMonth.setMonth(nextMonth.getMonth() + 1);
+                          // This will trigger the calendar's built-in month change
+                        }}
+                        className="h-8 w-8"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ),
                 }}
                 initialFocus
               />
