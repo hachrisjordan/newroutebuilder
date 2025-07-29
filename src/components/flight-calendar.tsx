@@ -78,14 +78,28 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
     return idx !== -1 ? idx : (months.length > 0 ? months.length - 1 : 0);
   }, [months, latestValidMonth]);
 
-  // Set the current month index if it hasn't been set yet
+  // Always set to default month when flightData changes
   React.useEffect(() => {
-    if (currentMonthIndex === 0 && defaultMonthIndex !== 0) {
-      setCurrentMonthIndex(defaultMonthIndex);
-    }
-  }, [defaultMonthIndex, currentMonthIndex]);
+    setCurrentMonthIndex(defaultMonthIndex);
+  }, [defaultMonthIndex]);
 
-  const currentMonthKey = months[currentMonthIndex];
+  // Ensure currentMonthIndex is valid
+  const validCurrentMonthIndex = Math.max(0, Math.min(currentMonthIndex, months.length - 1));
+  
+  // Update state if it's out of sync
+  React.useEffect(() => {
+    if (validCurrentMonthIndex !== currentMonthIndex) {
+      setCurrentMonthIndex(validCurrentMonthIndex);
+    }
+  }, [validCurrentMonthIndex, currentMonthIndex]);
+  
+  const currentMonthKey = months[validCurrentMonthIndex];
+  
+  // Guard against undefined currentMonthKey
+  if (!currentMonthKey) {
+    return <div className="text-center text-muted-foreground py-8">Error: Invalid month data.</div>;
+  }
+
   const [year, month] = currentMonthKey.split('-');
   const date = new Date(parseInt(year), parseInt(month) - 1);
   const monthName = date.toLocaleString('default', { month: 'long', year: 'numeric' });
@@ -293,7 +307,7 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
                 variant="ghost"
                 size="icon"
                 onClick={handlePreviousMonth}
-                disabled={currentMonthIndex === 0}
+                disabled={validCurrentMonthIndex === 0}
                 className="h-10 w-10"
               >
                 <ChevronLeft className="h-5 w-5" />
@@ -326,7 +340,7 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
                 variant="ghost"
                 size="icon"
                 onClick={handleNextMonth}
-                disabled={currentMonthIndex === months.length - 1}
+                disabled={validCurrentMonthIndex === months.length - 1}
                 className="h-10 w-10"
               >
                 <ChevronRight className="h-5 w-5" />
@@ -553,7 +567,7 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
                     variant="ghost"
                     size="icon"
                     onClick={handlePreviousMonth}
-                    disabled={currentMonthIndex === 0}
+                    disabled={validCurrentMonthIndex === 0}
                     className="h-8 w-8"
                   >
                     <ChevronLeft className="h-4 w-4" />
@@ -586,7 +600,7 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
                     variant="ghost"
                     size="icon"
                     onClick={handleNextMonth}
-                    disabled={currentMonthIndex === months.length - 1}
+                    disabled={validCurrentMonthIndex === months.length - 1}
                     className="h-8 w-8"
                   >
                     <ChevronRight className="h-4 w-4" />

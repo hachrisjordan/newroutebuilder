@@ -64,7 +64,7 @@ export default function SeatTypeDelayPage() {
             // On mobile, render each card separately
             <>
               <div className="w-full max-w-[370px] mx-auto">
-                <FlightCalendar flightData={flightData} />
+                <FlightCalendar key={`mobile-${airline}-${flightData.length}`} flightData={flightData} />
               </div>
               {seatConfigData && !configLoading && (
                 <div className="w-full">
@@ -80,7 +80,7 @@ export default function SeatTypeDelayPage() {
           ) : (
             // On desktop/tablet, use shared container for perfect alignment
             <div className="w-full xxl:w-4/5 mx-auto flex flex-col gap-4">
-              <FlightCalendar flightData={flightData} />
+              <FlightCalendar key={`desktop-${airline}-${flightData.length}`} flightData={flightData} />
               {seatConfigData && !configLoading && (
                 <>
                   <VariantAnalysis
