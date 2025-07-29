@@ -91,6 +91,9 @@ export default function AwardFinderPage() {
   // Flag to track if filters have been initialized
   const [filtersInitialized, setFiltersInitialized] = useState(false);
   
+  // Flag to track if filters have been initialized
+  const [isPerformingNewSearch, setIsPerformingNewSearch] = useState(false);
+  
   // Memoize objects to prevent unnecessary re-renders
   const memoizedDepTimeRange = useMemo(() => depTimeRange, [depTimeRange?.[0], depTimeRange?.[1]]);
   const memoizedArrTimeRange = useMemo(() => arrTimeRange, [arrTimeRange?.[0], arrTimeRange?.[1]]);
@@ -162,11 +165,44 @@ export default function AwardFinderPage() {
   };
 
   // Handler for search
-  const handleSearch = useCallback(async (body: any, pageOverride?: number, pageSizeOverride?: number) => {
+  const handleSearch = useCallback(async (body: any, pageOverride?: number, pageSizeOverride?: number, isNewSearchFromForm: boolean = false) => {
     setIsLoading(true);
     setLastSearchBody(body); // Store the last search body
     setFiltersInitialized(true); // Mark filters as initialized after first search
-    const query = buildQueryParams();
+    setIsPerformingNewSearch(true); // Set flag to true when a new search is initiated
+    
+    // For new searches from the search form, only include basic parameters, not filter parameters
+    const isNewSearch = isNewSearchFromForm || !lastSearchBody || JSON.stringify(lastSearchBody) !== JSON.stringify(body);
+    
+    // Clear all filter states for new searches
+    if (isNewSearch) {
+      // Reset all filter states to their initial values
+      setSelectedStopsNumbers([]);
+      setSelectedIncludeAirlines([]);
+      setSelectedExcludeAirlines([]);
+      setYPercent(0);
+      setWPercent(0);
+      setJPercent(0);
+      setFPercent(0);
+      setDuration(0);
+      setDepTimeRange(null);
+      setArrTimeRange(null);
+      setAirportFilterObj({ include: { origin: [], destination: [], connection: [] }, exclude: { origin: [], destination: [], connection: [] } });
+      setSearchQuery('');
+    }
+    
+    let query = '';
+    if (isNewSearch) {
+      // For new searches, only include sort and pagination parameters
+      const params = new URLSearchParams();
+      if (sortBy) params.set('sortBy', sortBy);
+      if (sortOrder) params.set('sortOrder', sortOrder);
+      query = params.toString();
+    } else {
+      // For filter changes, include all parameters
+      query = buildQueryParams();
+    }
+    
     const pageParam = pageOverride ?? page;
     const pageSizeParam = pageSizeOverride ?? pageSize;
     const url = `https://api.bbairtools.com/api/build-itineraries${query ? '?' + query : ''}&page=${pageParam}&pageSize=${pageSizeParam}`;
@@ -188,12 +224,13 @@ export default function AwardFinderPage() {
     setPageSize(data.pageSize || PAGE_SIZE);
     setResetFiltersSignal(s => s + 1);
     setIsLoading(false);
-  }, [buildQueryParams, page, pageSize]);
+    setIsPerformingNewSearch(false); // Reset flag after search completes
+  }, [buildQueryParams, page, pageSize, lastSearchBody, sortBy, sortOrder]);
 
   // When user changes sortBy or sortOrder, trigger a new search with the latest values
   useEffect(() => {
-    if (lastSearchBody) {
-      handleSearch(lastSearchBody, 1, pageSize);
+    if (lastSearchBody && !isPerformingNewSearch) {
+      handleSearch(lastSearchBody, 1, pageSize, false); // Pass false to indicate this is NOT a new search from form
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortBy, sortOrder]);
@@ -201,8 +238,8 @@ export default function AwardFinderPage() {
   // When user changes page
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
-    if (lastSearchBody) {
-      handleSearch(lastSearchBody, newPage, pageSize);
+    if (lastSearchBody && !isPerformingNewSearch) {
+      handleSearch(lastSearchBody, newPage, pageSize, false); // Pass false to indicate this is NOT a new search from form
     }
   };
 
@@ -210,8 +247,8 @@ export default function AwardFinderPage() {
   const handlePageSizeChange = (newPageSize: number) => {
     setPageSize(newPageSize);
     setPage(1);
-    if (lastSearchBody) {
-      handleSearch(lastSearchBody, 1, newPageSize);
+    if (lastSearchBody && !isPerformingNewSearch) {
+      handleSearch(lastSearchBody, 1, newPageSize, false); // Pass false to indicate this is NOT a new search from form
     }
   };
 
@@ -291,19 +328,19 @@ export default function AwardFinderPage() {
   }, [reliableOnly, reliability, minReliabilityPercent]);
 
   useEffect(() => {
-    if (lastSearchBody) {
+    if (lastSearchBody && !isPerformingNewSearch) {
       setPage(1);
-      handleSearch(lastSearchBody, 1, pageSize);
+      handleSearch(lastSearchBody, 1, pageSize, false); // Pass false to indicate this is NOT a new search from form
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 
   // Debounced filter effect to prevent rapid API calls
   useEffect(() => {
-    if (lastSearchBody && filtersInitialized) {
+    if (lastSearchBody && filtersInitialized && !isPerformingNewSearch) {
       const timeoutId = setTimeout(() => {
         setPage(1);
-        handleSearch(lastSearchBody, 1, pageSize);
+        handleSearch(lastSearchBody, 1, pageSize, false); // Pass false to indicate this is NOT a new search from form
       }, 500); // 500ms debounce
       
       return () => clearTimeout(timeoutId);
@@ -314,7 +351,7 @@ export default function AwardFinderPage() {
   return (
     <main className="flex flex-1 flex-col items-center bg-background pt-8 pb-12 px-2 sm:px-4">
       <AwardFinderSearch
-        onSearch={handleSearch}
+        onSearch={(body, isNewSearchFromForm) => handleSearch(body, undefined, undefined, isNewSearchFromForm)}
         minReliabilityPercent={minReliabilityPercent}
         selectedStops={selectedStops}
         setSelectedStops={setSelectedStops}

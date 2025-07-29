@@ -221,8 +221,10 @@ const LiveSearchForm = ({ onSearch }: LiveSearchFormProps) => {
               <Calendar
                 mode="range"
                 selected={date}
+                month={currentMonth}
                 fromDate={new Date()}
                 toDate={addYears(new Date(), 1)}
+                onMonthChange={setCurrentMonth}
                 onSelect={(range, selectedDay) => {
                   if (date?.from && date?.to && selectedDay) {
                     setDate({ from: selectedDay, to: undefined });
@@ -240,7 +242,7 @@ const LiveSearchForm = ({ onSearch }: LiveSearchFormProps) => {
                         onClick={() => {
                           const prevMonth = new Date(displayMonth);
                           prevMonth.setMonth(prevMonth.getMonth() - 1);
-                          // This will trigger the calendar's built-in month change
+                          setCurrentMonth(prevMonth);
                         }}
                         className="h-8 w-8"
                       >
@@ -252,7 +254,7 @@ const LiveSearchForm = ({ onSearch }: LiveSearchFormProps) => {
                         onValueChange={(value) => {
                           const [year, month] = value.split('-').map(Number);
                           const newDate = new Date(year, month - 1);
-                          // This will trigger the calendar's built-in month change
+                          setCurrentMonth(newDate);
                         }}
                       >
                         <SelectTrigger className="w-fit text-m font-semibold">
@@ -285,7 +287,7 @@ const LiveSearchForm = ({ onSearch }: LiveSearchFormProps) => {
                         onClick={() => {
                           const nextMonth = new Date(displayMonth);
                           nextMonth.setMonth(nextMonth.getMonth() + 1);
-                          // This will trigger the calendar's built-in month change
+                          setCurrentMonth(nextMonth);
                         }}
                         className="h-8 w-8"
                       >

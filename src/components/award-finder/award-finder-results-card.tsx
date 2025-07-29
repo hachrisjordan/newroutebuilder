@@ -138,14 +138,24 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
   // Initialize time ranges from filter metadata when available
   React.useEffect(() => {
     if (results.filterMetadata?.departure && results.filterMetadata?.arrival) {
-      if (!depTime) {
-        setDepTime([results.filterMetadata.departure.min, results.filterMetadata.departure.max]);
+      // Only update if the values are different to prevent infinite loops
+      const newDepTime: [number, number] = [results.filterMetadata.departure.min, results.filterMetadata.departure.max];
+      const newArrTime: [number, number] = [results.filterMetadata.arrival.min, results.filterMetadata.arrival.max];
+      
+      if (!depTime || depTime[0] !== newDepTime[0] || depTime[1] !== newDepTime[1]) {
+        setDepTime(newDepTime);
       }
-      if (!arrTime) {
-        setArrTime([results.filterMetadata.arrival.min, results.filterMetadata.arrival.max]);
+      if (!arrTime || arrTime[0] !== newArrTime[0] || arrTime[1] !== newArrTime[1]) {
+        setArrTime(newArrTime);
       }
     }
   }, [results.filterMetadata, depTime, arrTime, setDepTime, setArrTime]);
+
+  // Reset time ranges when resetFiltersSignal changes
+  React.useEffect(() => {
+    setDepTime(undefined);
+    setArrTime(undefined);
+  }, [resetFiltersSignal, setDepTime, setArrTime]);
 
   // Default: all stops selected
   React.useEffect(() => {

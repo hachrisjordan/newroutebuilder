@@ -18,7 +18,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { TooltipTouch } from '@/components/ui/tooltip-touch';
 
 interface AwardFinderSearchProps {
-  onSearch: (searchParams: any) => void;
+  onSearch: (searchParams: any, isNewSearchFromForm?: boolean) => void;
   minReliabilityPercent?: number;
   selectedStops: string[];
   setSelectedStops: (stops: string[]) => void;
@@ -240,7 +240,7 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
     };
     setIsLoading(true);
     try {
-      await onSearch(requestBody);
+      await onSearch(requestBody, true); // Pass true to indicate this is a new search from the form
     } catch (err: any) {
       setError(err.message || 'Failed to fetch results');
     } finally {
