@@ -615,15 +615,17 @@ const Filters: React.FC<FiltersProps> = ({
               </Button>
             </div>
             {/* Checkbox list for airports in selected role and mode */}
-            <div className="max-h-60 overflow-y-auto">
+            <div className="max-h-60 overflow-y-auto" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
               {sortedAirports.map((airport) => (
                 <div key={airport.code} className="flex items-center gap-2">
                   <DropdownMenuCheckboxItem
                     checked={selectedAirportFilter[includeExcludeTab][roleTab].includes(airport.code)}
                     onCheckedChange={checked => {
+                      console.log('Airport checkbox clicked:', airport.code, 'checked:', checked, 'current state:', selectedAirportFilter[includeExcludeTab][roleTab]);
                       const next = { ...selectedAirportFilter };
                       if (checked) next[includeExcludeTab][roleTab] = [...next[includeExcludeTab][roleTab], airport.code];
                       else next[includeExcludeTab][roleTab] = next[includeExcludeTab][roleTab].filter(c => c !== airport.code);
+                      console.log('New state:', next[includeExcludeTab][roleTab]);
                       onChangeAirportFilter(next);
                     }}
                     onSelect={e => e.preventDefault()}

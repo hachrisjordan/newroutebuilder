@@ -366,7 +366,7 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
     // setSelectedStops(getStopCounts()); // This line is removed
     // setDepTime([depMin, depMax]); // This line is removed
     // setArrTime([arrMin, arrMax]); // This line is removed
-    setAirportFilter({ include: { origin: [], destination: [], connection: [] }, exclude: { origin: [], destination: [], connection: [] } });
+    // setAirportFilter({ include: { origin: [], destination: [], connection: [] }, exclude: { origin: [], destination: [], connection: [] } });
     // Optionally, reset other local state if needed
   }, [resetFiltersSignal, results.flights]); // Modified dependency array
 
