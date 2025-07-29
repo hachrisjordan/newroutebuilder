@@ -510,7 +510,7 @@ const Filters: React.FC<FiltersProps> = ({
         </DropdownMenuContent>
       </DropdownMenu>
       {/* Departure time filter */}
-      {depMin > 0 && depTime !== undefined && (
+      {depMin > 0 && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant={isDefault('depTime') ? 'outline' : 'default'} className={cn('justify-start px-4 py-2')}>
@@ -525,15 +525,23 @@ const Filters: React.FC<FiltersProps> = ({
               </button>
             </div>
             <DropdownMenuSeparator />
-            <div className="px-2 py-2 w-64 flex flex-col gap-2">
-              <Slider min={depMin} max={depMax} value={depTime || [depMin, depMax]} onValueChange={v => onDepTimeChange(v as [number, number])} step={15 * 60 * 1000} />
-              <div className="text-xs text-center">{formatSliderIso((depTime || [depMin, depMax])[0])} - {formatSliderIso((depTime || [depMin, depMax])[1])}</div>
+            <div className="px-2 py-2 w-64 flex flex-col gap-2" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
+              <Slider 
+                min={depMin} 
+                max={depMax} 
+                value={depTime || [depMin, depMax]} 
+                onValueChange={v => onDepTimeChange(v as [number, number])} 
+                step={60 * 1000} 
+              />
+              <div className="text-xs text-center">
+                {formatSliderIso((depTime || [depMin, depMax])[0])} - {formatSliderIso((depTime || [depMin, depMax])[1])}
+              </div>
             </div>
           </DropdownMenuContent>
         </DropdownMenu>
       )}
       {/* Arrival time filter */}
-      {arrMin > 0 && arrTime !== undefined && (
+      {arrMin > 0 && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant={isDefault('arrTime') ? 'outline' : 'default'} className={cn('justify-start px-4 py-2')}>
@@ -548,9 +556,17 @@ const Filters: React.FC<FiltersProps> = ({
               </button>
             </div>
             <DropdownMenuSeparator />
-            <div className="px-2 py-2 w-64 flex flex-col gap-2">
-              <Slider min={arrMin} max={arrMax} value={arrTime || [arrMin, arrMax]} onValueChange={v => onArrTimeChange(v as [number, number])} step={15 * 60 * 1000} />
-              <div className="text-xs text-center">{formatSliderIso((arrTime || [arrMin, arrMax])[0])} - {formatSliderIso((arrTime || [arrMin, arrMax])[1])}</div>
+            <div className="px-2 py-2 w-64 flex flex-col gap-2" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
+              <Slider 
+                min={arrMin} 
+                max={arrMax} 
+                value={arrTime || [arrMin, arrMax]} 
+                onValueChange={v => onArrTimeChange(v as [number, number])} 
+                step={60 * 1000} 
+              />
+              <div className="text-xs text-center">
+                {formatSliderIso((arrTime || [arrMin, arrMax])[0])} - {formatSliderIso((arrTime || [arrMin, arrMax])[1])}
+              </div>
             </div>
           </DropdownMenuContent>
         </DropdownMenu>

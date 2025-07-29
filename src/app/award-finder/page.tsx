@@ -95,8 +95,6 @@ export default function AwardFinderPage() {
   const [isPerformingNewSearch, setIsPerformingNewSearch] = useState(false);
   
   // Memoize objects to prevent unnecessary re-renders
-  const memoizedDepTimeRange = useMemo(() => depTimeRange, [depTimeRange?.[0], depTimeRange?.[1]]);
-  const memoizedArrTimeRange = useMemo(() => arrTimeRange, [arrTimeRange?.[0], arrTimeRange?.[1]]);
   const memoizedAirportFilterObj = useMemo(() => airportFilterObj, [
     JSON.stringify(airportFilterObj.include.origin),
     JSON.stringify(airportFilterObj.include.destination),
@@ -144,13 +142,13 @@ export default function AwardFinderPage() {
     if (jPercent > 0) params.set('minJPercent', String(jPercent));
     if (fPercent > 0) params.set('minFPercent', String(fPercent));
     if (duration > 0) params.set('maxDuration', String(duration));
-    if (memoizedDepTimeRange) {
-      params.set('depTimeMin', String(memoizedDepTimeRange[0]));
-      params.set('depTimeMax', String(memoizedDepTimeRange[1]));
+    if (depTimeRange) {
+      params.set('depTimeMin', String(depTimeRange[0]));
+      params.set('depTimeMax', String(depTimeRange[1]));
     }
-    if (memoizedArrTimeRange) {
-      params.set('arrTimeMin', String(memoizedArrTimeRange[0]));
-      params.set('arrTimeMax', String(memoizedArrTimeRange[1]));
+    if (arrTimeRange) {
+      params.set('arrTimeMin', String(arrTimeRange[0]));
+      params.set('arrTimeMax', String(arrTimeRange[1]));
     }
     if (memoizedAirportFilterObj.include.origin.length) params.set('includeOrigin', memoizedAirportFilterObj.include.origin.join(','));
     if (memoizedAirportFilterObj.include.destination.length) params.set('includeDestination', memoizedAirportFilterObj.include.destination.join(','));
@@ -346,7 +344,7 @@ export default function AwardFinderPage() {
       return () => clearTimeout(timeoutId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedStopsNumbers, selectedIncludeAirlines, selectedExcludeAirlines, yPercent, wPercent, jPercent, fPercent, duration, memoizedDepTimeRange, memoizedArrTimeRange, memoizedAirportFilterObj]);
+  }, [selectedStopsNumbers, selectedIncludeAirlines, selectedExcludeAirlines, yPercent, wPercent, jPercent, fPercent, duration, depTimeRange, arrTimeRange, memoizedAirportFilterObj]);
 
   return (
     <main className="flex flex-1 flex-col items-center bg-background pt-8 pb-12 px-2 sm:px-4">
@@ -422,10 +420,10 @@ export default function AwardFinderPage() {
           setFPercent={setFPercent}
           duration={duration}
           setDuration={setDuration}
-          depTime={memoizedDepTimeRange || undefined}
-          setDepTime={(time) => time && setDepTimeRange(time)}
-          arrTime={memoizedArrTimeRange || undefined}
-          setArrTime={(time) => time && setArrTimeRange(time)}
+          depTime={depTimeRange || undefined}
+          setDepTime={(time) => setDepTimeRange(time || null)}
+          arrTime={arrTimeRange || undefined}
+          setArrTime={(time) => setArrTimeRange(time || null)}
           airportFilter={memoizedAirportFilterObj}
           setAirportFilter={setAirportFilterObj}
         />
