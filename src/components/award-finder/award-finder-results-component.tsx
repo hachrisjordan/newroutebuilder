@@ -252,9 +252,17 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                         <div className="flex flex-col">
                           <span className="font-semibold text-lg text-primary">{route}</span>
                           {/* Route segment color lines */}
-                          <div className="flex gap-1 mt-1">
-                            {(() => {
-                              const segments = route.split('-');
+                                                     <div 
+                             className="relative w-full min-h-[8px]"
+                             ref={(el) => {
+                               if (el) {
+                                 console.log(`Container width: ${el.offsetWidth}px, clientWidth: ${el.clientWidth}px, scrollWidth: ${el.scrollWidth}px`);
+                                 console.log(`Container computed style:`, window.getComputedStyle(el));
+                               }
+                             }}
+                           >
+                                                         {(() => {
+                               const segments = route.split('-');
                               
                               // Alliance definitions
                               const ALLIANCE = {
@@ -350,8 +358,10 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                               console.log('=== END DEBUG ===');
                               
                               return lineGroups.map((group, groupIndex) => {
-                                const colorClass = group.isUnreliable ? 'bg-green-500' : 'bg-foreground';
-                                const segmentCount = group.end - group.start + 1;
+                                                                                                  const colorClass = group.isUnreliable ? 'green' : 'gray';
+                                 const segmentCount = group.end - group.start + 1;
+                                 const widthPercent = (segmentCount / (segments.length - 1)) * 100;
+                                 console.log(`Group ${groupIndex}: start=${group.start}, end=${group.end}, segmentCount=${segmentCount}, totalSegments=${segments.length - 1}, width=${widthPercent}%, should be ${widthPercent}% of container width`);
                                 const startSegment = segments[group.start];
                                 const endSegment = segments[group.end + 1];
                                 const allianceName = group.alliance === 'OW' ? 'Oneworld' : 
@@ -507,10 +517,15 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                                       )}
                                     </div>
                                   }>
-                                    <div
-                                      className={`h-1 rounded-full ${colorClass} cursor-pointer`}
-                                      style={{ width: `${(segmentCount / (segments.length - 1)) * 100}%` }}
-                                    />
+                                                                         <div
+                                       className="absolute top-1/2 transform -translate-y-1/2 h-1 rounded-full cursor-pointer"
+                                       style={{ 
+                                         left: `${(group.start / (segments.length - 1)) * 100}%`,
+                                         width: `calc(${(segmentCount / (segments.length - 1)) * 100}% - 4px)`,
+                                         marginRight: '4px',
+                                         backgroundColor: colorClass === 'green' ? '#10b981' : '#6b7280'
+                                       }}
+                                     />
                                   </TooltipTouch>
                                 );
                               });
