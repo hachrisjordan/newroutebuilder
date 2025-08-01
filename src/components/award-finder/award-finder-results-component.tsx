@@ -139,6 +139,8 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
   const [iataToCity, setIataToCity] = useState<Record<string, string>>({});
   const [isLoadingCities, setIsLoadingCities] = useState(false);
   const [cityError, setCityError] = useState<string | null>(null);
+  const [allianceData, setAllianceData] = useState<Record<string, Array<{code: string, name: string, ffp: string}>>>({});
+  const [allAirlines, setAllAirlines] = useState<Array<{code: string, name: string, ffp: string, bonus: string[]}>>([]);
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
 
@@ -178,6 +180,52 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
     fetchCities();
   }, [cards]);
 
+  // Fetch all airline data for tooltips
+  useEffect(() => {
+    const fetchAirlineData = async () => {
+      try {
+        const supabase = createSupabaseBrowserClient();
+        const { data, error } = await supabase
+          .from('airlines')
+          .select('code, name, alliance, ffp, bonus');
+        
+        if (error) throw error;
+        
+        const allianceMap: Record<string, Array<{code: string, name: string, ffp: string}>> = {};
+        const allAirlines: Array<{code: string, name: string, ffp: string, bonus: string[]}> = [];
+        
+        data?.forEach((row: { code: string; name: string; alliance: string; ffp: string; bonus: string[] }) => {
+          // For alliance data (only airlines with FFP)
+          if (row.alliance && ['OW', 'SA', 'ST'].includes(row.alliance) && row.ffp) {
+            if (!allianceMap[row.alliance]) {
+              allianceMap[row.alliance] = [];
+            }
+            allianceMap[row.alliance].push({
+              code: row.code,
+              name: row.name,
+              ffp: row.ffp
+            });
+          }
+          
+          // For all airlines (including those without FFP for bonus checking)
+          allAirlines.push({
+            code: row.code,
+            name: row.name,
+            ffp: row.ffp,
+            bonus: row.bonus || []
+          });
+        });
+        
+        setAllianceData(allianceMap);
+        setAllAirlines(allAirlines);
+      } catch (err: any) {
+        console.error('Failed to fetch airline data:', err);
+      }
+    };
+    
+    fetchAirlineData();
+  }, []);
+
   const handleToggle = (key: string) => {
     setExpanded(expanded === key ? null : key);
   };
@@ -195,11 +243,275 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
           const cardKey = `${route}-${date}-${idx}`;
           const isOpen = expanded === cardKey;
           return (
-            <Card key={cardKey} className="rounded-xl border bg-card shadow transition-all cursor-pointer">
-              <div onClick={() => handleToggle(cardKey)} className="flex items-center justify-between">
+            <Card key={cardKey} className="rounded-xl border bg-card shadow transition-all">
+              <div className="flex items-center justify-between">
                 <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between py-4 gap-2 p-4 w-full">
                   <div className="flex flex-col md:flex-row md:items-center gap-2 w-full">
-                    <span className="font-semibold text-lg text-primary">{route}
+                    <div className="flex flex-col">
+                      <div className="flex items-center">
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-lg text-primary">{route}</span>
+                          {/* Route segment color lines */}
+                          <div className="flex gap-1 mt-1">
+                            {(() => {
+                              const segments = route.split('-');
+                              
+                              // Alliance definitions
+                              const ALLIANCE = {
+                                'OW': ['AS', 'AA', 'BA', 'CX', 'FJ', 'AY', 'IB', 'JL', 'QF', 'QR', 'AT', 'RJ', 'UL','WY','MH'],  // Oneworld
+                                'SA': ['A3', 'AC', 'CA', 'AI', 'NZ', 'NH', 'NQ', 'EQ', 'OZ', 'OS', 'AV', 'SN', 'CM', 'OU', 'MS', 'ET', 'BR', 'LO', 'LH', 'CL', 'SQ', 'SA', 'LX', 'TP', 'TG', 'UA','TK'],  // Star Alliance
+                                'ST': ['AR', 'AM', 'UX', 'AF', 'CI', 'MU', 'DL', 'GA', 'KQ', 'KL', 'KE', 'ME', 'SV', 'SK', 'RO', 'VN', 'VS', 'MF'],  // SkyTeam
+                                'EY': ['EY'],
+                                'EK': ['EK'],
+                                'JX': ['JX'],
+                                'B6': ['B6'],
+                                'DE': ['DE'],
+                                'GF': ['GF']
+                              };
+                              
+                              // Helper function to get alliance for an airline code
+                              const getAlliance = (code: string) => {
+                                for (const [alliance, airlines] of Object.entries(ALLIANCE)) {
+                                  if (airlines.includes(code)) {
+                                    return alliance;
+                                  }
+                                }
+                                return null;
+                              };
+                              
+                              // Check which segments are unreliable (have cash legs)
+                              const unreliableSegments = new Set<number>();
+                              flightsArr.forEach((f, i) => {
+                                const code = getAirlineCode(f.FlightNumbers);
+                                const rel = reliability[code];
+                                const min = rel?.min_count ?? 1;
+                                const exemption = rel?.exemption || '';
+                                const classCounts = [
+                                  { cls: 'Y', count: f.YCount },
+                                  { cls: 'W', count: f.WCount },
+                                  { cls: 'J', count: f.JCount },
+                                  { cls: 'F', count: f.FCount },
+                                ];
+                                const isUnreliable = !classCounts.some(({ cls, count }) => {
+                                  const minCount = exemption.includes(cls) ? 1 : min;
+                                  return count >= minCount;
+                                });
+                                if (isUnreliable) {
+                                  unreliableSegments.add(i);
+                                }
+                              });
+                              
+                              // Group consecutive segments by alliance for non-unreliable segments
+                              const lineGroups: Array<{start: number, end: number, alliance: string | null, isUnreliable: boolean}> = [];
+                              let currentGroup: {start: number, end: number, alliance: string | null, isUnreliable: boolean} | null = null;
+                              
+                              console.log('=== DEBUG ROUTE SEGMENTS ===');
+                              console.log('Route:', route);
+                              console.log('Segments:', segments);
+                              console.log('Unreliable segments:', Array.from(unreliableSegments));
+                              
+                              segments.slice(0, -1).forEach((_, index) => {
+                                const isUnreliable = unreliableSegments.has(index);
+                                const flight = flightsArr[index];
+                                const airlineCode = getAirlineCode(flight.FlightNumbers);
+                                const alliance = isUnreliable ? null : getAlliance(airlineCode);
+                                
+                                console.log(`Segment ${index}: ${segments[index]}-${segments[index+1]}`);
+                                console.log(`  Flight: ${flight.FlightNumbers}`);
+                                console.log(`  Airline: ${airlineCode}`);
+                                console.log(`  Alliance: ${alliance}`);
+                                console.log(`  Unreliable: ${isUnreliable}`);
+                                
+                                if (currentGroup === null) {
+                                  // Start new group
+                                  currentGroup = { start: index, end: index, alliance, isUnreliable };
+                                  console.log(`  → Starting new group: ${JSON.stringify(currentGroup)}`);
+                                } else if (currentGroup.isUnreliable !== isUnreliable || 
+                                         (currentGroup.isUnreliable === false && currentGroup.alliance !== alliance)) {
+                                  // End current group and start new one
+                                  console.log(`  → Ending group: ${JSON.stringify(currentGroup)}`);
+                                  lineGroups.push(currentGroup);
+                                  currentGroup = { start: index, end: index, alliance, isUnreliable };
+                                  console.log(`  → Starting new group: ${JSON.stringify(currentGroup)}`);
+                                } else {
+                                  // Extend current group
+                                  currentGroup.end = index;
+                                  console.log(`  → Extending group: ${JSON.stringify(currentGroup)}`);
+                                }
+                              });
+                              
+                              // Add the last group
+                              if (currentGroup) {
+                                console.log(`  → Adding final group: ${JSON.stringify(currentGroup)}`);
+                                lineGroups.push(currentGroup);
+                              }
+                              
+                              console.log('Final lineGroups:', lineGroups);
+                              console.log('=== END DEBUG ===');
+                              
+                              return lineGroups.map((group, groupIndex) => {
+                                const colorClass = group.isUnreliable ? 'bg-green-500' : 'bg-foreground';
+                                const segmentCount = group.end - group.start + 1;
+                                const startSegment = segments[group.start];
+                                const endSegment = segments[group.end + 1];
+                                const allianceName = group.alliance === 'OW' ? 'Oneworld' : 
+                                                   group.alliance === 'SA' ? 'Star Alliance' : 
+                                                   group.alliance === 'ST' ? 'SkyTeam' : 
+                                                   group.alliance;
+                                
+                                console.log(`Rendering line ${groupIndex}: segments ${group.start}-${group.end}, color: ${colorClass}, flex: flex-${segmentCount}`);
+                                
+                                // Get the full route coverage
+                                const routeSegments = [];
+                                for (let i = group.start; i <= group.end + 1; i++) {
+                                  routeSegments.push(segments[i]);
+                                }
+                                const fullRoute = routeSegments.join('-');
+                                
+                                // Get airlines in this line group
+                                const airlinesInGroup: string[] = [];
+                                for (let i = group.start; i <= group.end; i++) {
+                                  const flight = flightsArr[i];
+                                  const airlineCode = getAirlineCode(flight.FlightNumbers);
+                                  airlinesInGroup.push(airlineCode);
+                                }
+                                
+                                // Find airlines that can earn bonus miles on these flights
+                                const bonusAirlines: Array<{code: string, name: string, ffp: string}> = [];
+                                allAirlines.forEach(airline => {
+                                  // Check if this airline's bonus array contains any of the airlines in the group
+                                  // But exclude the airline itself (no self-bonus)
+                                  const canEarnBonus = airlinesInGroup.some(code => 
+                                    airline.bonus.includes(code) && airline.code !== code
+                                  );
+                                  if (canEarnBonus) {
+                                    bonusAirlines.push({
+                                      code: airline.code,
+                                      name: airline.name,
+                                      ffp: airline.ffp
+                                    });
+                                  }
+                                });
+                                
+                                // Find airlines that can be booked for bonus earning on these flights
+                                const bookableBonusAirlines: Array<{code: string, name: string, ffp: string}> = [];
+                                allAirlines.forEach(airline => {
+                                  // Check if any airline in the group has this airline in their bonus array
+                                  const canBookForBonus = airlinesInGroup.some(code => {
+                                    const airlineInGroup = allAirlines.find(a => a.code === code);
+                                    return airlineInGroup?.bonus.includes(airline.code);
+                                  });
+                                  if (canBookForBonus) {
+                                    bookableBonusAirlines.push({
+                                      code: airline.code,
+                                      name: airline.name,
+                                      ffp: airline.ffp
+                                    });
+                                  }
+                                });
+                                
+                                // Also check if any airline in the group can earn bonus miles on other airlines
+                                airlinesInGroup.forEach(code => {
+                                  const airlineInGroup = allAirlines.find(a => a.code === code);
+                                  if (airlineInGroup?.bonus) {
+                                    airlineInGroup.bonus.forEach(bonusCode => {
+                                      const bonusAirline = allAirlines.find(a => a.code === bonusCode);
+                                      if (bonusAirline && bonusAirline.ffp) {
+                                        const alreadyIncluded = bookableBonusAirlines.some(a => a.code === bonusAirline.code);
+                                        if (!alreadyIncluded) {
+                                          bookableBonusAirlines.push({
+                                            code: bonusAirline.code,
+                                            name: bonusAirline.name,
+                                            ffp: bonusAirline.ffp
+                                          });
+                                        }
+                                      }
+                                    });
+                                  }
+                                });
+                                
+                                // Get all airlines that operate these flights (for non-alliance airlines)
+                                const operatingAirlines: Array<{code: string, name: string, ffp: string}> = [];
+                                airlinesInGroup.forEach(code => {
+                                  const airline = allAirlines.find(a => a.code === code);
+                                  if (airline && airline.ffp) {
+                                    operatingAirlines.push({
+                                      code: airline.code,
+                                      name: airline.name,
+                                      ffp: airline.ffp
+                                    });
+                                  }
+                                });
+                                
+                                const allBookingOptions = [
+                                  ...(allianceData[group.alliance || ''] || []),
+                                  ...bonusAirlines,
+                                  ...bookableBonusAirlines
+                                ].sort((a, b) => a.name.localeCompare(b.name));
+                                
+                                return (
+                                  <TooltipTouch key={groupIndex} content={
+                                    <div className="whitespace-pre-line">
+                                      {group.isUnreliable ? (
+                                        <>
+                                          <div className="font-semibold text-lg mb-2 text-center">{fullRoute}</div>
+                                          <div className="text-sm text-center text-muted-foreground mb-2">(Cash / Positioning Leg)</div>
+                                        </>
+                                      ) : group.alliance && allianceData[group.alliance] ? (
+                                        <>
+                                          <div className="font-semibold text-lg mb-2 text-center">{fullRoute}</div>
+                                          <div className="text-sm">
+                                            {group.end - group.start + 1 === 1 ? 'This segment may be bookable on:' : 'These segments may be bookable on:'}
+                                            <ul className="mt-2 list-disc list-inside">
+                                              {allBookingOptions.map((airline: {code: string, name: string, ffp: string}) => (
+                                                <li key={airline.code}>{airline.name} {airline.ffp}</li>
+                                              ))}
+                                            </ul>
+                                            {group.end - group.start > 0 && (
+                                              <div className="mt-3 text-xs text-muted-foreground">
+                                                Note: You may not be able to find the full segments on some programs. Consider breaking it up if needed.
+                                              </div>
+                                            )}
+                                            <div className="mt-2 text-xs text-muted-foreground">
+                                              Some programs may only accept bookings via phone and options may not be available online.
+                                            </div>
+                                          </div>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <div className="font-semibold text-lg mb-2 text-center">{fullRoute}</div>
+                                          {allBookingOptions.length > 0 && (
+                                            <div className="text-sm">
+                                              {group.end - group.start + 1 === 1 ? 'This segment may be bookable on:' : 'These segments may be bookable on:'}
+                                              <ul className="mt-2 list-disc list-inside">
+                                                {allBookingOptions.map((airline: {code: string, name: string, ffp: string}) => (
+                                                  <li key={airline.code}>{airline.name} {airline.ffp}</li>
+                                                ))}
+                                              </ul>
+                                              {group.end - group.start > 0 && (
+                                                <div className="mt-3 text-xs text-muted-foreground">
+                                                  Note: You may not be able to find the full route on some programs. Consider breaking it up if needed.
+                                                </div>
+                                              )}
+                                              <div className="mt-2 text-xs text-muted-foreground">
+                                                Some programs may only accept bookings via phone and options may not be available online.
+                                              </div>
+                                            </div>
+                                          )}
+                                        </>
+                                      )}
+                                    </div>
+                                  }>
+                                    <div
+                                      className={`h-1 rounded-full ${colorClass} cursor-pointer`}
+                                      style={{ width: `${(segmentCount / (segments.length - 1)) * 100}%` }}
+                                    />
+                                  </TooltipTouch>
+                                );
+                              });
+                            })()}
+                          </div>
+                        </div>
                       {(() => {
                         const hasCashLeg = flightsArr.some(f => {
                           const code = getAirlineCode(f.FlightNumbers);
@@ -234,7 +546,8 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                         }
                         return null;
                       })()}
-                    </span>
+                      </div>
+                    </div>
                     <span className="text-muted-foreground text-sm md:ml-4">{date}</span>
                   </div>
                   <div className="flex flex-col md:flex-row md:items-center w-full md:w-auto gap-1 md:gap-6 mt-2 md:mt-0 ml-auto">
@@ -256,9 +569,13 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                         </span>
                       </div>
                     </div>
-                    <span className="self-end md:self-center">
-                      {isOpen ? <ChevronUp className="h-5 w-5 ml-2" /> : <ChevronDown className="h-5 w-5 ml-2" />}
-                    </span>
+                    <button
+                      onClick={() => handleToggle(cardKey)}
+                      className="self-end md:self-center p-2 rounded hover:bg-muted transition-colors"
+                      aria-label={isOpen ? "Collapse flight details" : "Expand flight details"}
+                    >
+                      {isOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                    </button>
                   </div>
                 </CardContent>
               </div>
