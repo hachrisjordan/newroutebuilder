@@ -443,11 +443,16 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                                   }
                                 });
                                 
+                                // Combine all booking options and remove duplicates based on airline code
                                 const allBookingOptions = [
                                   ...(allianceData[group.alliance || ''] || []),
                                   ...bonusAirlines,
                                   ...bookableBonusAirlines
-                                ].sort((a, b) => a.name.localeCompare(b.name));
+                                ]
+                                  .filter((airline, index, array) => 
+                                    array.findIndex(a => a.code === airline.code) === index
+                                  )
+                                  .sort((a, b) => a.name.localeCompare(b.name));
                                 
                                 return (
                                   <TooltipTouch key={groupIndex} content={
