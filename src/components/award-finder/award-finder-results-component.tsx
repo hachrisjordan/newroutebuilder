@@ -195,46 +195,91 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
           const cardKey = `${route}-${date}-${idx}`;
           const isOpen = expanded === cardKey;
           return (
-            <Card key={cardKey} className="rounded-xl border bg-card shadow transition-all cursor-pointer">
-              <div onClick={() => handleToggle(cardKey)} className="flex items-center justify-between">
+            <Card key={cardKey} className="rounded-xl border bg-card shadow transition-all">
+              <div className="flex items-center justify-between">
                 <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between py-4 gap-2 p-4 w-full">
                   <div className="flex flex-col md:flex-row md:items-center gap-2 w-full">
-                    <span className="font-semibold text-lg text-primary">{route}
-                      {(() => {
-                        const hasCashLeg = flightsArr.some(f => {
-                          const code = getAirlineCode(f.FlightNumbers);
-                          const rel = reliability[code];
-                          const min = rel?.min_count ?? 1;
-                          const exemption = rel?.exemption || '';
-                          const classCounts = [
-                            { cls: 'Y', count: f.YCount },
-                            { cls: 'W', count: f.WCount },
-                            { cls: 'J', count: f.JCount },
-                            { cls: 'F', count: f.FCount },
-                          ];
-                          return !classCounts.some(({ cls, count }) => {
-                            const minCount = exemption.includes(cls) ? 1 : min;
-                            return count >= minCount;
+                    <div className="flex flex-col">
+                      <div className="flex items-center">
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-lg text-primary">{route}</span>
+                          {/* Route segment color lines */}
+                          <div className="flex gap-1 mt-1">
+                            {(() => {
+                              const segments = route.split('-');
+                              
+                              // Check which segments are unreliable (have cash legs)
+                              const unreliableSegments = new Set<number>();
+                              flightsArr.forEach((f, i) => {
+                                const code = getAirlineCode(f.FlightNumbers);
+                                const rel = reliability[code];
+                                const min = rel?.min_count ?? 1;
+                                const exemption = rel?.exemption || '';
+                                const classCounts = [
+                                  { cls: 'Y', count: f.YCount },
+                                  { cls: 'W', count: f.WCount },
+                                  { cls: 'J', count: f.JCount },
+                                  { cls: 'F', count: f.FCount },
+                                ];
+                                const isUnreliable = !classCounts.some(({ cls, count }) => {
+                                  const minCount = exemption.includes(cls) ? 1 : min;
+                                  return count >= minCount;
+                                });
+                                if (isUnreliable) {
+                                  unreliableSegments.add(i);
+                                }
+                              });
+                              
+                              return segments.slice(0, -1).map((_, index) => {
+                                const isUnreliable = unreliableSegments.has(index);
+                                const colorClass = isUnreliable ? 'bg-green-500' : 'bg-foreground';
+                                return (
+                                  <div
+                                    key={index}
+                                    className={`h-1 rounded-full ${colorClass} flex-1`}
+                                    title={`Segment ${index + 1}: ${segments[index]}-${segments[index + 1]}${isUnreliable ? ' (unreliable)' : ''}`}
+                                  />
+                                );
+                              });
+                            })()}
+                          </div>
+                        </div>
+                        {(() => {
+                          const hasCashLeg = flightsArr.some(f => {
+                            const code = getAirlineCode(f.FlightNumbers);
+                            const rel = reliability[code];
+                            const min = rel?.min_count ?? 1;
+                            const exemption = rel?.exemption || '';
+                            const classCounts = [
+                              { cls: 'Y', count: f.YCount },
+                              { cls: 'W', count: f.WCount },
+                              { cls: 'J', count: f.JCount },
+                              { cls: 'F', count: f.FCount },
+                            ];
+                            return !classCounts.some(({ cls, count }) => {
+                              const minCount = exemption.includes(cls) ? 1 : min;
+                              return count >= minCount;
+                            });
                           });
-                        });
-                        if (hasCashLeg) {
-                          return (
-                            <TooltipTouch content={<div>This itinerary contains a repositioning / cash leg</div>}>
-                              <button
-                                type="button"
-                                tabIndex={0}
-                                aria-label="Contains repositioning / cash leg"
-                                className="p-1 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500 ml-1 align-middle"
-                                style={{ touchAction: 'manipulation' }}
-                              >
-                                <DollarSign className="text-emerald-600 h-5 w-5" />
-                              </button>
-                            </TooltipTouch>
-                          );
-                        }
-                        return null;
-                      })()}
-                    </span>
+                          if (hasCashLeg) {
+                            return (
+                              <TooltipTouch content={<div>This itinerary contains a repositioning / cash leg</div>}>
+                                <button
+                                  type="button"
+                                  tabIndex={0}
+                                  aria-label="Contains repositioning / cash leg"
+                                  className="p-1 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500 ml-1 align-middle"
+                                  style={{ touchAction: 'manipulation' }}
+                                >
+                                  <DollarSign className="text-emerald-600 h-5 w-5" />
+                                </button>
+                              </TooltipTouch>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
+                    </div>
                     <span className="text-muted-foreground text-sm md:ml-4">{date}</span>
                   </div>
                   <div className="flex flex-col md:flex-row md:items-center w-full md:w-auto gap-1 md:gap-6 mt-2 md:mt-0 ml-auto">
@@ -256,9 +301,13 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                         </span>
                       </div>
                     </div>
-                    <span className="self-end md:self-center">
-                      {isOpen ? <ChevronUp className="h-5 w-5 ml-2" /> : <ChevronDown className="h-5 w-5 ml-2" />}
-                    </span>
+                    <button
+                      onClick={() => handleToggle(cardKey)}
+                      className="self-end md:self-center p-2 rounded hover:bg-muted transition-colors"
+                      aria-label={isOpen ? "Collapse flight details" : "Expand flight details"}
+                    >
+                      {isOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                    </button>
                   </div>
                 </CardContent>
               </div>
