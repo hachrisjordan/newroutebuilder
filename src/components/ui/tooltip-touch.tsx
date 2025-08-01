@@ -89,7 +89,7 @@ export const TooltipTouch: React.FC<TooltipTouchProps> = ({
               marginTop: 8,
               left: 0,
               minWidth: 120,
-              maxWidth: 240,
+              maxWidth: "90vw",
               pointerEvents: "auto",
             }}
             role="tooltip"

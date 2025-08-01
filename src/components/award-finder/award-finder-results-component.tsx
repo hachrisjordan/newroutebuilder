@@ -140,7 +140,7 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
   const [isLoadingCities, setIsLoadingCities] = useState(false);
   const [cityError, setCityError] = useState<string | null>(null);
   const [allianceData, setAllianceData] = useState<Record<string, Array<{code: string, name: string, ffp: string}>>>({});
-  const [allAirlines, setAllAirlines] = useState<Array<{code: string, name: string, ffp: string, bonus: string[]}>>([]);
+     const [allAirlines, setAllAirlines] = useState<Array<{code: string, name: string, ffp: string, bonus: string[], recommend: string[]}>>([]);
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
 
@@ -185,16 +185,16 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
     const fetchAirlineData = async () => {
       try {
         const supabase = createSupabaseBrowserClient();
-        const { data, error } = await supabase
-          .from('airlines')
-          .select('code, name, alliance, ffp, bonus');
+                 const { data, error } = await supabase
+           .from('airlines')
+           .select('code, name, alliance, ffp, bonus, recommend');
         
         if (error) throw error;
         
-        const allianceMap: Record<string, Array<{code: string, name: string, ffp: string}>> = {};
-        const allAirlines: Array<{code: string, name: string, ffp: string, bonus: string[]}> = [];
-        
-        data?.forEach((row: { code: string; name: string; alliance: string; ffp: string; bonus: string[] }) => {
+                 const allianceMap: Record<string, Array<{code: string, name: string, ffp: string}>> = {};
+         const allAirlines: Array<{code: string, name: string, ffp: string, bonus: string[], recommend: string[]}> = [];
+         
+         data?.forEach((row: { code: string; name: string; alliance: string; ffp: string; bonus: string[]; recommend: string[] }) => {
           // For alliance data (only airlines with FFP)
           if (row.alliance && ['OW', 'SA', 'ST'].includes(row.alliance) && row.ffp) {
             if (!allianceMap[row.alliance]) {
@@ -207,13 +207,14 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
             });
           }
           
-          // For all airlines (including those without FFP for bonus checking)
-          allAirlines.push({
-            code: row.code,
-            name: row.name,
-            ffp: row.ffp,
-            bonus: row.bonus || []
-          });
+                     // For all airlines (including those without FFP for bonus checking)
+           allAirlines.push({
+             code: row.code,
+             name: row.name,
+             ffp: row.ffp,
+             bonus: row.bonus || [],
+             recommend: row.recommend || []
+           });
         });
         
         setAllianceData(allianceMap);
@@ -255,10 +256,7 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                                                      <div 
                              className="relative w-full min-h-[8px]"
                              ref={(el) => {
-                               if (el) {
-                                 console.log(`Container width: ${el.offsetWidth}px, clientWidth: ${el.clientWidth}px, scrollWidth: ${el.scrollWidth}px`);
-                                 console.log(`Container computed style:`, window.getComputedStyle(el));
-                               }
+                               // Container ref for potential future use
                              }}
                            >
                                                          {(() => {
@@ -313,10 +311,7 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                               const lineGroups: Array<{start: number, end: number, alliance: string | null, isUnreliable: boolean}> = [];
                               let currentGroup: {start: number, end: number, alliance: string | null, isUnreliable: boolean} | null = null;
                               
-                              console.log('=== DEBUG ROUTE SEGMENTS ===');
-                              console.log('Route:', route);
-                              console.log('Segments:', segments);
-                              console.log('Unreliable segments:', Array.from(unreliableSegments));
+                              
                               
                               segments.slice(0, -1).forEach((_, index) => {
                                 const isUnreliable = unreliableSegments.has(index);
@@ -324,44 +319,33 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                                 const airlineCode = getAirlineCode(flight.FlightNumbers);
                                 const alliance = isUnreliable ? null : getAlliance(airlineCode);
                                 
-                                console.log(`Segment ${index}: ${segments[index]}-${segments[index+1]}`);
-                                console.log(`  Flight: ${flight.FlightNumbers}`);
-                                console.log(`  Airline: ${airlineCode}`);
-                                console.log(`  Alliance: ${alliance}`);
-                                console.log(`  Unreliable: ${isUnreliable}`);
+                                
                                 
                                 if (currentGroup === null) {
-                                  // Start new group
-                                  currentGroup = { start: index, end: index, alliance, isUnreliable };
-                                  console.log(`  → Starting new group: ${JSON.stringify(currentGroup)}`);
+                                                                     // Start new group
+                                   currentGroup = { start: index, end: index, alliance, isUnreliable };
                                 } else if (currentGroup.isUnreliable !== isUnreliable || 
                                          (currentGroup.isUnreliable === false && currentGroup.alliance !== alliance)) {
-                                  // End current group and start new one
-                                  console.log(`  → Ending group: ${JSON.stringify(currentGroup)}`);
-                                  lineGroups.push(currentGroup);
-                                  currentGroup = { start: index, end: index, alliance, isUnreliable };
-                                  console.log(`  → Starting new group: ${JSON.stringify(currentGroup)}`);
+                                                                     // End current group and start new one
+                                   lineGroups.push(currentGroup);
+                                   currentGroup = { start: index, end: index, alliance, isUnreliable };
                                 } else {
-                                  // Extend current group
-                                  currentGroup.end = index;
-                                  console.log(`  → Extending group: ${JSON.stringify(currentGroup)}`);
+                                                                     // Extend current group
+                                   currentGroup.end = index;
                                 }
                               });
                               
-                              // Add the last group
-                              if (currentGroup) {
-                                console.log(`  → Adding final group: ${JSON.stringify(currentGroup)}`);
-                                lineGroups.push(currentGroup);
-                              }
+                                                             // Add the last group
+                               if (currentGroup) {
+                                 lineGroups.push(currentGroup);
+                               }
                               
-                              console.log('Final lineGroups:', lineGroups);
-                              console.log('=== END DEBUG ===');
+                              
                               
                               return lineGroups.map((group, groupIndex) => {
                                                                                                   const colorClass = group.isUnreliable ? 'green' : 'gray';
                                  const segmentCount = group.end - group.start + 1;
                                  const widthPercent = (segmentCount / (segments.length - 1)) * 100;
-                                 console.log(`Group ${groupIndex}: start=${group.start}, end=${group.end}, segmentCount=${segmentCount}, totalSegments=${segments.length - 1}, width=${widthPercent}%, should be ${widthPercent}% of container width`);
                                 const startSegment = segments[group.start];
                                 const endSegment = segments[group.end + 1];
                                 const allianceName = group.alliance === 'OW' ? 'Oneworld' : 
@@ -369,7 +353,7 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                                                    group.alliance === 'ST' ? 'SkyTeam' : 
                                                    group.alliance;
                                 
-                                console.log(`Rendering line ${groupIndex}: segments ${group.start}-${group.end}, color: ${colorClass}, flex: flex-${segmentCount}`);
+                                
                                 
                                 // Get the full route coverage
                                 const routeSegments = [];
@@ -453,20 +437,42 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                                   }
                                 });
                                 
-                                // Combine all booking options and remove duplicates based on airline code
-                                const allBookingOptions = [
-                                  ...(allianceData[group.alliance || ''] || []),
-                                  ...bonusAirlines,
-                                  ...bookableBonusAirlines
-                                ]
-                                  .filter((airline, index, array) => 
-                                    array.findIndex(a => a.code === airline.code) === index
-                                  )
-                                  .sort((a, b) => a.name.localeCompare(b.name));
+                                                                 // Find recommended airlines based on operating airlines
+                                 const allRecommendations: string[][] = [];
+                                 airlinesInGroup.forEach(operatingCode => {
+                                   const operatingAirline = allAirlines.find(a => a.code === operatingCode);
+                                   if (operatingAirline?.recommend) {
+                                     allRecommendations.push(operatingAirline.recommend);
+                                   }
+                                 });
+                                 
+                                 // Find intersection (common recommendations)
+                                 const recommendedAirlines = new Set<string>();
+                                 if (allRecommendations.length > 0) {
+                                   const firstSet = new Set(allRecommendations[0]);
+                                   for (const code of firstSet) {
+                                     if (allRecommendations.every(recommendations => recommendations.includes(code))) {
+                                       recommendedAirlines.add(code);
+                                     }
+                                   }
+                                 }
+                                 
+
+
+                                 // Combine all booking options and remove duplicates based on airline code
+                                 const allBookingOptions = [
+                                   ...(allianceData[group.alliance || ''] || []),
+                                   ...bonusAirlines,
+                                   ...bookableBonusAirlines
+                                 ]
+                                   .filter((airline, index, array) => 
+                                     array.findIndex(a => a.code === airline.code) === index
+                                   )
+                                   .sort((a, b) => a.name.localeCompare(b.name));
                                 
-                                return (
-                                  <TooltipTouch key={groupIndex} content={
-                                    <div className="whitespace-pre-line">
+                                                                 return (
+                                   <TooltipTouch key={groupIndex} content={
+                                     <div className="whitespace-pre-line max-w-[90vw] min-w-[350px] break-words overflow-hidden">
                                       {group.isUnreliable ? (
                                         <>
                                           <div className="font-semibold text-lg mb-2 text-center">{fullRoute}</div>
@@ -478,9 +484,17 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                                           <div className="text-sm">
                                             {group.end - group.start + 1 === 1 ? 'This segment may be bookable on:' : 'These segments may be bookable on:'}
                                             <ul className="mt-2 list-disc list-inside">
-                                              {allBookingOptions.map((airline: {code: string, name: string, ffp: string}) => (
-                                                <li key={airline.code}>{airline.name} {airline.ffp}</li>
-                                              ))}
+                                              {allBookingOptions.map((airline: {code: string, name: string, ffp: string}) => {
+                                                const isRecommended = recommendedAirlines.has(airline.code);
+                                                return (
+                                                  <li 
+                                                    key={airline.code}
+                                                    className={isRecommended ? "font-bold text-green-500" : ""}
+                                                  >
+                                                    {airline.name} {airline.ffp}
+                                                  </li>
+                                                );
+                                              })}
                                             </ul>
                                             {group.end - group.start > 0 && (
                                               <div className="mt-3 text-xs text-muted-foreground">
@@ -499,9 +513,18 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                                             <div className="text-sm">
                                               {group.end - group.start + 1 === 1 ? 'This segment may be bookable on:' : 'These segments may be bookable on:'}
                                               <ul className="mt-2 list-disc list-inside">
-                                                {allBookingOptions.map((airline: {code: string, name: string, ffp: string}) => (
-                                                  <li key={airline.code}>{airline.name} {airline.ffp}</li>
-                                                ))}
+                                                {allBookingOptions.map((airline: {code: string, name: string, ffp: string}) => {
+                                                  const isRecommended = recommendedAirlines.has(airline.code);
+                                                  return (
+                                                    <li 
+                                                      key={airline.code}
+                                                      className={isRecommended ? "font-bold text-green-500" : ""}
+                                                    >
+                                                      {airline.name} {airline.ffp}
+                                                      {isRecommended && " (Recommended)"}
+                                                    </li>
+                                                  );
+                                                })}
                                               </ul>
                                               {group.end - group.start > 0 && (
                                                 <div className="mt-3 text-xs text-muted-foreground">
@@ -591,7 +614,7 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                     </div>
                     <button
                       onClick={() => handleToggle(cardKey)}
-                      className="self-end md:self-center p-2 rounded hover:bg-muted transition-colors"
+                      className="self-end md:self-center p-0 md:p-2 rounded hover:bg-muted transition-colors"
                       aria-label={isOpen ? "Collapse flight details" : "Expand flight details"}
                     >
                       {isOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
