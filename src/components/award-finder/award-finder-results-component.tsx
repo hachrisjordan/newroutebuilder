@@ -521,7 +521,6 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                                                       className={isRecommended ? "font-bold text-green-500" : ""}
                                                     >
                                                       {airline.name} {airline.ffp}
-                                                      {isRecommended && " (Recommended)"}
                                                     </li>
                                                   );
                                                 })}
