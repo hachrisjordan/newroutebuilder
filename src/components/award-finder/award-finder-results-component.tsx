@@ -469,11 +469,13 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                                             </ul>
                                             {group.end - group.start > 0 && (
                                               <div className="mt-3 text-xs text-muted-foreground">
-                                                Note: You may not be able to find the full segments on some programs. Consider breaking it up if needed.
+                                                Note: You may not be able to find the full segments on some programs.<br />
+                                                Consider breaking it up if needed.
                                               </div>
                                             )}
                                             <div className="mt-2 text-xs text-muted-foreground">
-                                              Some programs may only accept bookings via phone and options may not be available online.
+                                              Some programs may only accept bookings via phone<br />
+                                              and options may not be available online.
                                             </div>
                                           </div>
                                         </>
@@ -494,7 +496,8 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                                                 </div>
                                               )}
                                               <div className="mt-2 text-xs text-muted-foreground">
-                                                Some programs may only accept bookings via phone and options may not be available online.
+                                                Some programs may only accept bookings via phone<br />
+                                                and options may not be available online.
                                               </div>
                                             </div>
                                           )}
@@ -502,9 +505,16 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                                       )}
                                     </div>
                                   }>
-                                    <div
-                                      className={`h-1 rounded-full ${colorClass} cursor-pointer`}
-                                      style={{ width: `${(segmentCount / (segments.length - 1)) * 100}%` }}
+                                    <button
+                                      type="button"
+                                      tabIndex={0}
+                                      aria-label="View booking options"
+                                      className="h-1 rounded-full cursor-pointer"
+                                      style={{ 
+                                        width: `${(segmentCount / (segments.length - 1)) * 100}%`,
+                                        background: colorClass === 'bg-foreground' ? 'currentColor' : colorClass === 'bg-green-500' ? '#22c55e' : 'currentColor',
+                                        touchAction: 'manipulation'
+                                      }}
                                     />
                                   </TooltipTouch>
                                 );

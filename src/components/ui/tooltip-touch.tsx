@@ -71,7 +71,12 @@ export const TooltipTouch: React.FC<TooltipTouchProps> = ({
         <span
           onClick={() => setOpen((v) => !v)}
           tabIndex={0}
-          style={{ cursor: "pointer" }}
+          style={{ 
+            cursor: "pointer",
+            padding: "8px",
+            margin: "-8px",
+            display: "inline-block"
+          }}
         >
           {children}
         </span>
@@ -89,8 +94,9 @@ export const TooltipTouch: React.FC<TooltipTouchProps> = ({
               marginTop: 8,
               left: 0,
               minWidth: 120,
-              maxWidth: 240,
+              maxWidth: 320,
               pointerEvents: "auto",
+              wordWrap: "break-word",
             }}
             role="tooltip"
           >
