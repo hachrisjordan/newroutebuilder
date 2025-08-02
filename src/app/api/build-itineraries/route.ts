@@ -45,8 +45,10 @@ function getClassPercentages(
     return { y, w, j, f };
   }
 
-  // Apply the reliability rule: if segment > 15% of total flight time AND class shows triangle, count = 0
-  const threshold = 0.15 * totalFlightDuration; // 15% of total flight duration
+  // Apply the reliability rule: if segment > threshold% of total flight time AND class shows triangle, count = 0
+  // threshold = (100 - minReliabilityPercent) / 100
+  const thresholdPercent = (100 - minReliabilityPercent) / 100;
+  const threshold = thresholdPercent * totalFlightDuration;
   
   // For each segment, adjust counts for each class as per the rule
   const adjusted = flights.map(f => {
@@ -61,7 +63,7 @@ function getClassPercentages(
     const minJ = exemption.includes('J') ? 1 : min;
     const minF = exemption.includes('F') ? 1 : min;
     
-    // Check if this segment is > 15% of total flight duration
+    // Check if this segment is > threshold% of total flight duration
     const overThreshold = f.TotalDuration > threshold;
     
     return {

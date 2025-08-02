@@ -211,11 +211,11 @@ export function getTotalDuration(flights: (Flight | undefined)[]): number {
 
 /**
  * Returns the percentage of the itinerary spent in each class (Y, W, J, F),
- * applying the reliability rule: for each segment, if its duration is > 15% of total flight duration
+ * applying the reliability rule: for each segment, if its duration is > threshold% of total flight duration
  * and the class count < minCount (showing triangle), treat that class as 0 for that segment.
  * @param flights Array of Flight objects in the itinerary order
  * @param reliability Record<string, { min_count: number; exemption?: string }>
- * @param minReliabilityPercent number (0-100) - not used in this implementation
+ * @param minReliabilityPercent number (0-100) - threshold is calculated as (100 - minReliabilityPercent) / 100
  */
 export function getClassPercentages(
   flights: Flight[],
@@ -253,8 +253,10 @@ export function getClassPercentages(
     return { y, w, j, f };
   }
 
-  // Apply the reliability rule: if segment > 15% of total flight time AND class shows triangle, count = 0
-  const threshold = 0.15 * totalFlightDuration; // 15% of total flight duration
+  // Apply the reliability rule: if segment > threshold% of total flight time AND class shows triangle, count = 0
+  // threshold = (100 - minReliabilityPercent) / 100
+  const thresholdPercent = (100 - minReliabilityPercent) / 100;
+  const threshold = thresholdPercent * totalFlightDuration;
   
   // For each segment, adjust counts for each class as per the rule
   const adjusted = flights.map(f => {
@@ -269,7 +271,7 @@ export function getClassPercentages(
     const minJ = exemption.includes('J') ? 1 : min;
     const minF = exemption.includes('F') ? 1 : min;
     
-    // Check if this segment is > 15% of total flight duration
+    // Check if this segment is > threshold% of total flight duration
     const overThreshold = f.TotalDuration > threshold;
     
     return {
