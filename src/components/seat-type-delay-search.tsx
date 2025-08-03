@@ -85,6 +85,7 @@ export function SeatTypeDelaySearch({ onSearch }: SeatTypeDelaySearchProps) {
 
   // Helper function to detect and extract airline code from flight number
   const detectAirlineCode = (input: string) => {
+    // First try the original pattern: 2 letters followed by numbers
     const match = input.match(/^([A-Z]{2})\s*(\d+)$/);
     if (match) {
       const [, airlineCode, flightNum] = match;
@@ -92,7 +93,57 @@ export function SeatTypeDelaySearch({ onSearch }: SeatTypeDelaySearchProps) {
       if (foundAirline) {
         return { airlineCode, flightNum, foundAirline };
       }
+      
+      // Fallback: check if it's in our allowed codes (for when airlines aren't loaded yet)
+      if (ALLOWED_AIRLINE_CODES.includes(airlineCode)) {
+        const tempAirline = { code: airlineCode, name: airlineCode, logo: '' };
+        return { airlineCode, flightNum, foundAirline: tempAirline };
+      }
     }
+    
+    // Simplified pattern: directly check for 2 letters followed by numbers
+    // This handles cases like "B620" where we want to extract "B6" and "20"
+    if (input.length >= 3) {
+      // Try to find a valid airline code in the first 2 characters
+      const potentialAirlineCode = input.substring(0, 2);
+      const remainingInput = input.substring(2);
+      
+      // Check if the remaining part starts with a number
+      if (/^\d+/.test(remainingInput)) {
+        // First try to find in loaded airlines
+        const foundAirline = airlines.find(a => a.code === potentialAirlineCode);
+        if (foundAirline) {
+          const flightNum = remainingInput.match(/^\d+/)?.[0] || '';
+          return { airlineCode: potentialAirlineCode, flightNum, foundAirline };
+        }
+        
+        // Fallback: check if it's in our allowed codes (for when airlines aren't loaded yet)
+        if (ALLOWED_AIRLINE_CODES.includes(potentialAirlineCode)) {
+          const flightNum = remainingInput.match(/^\d+/)?.[0] || '';
+          // Create a temporary airline object for the fallback
+          const tempAirline = { code: potentialAirlineCode, name: potentialAirlineCode, logo: '' };
+          return { airlineCode: potentialAirlineCode, flightNum, foundAirline: tempAirline };
+        }
+      }
+    }
+    
+    // Additional pattern: handle cases where we have 2 letters followed by numbers without space
+    // This specifically handles "B620" -> "B6" + "20"
+    const combinedMatch = input.match(/^([A-Z]{2})(\d+)$/);
+    if (combinedMatch) {
+      const [, airlineCode, flightNum] = combinedMatch;
+      const foundAirline = airlines.find(a => a.code === airlineCode);
+      if (foundAirline) {
+        return { airlineCode, flightNum, foundAirline };
+      }
+      
+      // Fallback: check if it's in our allowed codes
+      if (ALLOWED_AIRLINE_CODES.includes(airlineCode)) {
+        const tempAirline = { code: airlineCode, name: airlineCode, logo: '' };
+        return { airlineCode, flightNum, foundAirline: tempAirline };
+      }
+    }
+    
     return null;
   };
 
