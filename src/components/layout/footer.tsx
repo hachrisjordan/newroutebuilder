@@ -20,8 +20,8 @@ export function Footer() {
   const cardClass =
     'transition-[margin,max-width,background,border-radius,box-shadow] duration-700 ease-in-out ' +
     (isAtBottom
-      ? 'bg-card md:shadow-2xl md:ring-1 md:ring-border md:rounded-2xl mx-auto md:mb-6 md:max-w-4xl md:max-w-6xl w-full rounded-none shadow-none ring-0 mb-0'
-      : 'bg-background shadow-none ring-0 rounded-none mx-auto mb-0 md:max-w-[2000px] md:rounded-none md:shadow-none md:ring-0 md:mb-0 w-full');
+      ? 'bg-card md:shadow-2xl md:ring-1 md:ring-border md:rounded-2xl mx-auto md:mb-6 md:max-w-7xl w-full rounded-none shadow-none ring-0 mb-0'
+      : 'bg-background shadow-none ring-0 rounded-none mx-auto mb-0 md:max-w-[3000px] md:rounded-none md:shadow-none md:ring-0 md:mb-0 w-full');
 
   return (
     <footer className="w-full bg-transparent">
@@ -34,9 +34,25 @@ export function Footer() {
         style={{ boxSizing: 'border-box' }}
       >
         <div className="flex flex-col items-center gap-4 md:flex-row md:gap-2">
-          <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
-            Built by Ha Nguyen (binbinhihi).
-          </p>
+          <div className="flex flex-col items-center gap-2 md:flex-row md:gap-2">
+            <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
+              Built by Ha Nguyen (binbinhihi).
+            </p>
+            {/* Ko-fi Support Button */}
+            <a 
+              href='https://ko-fi.com/Y8Y81C7ZLG' 
+              target='_blank' 
+              rel="noopener noreferrer"
+              className="inline-block"
+            >
+              <img 
+                height='36' 
+                style={{border:'0px', height:'36px'}} 
+                src='https://storage.ko-fi.com/cdn/kofi2.png?v=6' 
+                alt='Buy Me a Coffee at ko-fi.com' 
+              />
+            </a>
+          </div>
         </div>
         <div className="flex items-center space-x-4 relative">
           {/* Game dropdown */}
