@@ -41,8 +41,8 @@ export function Header() {
   const cardClass =
     'transition-[margin,max-width,background,border-radius,box-shadow] duration-700 ease-in-out ' +
     (isAtTop
-      ? 'bg-card md:shadow-2xl md:ring-1 md:ring-border md:rounded-2xl mx-auto md:mt-6 md:max-w-4xl md:max-w-6xl px-2 md:px-8 w-full rounded-none shadow-none ring-0 mt-0'
-      : 'bg-background shadow-none ring-0 rounded-none mx-auto mt-0 md:max-w-[2000px] md:rounded-none md:shadow-none md:ring-0 md:mt-0 md:px-4 w-full');
+      ? 'bg-card md:shadow-2xl md:ring-1 md:ring-border md:rounded-2xl mx-auto md:mt-6 md:max-w-7xl px-2 md:px-8 w-full rounded-none shadow-none ring-0 mt-0'
+      : 'bg-background shadow-none ring-0 rounded-none mx-auto mt-0 md:max-w-[3000px] md:rounded-none md:shadow-none md:ring-0 md:mt-0 md:px-4 w-full');
 
   return (
     <header className="sticky top-0 z-50 w-full bg-transparent backdrop-blur supports-[backdrop-filter]:bg-transparent">
