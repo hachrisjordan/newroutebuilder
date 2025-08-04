@@ -73,12 +73,14 @@ export function LoadFactorSearch({ onSearch }: LoadFactorSearchProps) {
 
   // Smart date validation - ensure end date is not before start date
   const validateEndDate = (newEndYear: number, newEndMonth: number) => {
+    if (!startYear || !startMonth) return true; // Allow if start date not set
     const startDate = new Date(startYear, startMonth - 1);
     const endDate = new Date(newEndYear, newEndMonth - 1);
     return endDate >= startDate;
   };
 
   const validateStartDate = (newStartYear: number, newStartMonth: number) => {
+    if (!endYear || !endMonth) return true; // Allow if end date not set
     const startDate = new Date(newStartYear, newStartMonth - 1);
     const endDate = new Date(endYear, endMonth - 1);
     return startDate <= endDate;
@@ -161,12 +163,14 @@ export function LoadFactorSearch({ onSearch }: LoadFactorSearchProps) {
     }
 
     // Validate date range
-    const startDate = new Date(startYear, startMonth - 1);
-    const endDate = new Date(endYear, endMonth - 1);
-    
-    if (startDate > endDate) {
-      alert('Start date must be before or equal to end date');
-      return;
+    if (startYear && startMonth && endYear && endMonth) {
+      const startDate = new Date(startYear, startMonth - 1);
+      const endDate = new Date(endYear, endMonth - 1);
+      
+      if (startDate > endDate) {
+        alert('Start date must be before or equal to end date');
+        return;
+      }
     }
 
     // Check if total combinations exceed 16
