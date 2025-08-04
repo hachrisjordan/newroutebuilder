@@ -12,12 +12,17 @@ import HeaderUserMenu from '@/components/auth-wizard/header-user-menu';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 
 const navigation = [
   // { name: 'Home', href: '/' }, // Removed Home link
   { name: 'Seat Type / Delay', href: '/seat-type-delay' },
   { name: 'Award Finder', href: '/award-finder' },
   { name: 'Live Search', href: '/live-search' },
+];
+
+const aviationData = [
+  { name: 'Load Factor', href: '/load-factor' },
 ];
 
 const specialAwards = [
@@ -27,6 +32,8 @@ const specialAwards = [
 export function Header() {
   const pathname = usePathname();
   const [isAtTop, setIsAtTop] = useState(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [isLoadingRole, setIsLoadingRole] = useState(true);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -35,6 +42,29 @@ export function Header() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll(); // initialize
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      setIsLoadingRole(true);
+      const supabase = createSupabaseBrowserClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        
+        setUserRole(profile?.role || null);
+      } else {
+        setUserRole(null);
+      }
+      setIsLoadingRole(false);
+    };
+    
+    fetchUserRole();
   }, []);
 
   // Shared card style for both desktop and mobile
@@ -95,29 +125,54 @@ export function Header() {
               </Link>
             )
           ))}
-          {/* Special Award Dropdown */}
+          {/* Aviation Data Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 className={cn(
                   'ml-6 text-sm font-medium transition-colors hover:text-foreground/80',
-                  pathname.startsWith('/jetblue/etihad')
+                  pathname.startsWith('/load-factor')
                     ? 'text-foreground'
                     : 'text-foreground/60'
                 )}
                 aria-haspopup="menu"
               >
-                Special Award
+                Aviation Data
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
-              {specialAwards.map((item) => (
+              {aviationData.map((item) => (
                 <DropdownMenuItem key={item.href} asChild>
                   <Link href={item.href}>{item.name}</Link>
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+          {/* Special Award Dropdown - Only for Owner and Pro users */}
+          {(userRole === 'Owner' || userRole === 'Pro') && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={cn(
+                    'ml-6 text-sm font-medium transition-colors hover:text-foreground/80',
+                    pathname.startsWith('/jetblue/etihad')
+                      ? 'text-foreground'
+                      : 'text-foreground/60'
+                  )}
+                  aria-haspopup="menu"
+                >
+                  Special Award
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                {specialAwards.map((item) => (
+                  <DropdownMenuItem key={item.href} asChild>
+                    <Link href={item.href}>{item.name}</Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </nav>
         <div className="ml-auto flex items-center space-x-4">
           <HeaderUserMenu />
@@ -164,13 +219,13 @@ export function Header() {
                     {item.name}
                   </Link>
                 ))}
-                {/* Special Award Mobile Dropdown */}
+                {/* Aviation Data Mobile Dropdown */}
                 <details className="mt-4">
                   <summary className="text-xs text-muted-foreground uppercase tracking-wider cursor-pointer select-none py-2 px-2 rounded hover:bg-accent">
-                    Special Award
+                    Aviation Data
                   </summary>
                   <div className="flex flex-col ml-2">
-                    {specialAwards.map((item) => (
+                    {aviationData.map((item) => (
                       <Link
                         key={item.href}
                         href={item.href}
@@ -186,6 +241,30 @@ export function Header() {
                     ))}
                   </div>
                 </details>
+                {/* Special Award Mobile Dropdown - Only for Owner and Pro users */}
+                {(userRole === 'Owner' || userRole === 'Pro') && (
+                  <details className="mt-4">
+                    <summary className="text-xs text-muted-foreground uppercase tracking-wider cursor-pointer select-none py-2 px-2 rounded hover:bg-accent">
+                      Special Award
+                    </summary>
+                    <div className="flex flex-col ml-2">
+                      {specialAwards.map((item) => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          className={cn(
+                            'py-2 px-2 rounded transition-colors hover:bg-accent',
+                            pathname === item.href
+                              ? 'text-foreground font-semibold'
+                              : 'text-foreground/70'
+                          )}
+                        >
+                          {item.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </details>
+                )}
               </nav>
             </DialogContent>
           </Dialog>
