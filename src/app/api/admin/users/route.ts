@@ -135,8 +135,11 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
     }
 
-    // Update the role in the profiles table
-    const { error: updateError } = await supabase
+    // Use admin client to bypass RLS policies
+    const adminSupabase = createSupabaseAdminClient();
+    
+    // Update the role in the profiles table using admin client
+    const { error: updateError } = await adminSupabase
       .from('profiles')
       .update({ role: role })
       .eq('id', userId);
@@ -146,6 +149,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to update user role' }, { status: 500 });
     }
 
+    console.log(`Successfully updated user ${userId} role to ${role}`);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error in users API:', error);
