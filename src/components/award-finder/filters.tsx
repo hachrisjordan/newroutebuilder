@@ -222,6 +222,17 @@ const Filters: React.FC<FiltersProps> = ({
     if (key === 'F') return fPercent === 0;
     if (key === 'depTime') return depTime === undefined || (depTime[0] === depMin && depTime[1] === depMax);
     if (key === 'arrTime') return arrTime === undefined || (arrTime[0] === arrMin && arrTime[1] === arrMax);
+    if (key === 'airports') {
+      // Check if any airport filters are active (any arrays have items)
+      return (
+        selectedAirportFilter.include.origin.length === 0 &&
+        selectedAirportFilter.include.destination.length === 0 &&
+        selectedAirportFilter.include.connection.length === 0 &&
+        selectedAirportFilter.exclude.origin.length === 0 &&
+        selectedAirportFilter.exclude.destination.length === 0 &&
+        selectedAirportFilter.exclude.connection.length === 0
+      );
+    }
     return true;
   }
 

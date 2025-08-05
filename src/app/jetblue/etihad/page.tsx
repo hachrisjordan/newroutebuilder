@@ -1,5 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { format, toZonedTime } from 'date-fns-tz';
 import { getAirportTimezone } from '@/lib/airport-tz-map';
 import Image from 'next/image';
@@ -9,6 +9,9 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { Pagination } from '@/components/ui/pagination';
+import { getCurrentUser } from '@/lib/auth';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { parseISO } from 'date-fns';
 
 // Dynamic imports for heavy components to reduce initial bundle size
 const EtihadItineraryCard = dynamic(
@@ -26,8 +29,6 @@ const EtihadFiltersControls = dynamic(
     ssr: true
   }
 );
-import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { parseISO } from 'date-fns';
 
 interface Itinerary {
   id: string;
@@ -116,11 +117,28 @@ const EtihadPagination = dynamic(() => import('@/components/jetblue/etihad/etiha
 const EtihadFilters = dynamic(() => import('@/components/jetblue/etihad/etihad-filters'), { ssr: false });
 
 export default async function EtihadPage({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
+  // Authentication and authorization check
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect('/auth');
+  }
+
+  // Check user role
   const supabase = createSupabaseServerClient();
-  const { data, error } = await supabase
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (error || !profile || (profile.role !== 'Owner' && profile.role !== 'Pro')) {
+    redirect('/auth');
+  }
+
+  const { data, error: dataError } = await supabase
     .from('itinerary')
     .select('*');
-  if (error || !data) return notFound();
+  if (dataError || !data) return notFound();
 
   // Fetch all segments referenced by these itineraries
   const allSegmentIds = Array.from(new Set(data.flatMap((it: Itinerary) => it.segment_ids)));

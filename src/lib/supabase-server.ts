@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export const createSupabaseServerClient = () => {
   const cookieStore = cookies();
@@ -11,6 +12,16 @@ export const createSupabaseServerClient = () => {
       get: (key: string) => cookieStore.get(key)?.value,
       set: (key: string, value: string, options: any) => {},
       remove: (key: string, options: any) => {},
+    },
+  });
+};
+
+export const createSupabaseAdminClient = () => {
+  return createServerClient(supabaseUrl, supabaseServiceKey, {
+    cookies: {
+      get: () => '',
+      set: () => {},
+      remove: () => {},
     },
   });
 }; 
