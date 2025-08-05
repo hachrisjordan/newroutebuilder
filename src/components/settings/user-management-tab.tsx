@@ -235,8 +235,7 @@ const UserManagementTab = () => {
                       variant="outline"
                       onClick={() => startEditing(user)}
                     >
-                      <Edit className="w-3 h-3 mr-1" />
-                      Edit Role
+                      <Edit className="w-3 h-3" />
                     </Button>
                   )}
                 </div>

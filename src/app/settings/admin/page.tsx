@@ -2,11 +2,11 @@ import { getCurrentUser } from '@/lib/auth';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import dynamic from 'next/dynamic';
 
 const AircraftConfigTab = dynamic(() => import('@/components/settings/aircraft-config-tab'), { ssr: false });
 const UserManagementTab = dynamic(() => import('@/components/settings/user-management-tab'), { ssr: false });
+const ResponsiveTabs = dynamic(() => import('@/components/settings/responsive-tabs'), { ssr: false });
 
 export default async function AdminSettingsPage() {
   const user = await getCurrentUser();
@@ -33,18 +33,7 @@ export default async function AdminSettingsPage() {
           <CardTitle className="text-xl">Admin Settings</CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="aircraft-config" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="aircraft-config">Aircraft Configuration</TabsTrigger>
-              <TabsTrigger value="user-management">User Management</TabsTrigger>
-            </TabsList>
-            <TabsContent value="aircraft-config" className="mt-6">
-              <AircraftConfigTab />
-            </TabsContent>
-            <TabsContent value="user-management" className="mt-6">
-              <UserManagementTab />
-            </TabsContent>
-          </Tabs>
+          <ResponsiveTabs />
         </CardContent>
       </Card>
     </main>
