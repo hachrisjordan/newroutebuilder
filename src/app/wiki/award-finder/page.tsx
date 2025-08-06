@@ -12,18 +12,18 @@ export default function AwardFinderWikiPage() {
         <h1 className="text-4xl font-bold mb-8">Award Finder Wiki 🛫</h1>
         
         {/* Table of Contents */}
-        <div className="bg-gray-50 p-6 rounded-lg mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Table of Contents</h2>
+        <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg mb-8 border border-gray-200 dark:border-gray-700">
+          <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Table of Contents</h2>
           <ul className="space-y-2">
-            <li><a href="#overview" className="text-blue-600 hover:text-blue-800">Overview</a></li>
-            <li><a href="#getting-started" className="text-blue-600 hover:text-blue-800">Getting Started</a></li>
-            <li><a href="#search-interface" className="text-blue-600 hover:text-blue-800">Search Interface</a></li>
-            <li><a href="#understanding-results" className="text-blue-600 hover:text-blue-800">Understanding Results</a></li>
-            <li><a href="#filters-and-sorting" className="text-blue-600 hover:text-blue-800">Filters and Sorting</a></li>
-            <li><a href="#tips-and-strategies" className="text-blue-600 hover:text-blue-800">Tips and Strategies</a></li>
-            <li><a href="#troubleshooting" className="text-blue-600 hover:text-blue-800">Troubleshooting</a></li>
-            <li><a href="#quick-reference" className="text-blue-600 hover:text-blue-800">Quick Reference</a></li>
-            <li><a href="#important-notes" className="text-blue-600 hover:text-blue-800">Important Notes</a></li>
+            <li><a href="#overview" className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">Overview</a></li>
+            <li><a href="#getting-started" className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">Getting Started</a></li>
+            <li><a href="#search-interface" className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">Search Interface</a></li>
+            <li><a href="#understanding-results" className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">Understanding Results</a></li>
+            <li><a href="#filters-and-sorting" className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">Filters and Sorting</a></li>
+            <li><a href="#tips-and-strategies" className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">Tips and Strategies</a></li>
+            <li><a href="#troubleshooting" className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">Troubleshooting</a></li>
+            <li><a href="#quick-reference" className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">Quick Reference</a></li>
+            <li><a href="#important-notes" className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">Important Notes</a></li>
           </ul>
         </div>
 
@@ -92,13 +92,11 @@ export default function AwardFinderWikiPage() {
           
           <h3 className="text-2xl font-semibold mb-4">Advanced Search Options</h3>
           
-          <h4 className="text-xl font-semibold mb-3">API Key (Optional)</h4>
-          <ul className="list-disc pl-6 space-y-2">
-            <li><strong>Free users</strong>: Limited to 4 origin-destination combinations and 2 stops maximum</li>
-            <li><strong>seats.aero Pro users</strong>: Up to 9 combinations, 4 stops maximum, and longer date ranges</li>
-            <li><strong>API key requirement</strong>: You must be a seats.aero Pro user with your own API key to unlock advanced features</li>
-            <li>Enter your seats.aero API key to unlock advanced features</li>
-          </ul>
+                     <h4 className="text-xl font-semibold mb-3">API Key (Optional)</h4>
+           <ul className="list-disc pl-6 space-y-2">
+             <li>Enter your seats.aero API key to unlock advanced features</li>
+             <li>Advanced features include: longer date ranges, more combinations, and additional search options</li>
+           </ul>
 
           <h4 className="text-xl font-semibold mb-3 mt-6">Reliability Filter</h4>
           <ul className="list-disc pl-6 space-y-2">
@@ -299,74 +297,74 @@ export default function AwardFinderWikiPage() {
         <section id="quick-reference" className="mb-12">
           <h2 className="text-3xl font-bold mb-6">Quick Reference</h2>
           
-          <div className="overflow-x-auto">
-            <table className="min-w-full border border-gray-300">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="border border-gray-300 px-4 py-2 text-left">Feature</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">Free Users</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">seats.aero Pro Users</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="border border-gray-300 px-4 py-2">Max combinations</td>
-                  <td className="border border-gray-300 px-4 py-2">4</td>
-                  <td className="border border-gray-300 px-4 py-2">9</td>
-                </tr>
-                <tr className="bg-gray-50">
-                  <td className="border border-gray-300 px-4 py-2">Max stops</td>
-                  <td className="border border-gray-300 px-4 py-2">2</td>
-                  <td className="border border-gray-300 px-4 py-2">4</td>
-                </tr>
-                <tr>
-                  <td className="border border-gray-300 px-4 py-2">Date range</td>
-                  <td className="border border-gray-300 px-4 py-2">Limited</td>
-                  <td className="border border-gray-300 px-4 py-2">Extended</td>
-                </tr>
-                <tr className="bg-gray-50">
-                  <td className="border border-gray-300 px-4 py-2">Reliability data</td>
-                  <td className="border border-gray-300 px-4 py-2">Yes</td>
-                  <td className="border border-gray-300 px-4 py-2">Yes</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                     <div className="overflow-x-auto">
+             <table className="min-w-full border border-gray-300 dark:border-gray-600">
+               <thead>
+                 <tr className="bg-gray-100 dark:bg-gray-700">
+                   <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-left text-gray-900 dark:text-gray-100">Feature</th>
+                   <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-left text-gray-900 dark:text-gray-100">Free Users</th>
+                   <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-left text-gray-900 dark:text-gray-100">seats.aero Pro Users</th>
+                 </tr>
+               </thead>
+               <tbody>
+                 <tr className="bg-white dark:bg-gray-800">
+                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-900 dark:text-gray-100">Max combinations</td>
+                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-900 dark:text-gray-100">4</td>
+                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-900 dark:text-gray-100">9</td>
+                 </tr>
+                 <tr className="bg-gray-50 dark:bg-gray-700">
+                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-900 dark:text-gray-100">Max stops</td>
+                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-900 dark:text-gray-100">2</td>
+                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-900 dark:text-gray-100">4</td>
+                 </tr>
+                 <tr className="bg-white dark:bg-gray-800">
+                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-900 dark:text-gray-100">Date range</td>
+                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-900 dark:text-gray-100">Limited</td>
+                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-900 dark:text-gray-100">Extended</td>
+                 </tr>
+                 <tr className="bg-gray-50 dark:bg-gray-700">
+                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-900 dark:text-gray-100">Reliability data</td>
+                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-900 dark:text-gray-100">Yes</td>
+                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-900 dark:text-gray-100">Yes</td>
+                 </tr>
+               </tbody>
+             </table>
+           </div>
 
           <h3 className="text-2xl font-semibold mb-4 mt-8">Visual Symbols Quick Reference</h3>
-          <div className="overflow-x-auto">
-            <table className="min-w-full border border-gray-300">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="border border-gray-300 px-4 py-2 text-left">Symbol</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">Meaning</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">Recommendation</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="border border-gray-300 px-4 py-2">✅ Green Check</td>
-                  <td className="border border-gray-300 px-4 py-2">Reliable availability</td>
-                  <td className="border border-gray-300 px-4 py-2">Best value for points</td>
-                </tr>
-                <tr className="bg-gray-50">
-                  <td className="border border-gray-300 px-4 py-2">⚠️ Yellow Triangle</td>
-                  <td className="border border-gray-300 px-4 py-2">Unreliable availability</td>
-                  <td className="border border-gray-300 px-4 py-2">Consider cash payment</td>
-                </tr>
-                <tr>
-                  <td className="border border-gray-300 px-4 py-2">❌ Red X</td>
-                  <td className="border border-gray-300 px-4 py-2">No availability</td>
-                  <td className="border border-gray-300 px-4 py-2">Skip this option</td>
-                </tr>
-                <tr className="bg-gray-50">
-                  <td className="border border-gray-300 px-4 py-2">💲 Green Dollar Sign</td>
-                  <td className="border border-gray-300 px-4 py-2">Cash flight</td>
-                  <td className="border border-gray-300 px-4 py-2">Pay cash instead</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                     <div className="overflow-x-auto">
+             <table className="min-w-full border border-gray-300 dark:border-gray-600">
+               <thead>
+                 <tr className="bg-gray-100 dark:bg-gray-700">
+                   <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-left text-gray-900 dark:text-gray-100">Symbol</th>
+                   <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-left text-gray-900 dark:text-gray-100">Meaning</th>
+                   <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-left text-gray-900 dark:text-gray-100">Recommendation</th>
+                 </tr>
+               </thead>
+               <tbody>
+                 <tr className="bg-white dark:bg-gray-800">
+                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-900 dark:text-gray-100">✅ Green Check</td>
+                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-900 dark:text-gray-100">Reliable availability</td>
+                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-900 dark:text-gray-100">Best value for points</td>
+                 </tr>
+                 <tr className="bg-gray-50 dark:bg-gray-700">
+                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-900 dark:text-gray-100">⚠️ Yellow Triangle</td>
+                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-900 dark:text-gray-100">Unreliable availability</td>
+                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-900 dark:text-gray-100">Consider cash payment</td>
+                 </tr>
+                 <tr className="bg-white dark:bg-gray-800">
+                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-900 dark:text-gray-100">❌ Red X</td>
+                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-900 dark:text-gray-100">No availability</td>
+                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-900 dark:text-gray-100">Skip this option</td>
+                 </tr>
+                 <tr className="bg-gray-50 dark:bg-gray-700">
+                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-900 dark:text-gray-100">💲 Green Dollar Sign</td>
+                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-900 dark:text-gray-100">Cash flight</td>
+                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-900 dark:text-gray-100">Pay cash instead</td>
+                 </tr>
+               </tbody>
+             </table>
+           </div>
         </section>
 
         {/* Important Notes Section */}
