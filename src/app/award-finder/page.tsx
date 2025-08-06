@@ -5,6 +5,7 @@ import { AwardFinderSearch } from '@/components/award-finder/award-finder-search
 import AwardFinderResultsCard from '@/components/award-finder/award-finder-results-card';
 import type { AwardFinderResults } from '@/types/award-finder-results';
 import { getTotalDuration, getClassPercentages } from '@/lib/utils';
+import Link from 'next/link';
 
 const PAGE_SIZE = 10;
 
@@ -64,6 +65,7 @@ export default function AwardFinderPage() {
   const [minReliabilityPercent, setMinReliabilityPercent] = useState<number>(85);
   const [resetFiltersSignal, setResetFiltersSignal] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [showGuideReminder, setShowGuideReminder] = useState(true);
 
   // --- Advanced filter/search state ---
   const [selectedStops, setSelectedStops] = useState<string[]>([]);
@@ -122,6 +124,14 @@ export default function AwardFinderPage() {
         setMinReliabilityPercent(data.min_reliability_percent);
       }
     });
+  }, []);
+
+  // Check if user has dismissed the guide reminder
+  useEffect(() => {
+    const dismissed = localStorage.getItem('award-finder-guide-dismissed');
+    if (dismissed === 'true') {
+      setShowGuideReminder(false);
+    }
   }, []);
 
   // Fetch airline list for dropdowns
@@ -261,6 +271,12 @@ export default function AwardFinderPage() {
     setPage(1);
   };
 
+  // Handler for dismissing the guide reminder
+  const handleDismissGuideReminder = () => {
+    setShowGuideReminder(false);
+    localStorage.setItem('award-finder-guide-dismissed', 'true');
+  };
+
   const filterReliable = useCallback((results: AwardFinderResults): AwardFinderResults => {
     if (!reliableOnly || !Object.keys(reliability).length) return results;
     // Do not mutate flight counts; keep original for display
@@ -348,6 +364,44 @@ export default function AwardFinderPage() {
 
   return (
     <main className="flex flex-1 flex-col items-center bg-background pt-8 pb-12 px-2 sm:px-4">
+      {/* Guide Reminder Box */}
+      {showGuideReminder && (
+        <div className="w-full max-w-4xl mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                🛫 New to Award Finder?
+              </h3>
+              <p className="text-blue-800 mb-3">
+                We recommend reading our comprehensive guide to understand how to use the tool effectively and interpret the results.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link
+                  href="/wiki/award-finder"
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  📖 Read the Guide
+                </Link>
+                <button
+                  onClick={handleDismissGuideReminder}
+                  className="inline-flex items-center px-4 py-2 bg-transparent text-blue-600 text-sm font-medium border border-blue-300 rounded-md hover:bg-blue-100 transition-colors"
+                >
+                  Don't show again
+                </button>
+              </div>
+            </div>
+            <button
+              onClick={handleDismissGuideReminder}
+              className="ml-4 text-blue-400 hover:text-blue-600 transition-colors"
+              aria-label="Close reminder"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
       <AwardFinderSearch
         onSearch={(body, isNewSearchFromForm) => handleSearch(body, undefined, undefined, isNewSearchFromForm)}
         minReliabilityPercent={minReliabilityPercent}

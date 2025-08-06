@@ -57,7 +57,7 @@ export default function Home() {
             <CardHeader>
               <CardTitle>Live Search</CardTitle>
               <CardDescription>
-                Search for real-time flight availability and pricing with up-to-date data.
+                Search for flight availability and pricing with up-to-date data.
               </CardDescription>
             </CardHeader>
             <CardContent />

@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 export function Footer() {
-  const [open, setOpen] = useState(false);
+  const [gameOpen, setGameOpen] = useState(false);
+  const [wikiOpen, setWikiOpen] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(false);
 
   useEffect(() => {
@@ -59,28 +60,51 @@ export function Footer() {
           <div className="relative">
             <button
               className="text-sm text-muted-foreground hover:text-foreground px-2 py-1 rounded focus:outline-none focus:ring"
-              onClick={() => setOpen((v) => !v)}
-              onBlur={() => setTimeout(() => setOpen(false), 150)}
+              onClick={() => setGameOpen((v) => !v)}
+              onBlur={() => setTimeout(() => setGameOpen(false), 150)}
               aria-haspopup="listbox"
-              aria-expanded={open}
+              aria-expanded={gameOpen}
             >
               Game
             </button>
-            {open && (
+            {gameOpen && (
               <div className="absolute left-0 bottom-full mb-2 w-40 bg-background border rounded shadow z-10">
                 <Link
                   href="/shortest-route"
                   className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-t"
-                  onClick={() => setOpen(false)}
+                  onClick={() => setGameOpen(false)}
                 >
                   Shortest Route
                 </Link>
                 <Link
                   href="/find-airport"
                   className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-b"
-                  onClick={() => setOpen(false)}
+                  onClick={() => setGameOpen(false)}
                 >
                   Find the Airport
+                </Link>
+              </div>
+            )}
+          </div>
+          {/* Wiki dropdown */}
+          <div className="relative">
+            <button
+              className="text-sm text-muted-foreground hover:text-foreground px-2 py-1 rounded focus:outline-none focus:ring"
+              onClick={() => setWikiOpen((v) => !v)}
+              onBlur={() => setTimeout(() => setWikiOpen(false), 150)}
+              aria-haspopup="listbox"
+              aria-expanded={wikiOpen}
+            >
+              Wiki
+            </button>
+            {wikiOpen && (
+              <div className="absolute left-0 bottom-full mb-2 w-48 bg-background border rounded shadow z-10">
+                <Link
+                  href="/wiki/award-finder"
+                  className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-t rounded-b"
+                  onClick={() => setWikiOpen(false)}
+                >
+                  Award Finder Guide
                 </Link>
               </div>
             )}
