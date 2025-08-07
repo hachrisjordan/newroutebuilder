@@ -695,15 +695,15 @@ export default function DeltaVirginDumpingPage() {
       {(koreanAirFlights.length > 0 || koreanAirLoading) && (
         <div className="mt-12">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Korean Air Flights</h2>
-            <p className="text-gray-600">Available Korean Air flights for the selected date</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">"Dumping" Flights</h2>
+            <p className="text-gray-600">Available selected "dumping" flights for the selected date</p>
           </div>
           
           {koreanAirLoading ? (
             <div className="flex items-center justify-center min-h-[200px]">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-muted-foreground">Loading Korean Air flights...</p>
+                <p className="text-muted-foreground">Loading "dumping" flights...</p>
               </div>
             </div>
           ) : (
