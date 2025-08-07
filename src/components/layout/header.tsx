@@ -27,6 +27,7 @@ const aviationData = [
 
 const specialAwards = [
   { name: 'Etihad on JetBlue', href: '/jetblue/etihad' },
+  { name: 'Delta on Virgin Dumping', href: '/delta-virgin-dumping' },
 ];
 
 export function Header() {
