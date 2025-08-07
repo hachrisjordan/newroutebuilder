@@ -891,26 +891,7 @@ export default function DeltaVirginDumpingPage() {
                                   ({flight.Aircraft.join(', ')})
                                 </span>
                               </div>
-                              <div className="flex flex-col gap-2 mt-2">
-                                {flight.economy && (
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-medium">Economy:</span>
-                                    <span className="rounded px-2 py-0.5 font-mono font-bold text-sm" style={{ background: '#F3CD87', color: '#222' }}>
-                                      {flight.economyMiles.toLocaleString()} miles
-                                    </span>
-                                    <span className="text-sm text-muted-foreground">+ ${(flight.TotalTaxes / 100).toFixed(2)}</span>
-                                  </div>
-                                )}
-                                {flight.business && (
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-medium">Business:</span>
-                                    <span className="rounded px-2 py-0.5 font-mono font-bold text-sm" style={{ background: '#F3CD87', color: '#222' }}>
-                                      {flight.businessMiles.toLocaleString()} miles
-                                    </span>
-                                    <span className="text-sm text-muted-foreground">+ ${(flight.TotalTaxes / 100).toFixed(2)}</span>
-                                  </div>
-                                )}
-                              </div>
+
                             </div>
                           </div>
                         </div>
@@ -922,14 +903,16 @@ export default function DeltaVirginDumpingPage() {
             </div>
           )}
 
-          {/* Korean Air Pagination */}
-          <div className="flex justify-center items-center mt-8">
-            <Pagination
-              currentPage={koreanAirCurrentPage - 1}
-              totalPages={koreanAirTotalPages}
-              onPageChange={handleKoreanAirPageChange}
-            />
-          </div>
+          {/* Korean Air Pagination - Only show when not both flights are selected */}
+          {(!selectedFlight || !selectedKoreanAirClass) && (
+            <div className="flex justify-center items-center mt-8">
+              <Pagination
+                currentPage={koreanAirCurrentPage - 1}
+                totalPages={koreanAirTotalPages}
+                onPageChange={handleKoreanAirPageChange}
+              />
+            </div>
+          )}
 
           {/* Combined Booking Section - Only show when both Delta and Korean Air are selected */}
           {selectedFlight && selectedKoreanAirClass && (
