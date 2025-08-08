@@ -630,25 +630,32 @@ export default function VirginDumpingPage() {
                   </div>
                   <div className="flex flex-wrap gap-4 items-center">
                     <span className="text-sm font-medium flex flex-col gap-2">
-                      {/* Original pricing row - grayed out with strikethrough */}
-                      <span className="flex items-center gap-4 text-gray-400 line-through">
-                        <span className="flex items-center gap-1">
-                          Seats:
-                          <span className="rounded px-2 py-0.5 font-mono font-bold text-sm" style={{ background: '#E5E7EB', color: '#6B7280' }}>
-                            {flight.RemainingSeats}
+                      {/* Original pricing row - only show if different from second row */}
+                      {(() => {
+                        const secondRowMiles = Math.max(29000, Math.floor(flight.MileageCost / 2));
+                        const isDifferent = secondRowMiles < flight.MileageCost;
+                        
+                        return isDifferent ? (
+                          <span className="flex items-center gap-4 text-gray-400 line-through">
+                            <span className="flex items-center gap-1">
+                              Seats:
+                              <span className="rounded px-2 py-0.5 font-mono font-bold text-sm" style={{ background: '#E5E7EB', color: '#6B7280' }}>
+                                {flight.RemainingSeats}
+                              </span>
+                            </span>
+                            <span className="flex items-center gap-2">
+                              Business:
+                              <span className="rounded px-2 py-0.5 font-mono font-bold text-sm" style={{ background: '#E5E7EB', color: '#6B7280' }}>
+                                {flight.MileageCost.toLocaleString()}
+                              </span>
+                              +
+                              <span className="font-mono text-sm">
+                                ${(flight.TotalTaxes / 100).toFixed(2)}
+                              </span>
+                            </span>
                           </span>
-                        </span>
-                        <span className="flex items-center gap-2">
-                          Business:
-                          <span className="rounded px-2 py-0.5 font-mono font-bold text-sm" style={{ background: '#E5E7EB', color: '#6B7280' }}>
-                            {flight.MileageCost.toLocaleString()}
-                          </span>
-                          +
-                          <span className="font-mono text-sm">
-                            ${(flight.TotalTaxes / 100).toFixed(2)}
-                          </span>
-                        </span>
-                      </span>
+                        ) : null;
+                      })()}
                       {/* Half points pricing row */}
                       <span className="flex items-center gap-4">
                         <span className="flex items-center gap-1">
