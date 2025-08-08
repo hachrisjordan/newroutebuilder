@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Select, Input, Button, Space, Modal, Checkbox } from 'antd';
-import { FilterOutlined } from '@ant-design/icons';
+import React, { useState, useEffect } from 'react';
+import { Filter } from 'lucide-react';
 import airlines from '../../airlines_full';
 import { parseSearchInput, resolveVariant, isValidRegistration } from '../lib/seat-viewer-utils';
 import { ALLOWED_AIRLINES } from '../lib/seat-viewer-constants';
@@ -10,8 +9,24 @@ import { useFlightData } from '../hooks/useFlightData';
 import RegistrationCalendar from './seat-type-viewer/RegistrationCalendar';
 import VariantAnalysis from './seat-type-viewer/VariantAnalysis';
 import DelayAnalysis from './seat-type-viewer/DelayAnalysis';
-
-const { Option } = Select;
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 const SeatTypeViewer: React.FC = () => {
   const [selectedAirline, setSelectedAirline] = useState<string | null>(null);
@@ -122,74 +137,63 @@ const SeatTypeViewer: React.FC = () => {
         backgroundColor: 'white',
         border: '1px solid #f0f0f0'
       }}>
-        <div style={{ marginBottom: '16px' }}>
-          <Space wrap size={16}>
+        <div className="mb-4">
+          <div className="flex flex-wrap gap-4">
             <div>
-              <div style={{ fontWeight: 500, marginBottom: 4 }}>Airline</div>
+              <Label htmlFor="airline-select" className="font-medium mb-1">Airline</Label>
               <Select
-                showSearch
-                style={{ width: 240 }}
-                placeholder="Select an airline"
-                value={selectedAirline}
-                onChange={setSelectedAirline}
-                loading={seatDataLoading}
-                optionFilterProp="label"
-                filterOption={(input, option) => {
-                  if (!option) return false;
-                  const searchTerm = parseSearchInput(input);
-                  if (!searchTerm) return true;
-                  
-                  const label = String(option.label || '').toLowerCase();
-                  const value = String(option.value || '').toLowerCase();
-                  
-                  return label.includes(searchTerm) || value.includes(searchTerm);
-                }}
+                value={selectedAirline || ''}
+                onValueChange={setSelectedAirline}
+                disabled={seatDataLoading}
               >
-                {sortedAirlines.map(airline => (
-                  <Option key={airline.value} value={airline.value} label={airline.label}>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      {airline.flag && (
-                        <span className={`flag-icon flag-icon-${airline.flag.toLowerCase()}`} style={{ marginRight: 8 }} />
-                      )}
-                      {airline.label}
-                    </div>
-                  </Option>
-                ))}
+                <SelectTrigger className="w-60" id="airline-select">
+                  <SelectValue placeholder="Select an airline" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sortedAirlines.map(airline => (
+                    <SelectItem key={airline.value} value={airline.value}>
+                      <div className="flex items-center">
+                        {airline.flag && (
+                          <span className={`flag-icon flag-icon-${airline.flag.toLowerCase()} mr-2`} />
+                        )}
+                        {airline.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
-            
+
             <div>
-              <div style={{ fontWeight: 500, marginBottom: 4 }}>Flight Number</div>
+              <Label htmlFor="flight-number-input" className="font-medium mb-1">Flight Number</Label>
               <Input
-                style={{ width: 120 }}
+                id="flight-number-input"
+                className="w-32"
                 placeholder="e.g. 123"
                 value={flightNumber}
                 onChange={(e) => setFlightNumber(e.target.value)}
-                onPressEnter={handleSearch}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               />
             </div>
-            
-            <div style={{ display: 'flex', alignItems: 'end' }}>
+
+            <div className="flex items-end">
               <Button
-                type="primary"
                 onClick={handleSearch}
-                loading={loading}
-                disabled={!selectedAirline || !flightNumber}
-                style={{ backgroundColor: '#000000' }}
+                disabled={loading || !selectedAirline || !flightNumber}
               >
-                Search
+                {loading ? 'Searching...' : 'Search'}
               </Button>
             </div>
-            
-            <div style={{ display: 'flex', alignItems: 'end' }}>
+
+            <div className="flex items-end">
               <Button
+                variant="ghost"
                 onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
-                style={{ color: '#666' }}
               >
                 {isAdvancedOpen ? 'Hide' : 'Show'} Advanced Search
               </Button>
             </div>
-          </Space>
+          </div>
         </div>
         
                  {/* Advanced Search - Temporarily disabled */}
@@ -207,37 +211,27 @@ const SeatTypeViewer: React.FC = () => {
       
       {/* Results */}
       {dataFetched && (
-        <div 
-          style={{ 
-            borderRadius: '8px',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-            marginTop: '20px',
-            padding: '24px',
-            width: 'fit-content',
-            overflow: 'visible',
-            backgroundColor: 'white',
-            border: '1px solid #f0f0f0'
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+        <div className="rounded-lg shadow-lg mt-5 p-6 w-fit overflow-visible bg-white border border-gray-200">
+          <div className="flex justify-end mb-4">
             <Button
-              icon={<FilterOutlined />}
+              variant="outline"
               onClick={() => setFilterModalVisible(true)}
               disabled={availableVariants.length === 0}
             >
+              <Filter className="mr-2 h-4 w-4" />
               Filter Variants
             </Button>
           </div>
 
-          <RegistrationCalendar 
-            registrationData={getFilteredRegistrationData()} 
+          <RegistrationCalendar
+            registrationData={getFilteredRegistrationData()}
             airline={selectedAirline!}
             flightNumber={flightNumber}
             seatData={seatData}
           />
         </div>
       )}
-      
+
       {/* Analysis Components */}
       {dataFetched && seatData && (
         <>
@@ -251,49 +245,49 @@ const SeatTypeViewer: React.FC = () => {
           />
         </>
       )}
-      
+
       {/* Filter Modal */}
-      <Modal
-        title="Filter Aircraft Variants"
-        open={filterModalVisible}
-        onOk={() => setFilterModalVisible(false)}
-        onCancel={() => setFilterModalVisible(false)}
-        width={600}
-      >
-        <div style={{ width: '100%' }}>
-          {availableVariants.map(variant => (
-            <div key={variant.variant} style={{ marginBottom: 8 }}>
-              <Checkbox
-                checked={selectedVariants.includes(variant.variant)}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    setSelectedVariants([...selectedVariants, variant.variant]);
-                  } else {
-                    setSelectedVariants(selectedVariants.filter(v => v !== variant.variant));
-                  }
-                }}
-                style={{ marginRight: 8 }}
-              >
-                <span style={{ fontWeight: 'bold' }}>
-                  {variant.aircraftType} ({variant.variant})
-                </span>
-                <span style={{ fontStyle: 'italic', marginLeft: '10px' }}>- {variant.note}</span>
-              </Checkbox>
-            </div>
-          ))}
-        </div>
-        
-        {selectedVariants.length > 0 && (
-          <div style={{ marginTop: '20px', textAlign: 'right' }}>
-            <Button 
-              type="link" 
-              onClick={() => setSelectedVariants([])}
-            >
-              Clear All
-            </Button>
+      <Dialog open={filterModalVisible} onOpenChange={setFilterModalVisible}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Filter Aircraft Variants</DialogTitle>
+          </DialogHeader>
+          <div className="w-full">
+            {availableVariants.map((variant, index) => (
+              <div key={variant.variant} className="mb-2 flex items-center">
+                <Checkbox
+                  id={`variant-${index}`}
+                  checked={selectedVariants.includes(variant.variant)}
+                  onCheckedChange={(checked) => {
+                    const newSelectedVariants = checked
+                      ? [...selectedVariants, variant.variant]
+                      : selectedVariants.filter(v => v !== variant.variant);
+                    setSelectedVariants(newSelectedVariants);
+                  }}
+                  className="mr-2"
+                />
+                <Label htmlFor={`variant-${index}`} className="flex-grow">
+                  <span className="font-bold">
+                    {variant.aircraftType} ({variant.variant})
+                  </span>
+                  <span className="italic ml-2">- {variant.note}</span>
+                </Label>
+              </div>
+            ))}
           </div>
-        )}
-      </Modal>
+          <DialogFooter>
+            {selectedVariants.length > 0 && (
+              <Button
+                variant="link"
+                onClick={() => setSelectedVariants([])}
+              >
+                Clear All
+              </Button>
+            )}
+            <Button onClick={() => setFilterModalVisible(false)}>Done</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
