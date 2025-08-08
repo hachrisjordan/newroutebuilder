@@ -521,7 +521,7 @@ export default function VirginDumpingPage() {
                               }, 3000);
                             }
                           } catch (error) {
-                            console.error('Error refreshing data:', error);
+                            // Error handling without console logging
                           } finally {
                             setLoading(false);
                           }
