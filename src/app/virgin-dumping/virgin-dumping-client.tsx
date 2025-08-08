@@ -18,20 +18,21 @@ import airportsData from '@/data/airports.json';
 import type { DateRange } from 'react-day-picker';
 
 interface VirginAtlanticFlight {
-  id: string;
-  total_duration: number;
-  remaining_seats: number;
-  mileage_cost: number;
-  origin_airport: string;
-  destination_airport: string;
-  aircraft: string[];
-  flight_numbers: string;
-  departs_at: string;
-  cabin: string;
-  arrives_at: string;
-  updated_at: string;
-  created_at: string;
-  search_date: string;
+  TotalDuration: number;
+  RemainingSeats: number;
+  MileageCost: number;
+  OriginAirport: string;
+  DestinationAirport: string;
+  Aircraft: string[];
+  FlightNumbers: string;
+  DepartsAt: string;
+  Cabin: string;
+  ArrivesAt: string;
+  UpdatedAt: string;
+  Source: string;
+  virginatlantic: boolean;
+  TotalTaxes: number;
+  TaxesCurrency: string;
 }
 
 interface KoreanAirFlight {
@@ -51,10 +52,10 @@ interface KoreanAirFlight {
   businessMiles: number;
 }
 
-export default function DeltaVirginDumpingPage() {
+export default function VirginDumpingPage() {
   const [flights, setFlights] = useState<VirginAtlanticFlight[]>([]);
   const [koreanAirFlights, setKoreanAirFlights] = useState<KoreanAirFlight[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [koreanAirLoading, setKoreanAirLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -71,26 +72,36 @@ export default function DeltaVirginDumpingPage() {
   const PAGE_SIZE = 10;
   const KOREAN_AIR_PAGE_SIZE = 10;
 
-  useEffect(() => {
-    fetchFlights();
-  }, []);
+  // Removed automatic fetch - now user must click search button
 
   const fetchFlights = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const supabase = createSupabaseBrowserClient();
-      const { data, error } = await supabase
-        .from('virgin_atlantic_flights')
-        .select('*')
-        .order('departs_at', { ascending: true });
-
-      if (error) {
-        throw error;
+      // Build API URL with parameters
+      const params = new URLSearchParams();
+      
+      // Add direction parameter
+      if (europeFilter !== 'any') {
+        params.append('direction', europeFilter);
       }
-
-      setFlights(data || []);
+      
+      // Add date range parameters
+      if (date?.from && date?.to) {
+        params.append('start_date', format(date.from, 'yyyy-MM-dd'));
+        params.append('end_date', format(date.to, 'yyyy-MM-dd'));
+      }
+      
+      const apiUrl = `https://api.bbairtools.com/api/seats-aero-virginatlantic-vs?${params.toString()}`;
+      
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setFlights(data.trips || []);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch flights');
     } finally {
@@ -178,6 +189,20 @@ export default function DeltaVirginDumpingPage() {
     );
   };
 
+  // Currency conversion function for Saudi Airlines taxes
+  const convertTaxToUSD = (taxAmount: number, originAirport: string, destinationAirport: string) => {
+    // DXB-RUH: AED to USD (1 USD = 3.67 AED)
+    if (originAirport === 'DXB' && destinationAirport === 'RUH') {
+      return (taxAmount / 100) / 3.67; // Convert from AED to USD
+    }
+    // RUH-DXB: SAR to USD (1 USD = 3.75 SAR)
+    if (originAirport === 'RUH' && destinationAirport === 'DXB') {
+      return (taxAmount / 100) / 3.75; // Convert from SAR to USD
+    }
+    // Default: assume USD (divide by 100 for cents)
+    return taxAmount / 100;
+  };
+
   // Build IATA to CityName map
   const iataToCity: Record<string, string> = {};
   (airportsData as any[]).forEach((airport: any) => {
@@ -186,13 +211,13 @@ export default function DeltaVirginDumpingPage() {
 
   const filteredFlights = flights.filter(flight => {
     const matchesSearch = 
-      flight.origin_airport.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      flight.destination_airport.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      flight.flight_numbers.toLowerCase().includes(searchTerm.toLowerCase());
+      flight.OriginAirport.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      flight.DestinationAirport.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      flight.FlightNumbers.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesDateRange = (() => {
       if (!date?.from) return true;
-      const flightDate = new Date(flight.departs_at);
+      const flightDate = new Date(flight.DepartsAt);
       const fromDate = date.from;
       const toDate = date.to || date.from;
       
@@ -203,8 +228,8 @@ export default function DeltaVirginDumpingPage() {
     const matchesEuropeFilter = (() => {
       if (europeFilter === 'any') return true;
       
-      const originAirport = (airportsData as any[]).find((airport: any) => airport.IATA === flight.origin_airport);
-      const destinationAirport = (airportsData as any[]).find((airport: any) => airport.IATA === flight.destination_airport);
+      const originAirport = (airportsData as any[]).find((airport: any) => airport.IATA === flight.OriginAirport);
+      const destinationAirport = (airportsData as any[]).find((airport: any) => airport.IATA === flight.DestinationAirport);
       
       if (europeFilter === 'from_europe') {
         return originAirport?.copazone === 'Europe';
@@ -217,8 +242,9 @@ export default function DeltaVirginDumpingPage() {
       return true;
     })();
 
-    // Selected flight filtering
-    const matchesSelectedFlight = selectedFlight ? flight.id === selectedFlight : true;
+    // Selected flight filtering - create unique identifier for each flight
+    const flightUniqueId = `${flight.FlightNumbers}-${flight.DepartsAt}-${flight.OriginAirport}-${flight.DestinationAirport}`;
+    const matchesSelectedFlight = selectedFlight ? flightUniqueId === selectedFlight : true;
     
     return matchesSearch && matchesDateRange && matchesEuropeFilter && matchesSelectedFlight;
   });
@@ -226,13 +252,13 @@ export default function DeltaVirginDumpingPage() {
   const sortedFlights = [...filteredFlights].sort((a, b) => {
     switch (sortBy) {
       case 'departs_at':
-        return new Date(a.departs_at).getTime() - new Date(b.departs_at).getTime();
+        return new Date(a.DepartsAt).getTime() - new Date(b.DepartsAt).getTime();
       case 'mileage_cost':
-        return a.mileage_cost - b.mileage_cost;
+        return a.MileageCost - b.MileageCost;
       case 'remaining_seats':
-        return b.remaining_seats - a.remaining_seats;
+        return b.RemainingSeats - a.RemainingSeats;
       case 'total_duration':
-        return a.total_duration - b.total_duration;
+        return a.TotalDuration - b.TotalDuration;
       default:
         return 0;
     }
@@ -260,9 +286,14 @@ export default function DeltaVirginDumpingPage() {
     
     // If selecting a flight, call the Korean Air API
     if (selectedFlight !== flightId) {
-      const selectedFlightData = flights.find(flight => flight.id === flightId);
+      // The flightId is the unique identifier, so we need to find the flight by reconstructing it
+      const selectedFlightData = flights.find(flight => {
+        const flightUniqueId = `${flight.FlightNumbers}-${flight.DepartsAt}-${flight.OriginAirport}-${flight.DestinationAirport}`;
+        return flightUniqueId === flightId;
+      });
+      
       if (selectedFlightData) {
-        callKoreanAirAPI(selectedFlightData.departs_at);
+        callKoreanAirAPI(selectedFlightData.DepartsAt);
       }
     } else {
       // If deselecting (selectedFlight === flightId), clear Korean Air flights and selection
@@ -275,26 +306,26 @@ export default function DeltaVirginDumpingPage() {
     try {
       setKoreanAirLoading(true);
       // Extract just the date part from the departure date
-      const dateOnly = departureDate.split(' ')[0]; // Get YYYY-MM-DD part
+      const dateOnly = departureDate.split('T')[0]; // Get YYYY-MM-DD part
       
-      const response = await fetch(`https://api.bbairtools.com/api/seats-aero-koreanair?date=${dateOnly}`);
+      const apiUrl = `https://api.bbairtools.com/api/seats-aero-saudiairlines?start_date=${dateOnly}`;
+      
+      const response = await fetch(apiUrl);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
-      console.log('Korean Air API response:', data);
       
-      // Store the Korean Air flights data
-      if (data.trips && Array.isArray(data.trips)) {
-        setKoreanAirFlights(data.trips);
+      // Store all Saudi Airlines flights from the response
+      if (data.trips && Array.isArray(data.trips) && data.trips.length > 0) {
+        setKoreanAirFlights(data.trips); // Show all flights
       } else {
         setKoreanAirFlights([]);
       }
       
     } catch (error) {
-      console.error('Error calling Korean Air API:', error);
       setKoreanAirFlights([]);
     } finally {
       setKoreanAirLoading(false);
@@ -324,7 +355,7 @@ export default function DeltaVirginDumpingPage() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading Virgin Atlantic flights...</p>
+            <p className="text-muted-foreground">Searching Virgin Atlantic flights...</p>
           </div>
         </div>
       </div>
@@ -345,20 +376,24 @@ export default function DeltaVirginDumpingPage() {
 
   return (
     <div className="max-w-[1000px] mx-auto px-4 py-6">
-      {/* Filters */}
+      {/* Search Section */}
       <div className="mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Search */}
+          {/* Direction */}
           <div className="flex flex-col justify-center">
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-100 mb-2">
-              Search
+              Direction
             </label>
-            <Input
-              placeholder="Search by airport or flight number..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 dark:placeholder:text-gray-400"
-            />
+            <Select value={europeFilter} onValueChange={setEuropeFilter}>
+              <SelectTrigger className="w-full dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100">
+                <SelectValue placeholder="Select direction" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="any">Any</SelectItem>
+                <SelectItem value="from_europe">From Europe</SelectItem>
+                <SelectItem value="to_europe">To Europe</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Date Range */}
@@ -366,7 +401,7 @@ export default function DeltaVirginDumpingPage() {
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-100 mb-2">
               Date Range
             </label>
-            <Popover open={open} onOpenChange={setOpen}>
+            <Popover>
               <PopoverTrigger asChild>
                 <Button
                   type="button"
@@ -401,31 +436,25 @@ export default function DeltaVirginDumpingPage() {
                   onMonthChange={setCurrentMonth}
                   onSelect={(range) => {
                     setDate(range);
-                    if (range?.from && range?.to) setOpen(false);
                   }}
                 />
               </PopoverContent>
             </Popover>
           </div>
 
-          {/* Europe Filter */}
-          <div className="flex flex-col justify-center">
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-100 mb-2">
-              Direction
-            </label>
-            <Select value={europeFilter} onValueChange={setEuropeFilter}>
-              <SelectTrigger className="w-full dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100">
-                <SelectValue placeholder="Europe Route" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="any">Any</SelectItem>
-                <SelectItem value="from_europe">From Europe</SelectItem>
-                <SelectItem value="to_europe">To Europe</SelectItem>
-              </SelectContent>
-            </Select>
+          {/* Search Button */}
+          <div className="flex flex-col justify-end">
+            <Button 
+              onClick={fetchFlights}
+              className="w-full"
+            >
+              Search
+            </Button>
           </div>
         </div>
       </div>
+
+
 
       {/* Sort By - Outside the card */}
       <div className="mb-6">
@@ -449,14 +478,14 @@ export default function DeltaVirginDumpingPage() {
       {(() => {
         if (flights.length === 0) return null;
         
-        // Find the most recent created_at timestamp
-        const mostRecentCreatedAt = flights.reduce((latest, flight) => {
-          const flightCreatedAt = new Date(flight.created_at);
-          return flightCreatedAt > latest ? flightCreatedAt : latest;
+        // Find the most recent UpdatedAt timestamp
+        const mostRecentUpdatedAt = flights.reduce((latest, flight) => {
+          const flightUpdatedAt = new Date(flight.UpdatedAt);
+          return flightUpdatedAt > latest ? flightUpdatedAt : latest;
         }, new Date(0));
         
         const now = new Date();
-        const ageInHours = (now.getTime() - mostRecentCreatedAt.getTime()) / (1000 * 60 * 60);
+        const ageInHours = (now.getTime() - mostRecentUpdatedAt.getTime()) / (1000 * 60 * 60);
         
         if (ageInHours > 1) {
           const ageInMinutes = Math.floor(ageInHours * 60);
@@ -525,34 +554,35 @@ export default function DeltaVirginDumpingPage() {
           </Card>
         ) : (
           paginatedFlights.map((flight) => {
-            const isExpanded = expandedId === flight.id;
+            const flightUniqueId = `${flight.FlightNumbers}-${flight.DepartsAt}-${flight.OriginAirport}-${flight.DestinationAirport}`;
+            const isExpanded = expandedId === flightUniqueId;
             return (
-              <Card key={flight.id} className={`rounded-xl border bg-card shadow transition-all ${
-                selectedFlight === flight.id ? 'ring-2 ring-primary ring-offset-2' : ''
+              <Card key={flightUniqueId} className={`rounded-xl border bg-card shadow transition-all ${
+                selectedFlight === flightUniqueId ? 'ring-2 ring-primary ring-offset-2' : ''
               }`}>
                 <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between py-4 gap-2 p-4 w-full">
                   <div className="flex flex-col md:flex-row md:items-center gap-2 w-full">
                     <span className="font-semibold text-lg text-primary">
-                      {flight.origin_airport} → {flight.destination_airport}
+                      {flight.OriginAirport} → {flight.DestinationAirport}
                     </span>
                     <span className="text-muted-foreground text-sm md:ml-4">
-                      {formatDate(flight.departs_at)}
+                      {formatDate(flight.DepartsAt)}
                     </span>
                   </div>
                   <div className="flex flex-col md:flex-row md:items-center w-full md:w-auto gap-1 md:gap-6 mt-2 md:mt-0 ml-auto">
                     <div className="flex items-center gap-6">
                       <span className="text-sm font-mono text-muted-foreground font-bold whitespace-nowrap">
-                        {formatDuration(flight.total_duration)}
+                        {formatDuration(flight.TotalDuration)}
                       </span>
                       <div className="flex items-center gap-2 whitespace-nowrap">
                         <span className="text-sm font-medium">
-                          {formatTime(flight.departs_at)}
+                          {formatTime(flight.DepartsAt)}
                         </span>
                         <span className="text-muted-foreground">→</span>
                         <span className="text-sm font-medium">
-                          {formatTime(flight.arrives_at)}
+                          {formatTime(flight.ArrivesAt)}
                           {(() => {
-                            const diff = getDateDifference(flight.departs_at, flight.arrives_at);
+                            const diff = getDateDifference(flight.DepartsAt, flight.ArrivesAt);
                             return diff > 0 ? (
                               <span className="text-xs text-muted-foreground ml-1">(+{diff})</span>
                             ) : null;
@@ -562,7 +592,7 @@ export default function DeltaVirginDumpingPage() {
                     </div>
                   </div>
                   <button
-                    onClick={() => handleExpandToggle(flight.id)}
+                    onClick={() => handleExpandToggle(flightUniqueId)}
                     className="ml-2 p-1 hover:bg-muted rounded transition-colors self-start md:self-center"
                     aria-label={isExpanded ? "Collapse details" : "Expand details"}
                   >
@@ -577,43 +607,65 @@ export default function DeltaVirginDumpingPage() {
                   <div className="flex flex-wrap gap-2 items-center">
                     <span className="flex items-center gap-1">
                       <Image
-                        src={getAirlineLogo(flight.flight_numbers)}
-                        alt={flight.flight_numbers.startsWith('DL') ? 'Delta' : 'Virgin Atlantic'}
+                        src={getAirlineLogo(flight.FlightNumbers)}
+                        alt={flight.FlightNumbers.startsWith('DL') ? 'Delta' : 'Virgin Atlantic'}
                         width={24}
                         height={24}
                         className="inline-block align-middle rounded-md"
                         style={{ objectFit: 'contain' }}
                       />
-                      <span className="font-mono">{flight.flight_numbers}</span>
+                      <span className="font-mono">{flight.FlightNumbers}</span>
                       <button
-                        onClick={() => handleFlightSelect(flight.id)}
+                        onClick={() => handleFlightSelect(flightUniqueId)}
                         className={`ml-2 px-2 py-1 text-xs rounded transition-colors ${
-                          selectedFlight === flight.id
+                          selectedFlight === flightUniqueId
                             ? 'bg-primary text-primary-foreground'
                             : 'bg-muted hover:bg-muted/80 text-muted-foreground'
                         }`}
-                        aria-label={selectedFlight === flight.id ? "Deselect flight" : "Select flight"}
+                        aria-label={selectedFlight === flightUniqueId ? "Deselect flight" : "Select flight"}
                       >
-                        {selectedFlight === flight.id ? 'Selected' : 'Select'}
+                        {selectedFlight === flightUniqueId ? 'Selected' : 'Select'}
                       </button>
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-4 items-center">
-                    <span className="text-sm font-medium flex items-center gap-4">
-                      <span className="flex items-center gap-1">
-                        Seats:
-                        <span className="rounded px-2 py-0.5 font-mono font-bold text-sm" style={{ background: '#F3CD87', color: '#222' }}>
-                          {flight.remaining_seats}
+                    <span className="text-sm font-medium flex flex-col gap-2">
+                      {/* Original pricing row - grayed out with strikethrough */}
+                      <span className="flex items-center gap-4 text-gray-400 line-through">
+                        <span className="flex items-center gap-1">
+                          Seats:
+                          <span className="rounded px-2 py-0.5 font-mono font-bold text-sm" style={{ background: '#E5E7EB', color: '#6B7280' }}>
+                            {flight.RemainingSeats}
+                          </span>
+                        </span>
+                        <span className="flex items-center gap-2">
+                          Business:
+                          <span className="rounded px-2 py-0.5 font-mono font-bold text-sm" style={{ background: '#E5E7EB', color: '#6B7280' }}>
+                            {flight.MileageCost.toLocaleString()}
+                          </span>
+                          +
+                          <span className="font-mono text-sm">
+                            ${(flight.TotalTaxes / 100).toFixed(2)}
+                          </span>
                         </span>
                       </span>
-                      <span className="flex items-center gap-2">
-                        Business:
-                        <span className="rounded px-2 py-0.5 font-mono font-bold text-sm" style={{ background: '#F3CD87', color: '#222' }}>
-                          {flight.mileage_cost.toLocaleString()}
+                      {/* Half points pricing row */}
+                      <span className="flex items-center gap-4">
+                        <span className="flex items-center gap-1">
+                          Seats:
+                          <span className="rounded px-2 py-0.5 font-mono font-bold text-sm" style={{ background: '#F3CD87', color: '#222' }}>
+                            {flight.RemainingSeats}
+                          </span>
                         </span>
-                        +
-                        <span className="font-mono text-sm">
-                          $1027.80
+                        <span className="flex items-center gap-2">
+                          Business:
+                          <span className="rounded px-2 py-0.5 font-mono font-bold text-sm" style={{ background: '#F3CD87', color: '#222' }}>
+                            {(flight.MileageCost / 2).toLocaleString()}
+                          </span>
+                          +
+                          <span className="font-mono text-sm">
+                            ${(flight.TotalTaxes / 100).toFixed(2)}
+                          </span>
                         </span>
                       </span>
                     </span>
@@ -631,22 +683,22 @@ export default function DeltaVirginDumpingPage() {
                             <div className="flex flex-col w-full md:flex-row md:items-center md:gap-6">
                               <div className="flex items-center gap-2 w-full md:w-auto">
                                 <span className="font-semibold text-primary break-words whitespace-normal">
-                                  {iataToCity[flight.origin_airport] || flight.origin_airport} ({flight.origin_airport}) → {iataToCity[flight.destination_airport] || flight.destination_airport} ({flight.destination_airport})
+                                  {iataToCity[flight.OriginAirport] || flight.OriginAirport} ({flight.OriginAirport}) → {iataToCity[flight.DestinationAirport] || flight.DestinationAirport} ({flight.DestinationAirport})
                                 </span>
                               </div>
                               <div className="flex flex-row justify-between items-center w-full md:w-auto mt-1 md:mt-0 md:ml-auto md:gap-6">
                                 <span className="text-sm font-mono text-muted-foreground font-bold">
-                                  {formatDuration(flight.total_duration)}
+                                  {formatDuration(flight.TotalDuration)}
                                 </span>
                                 <div className="flex items-center gap-2">
                                   <span className="text-sm font-medium">
-                                    {formatTime(flight.departs_at)}
+                                    {formatTime(flight.DepartsAt)}
                                   </span>
                                   <span className="text-muted-foreground">→</span>
                                   <span className="text-sm font-medium">
-                                    {formatTime(flight.arrives_at)}
+                                    {formatTime(flight.ArrivesAt)}
                                     {(() => {
-                                      const diff = getDateDifference(flight.departs_at, flight.arrives_at);
+                                      const diff = getDateDifference(flight.DepartsAt, flight.ArrivesAt);
                                       return diff > 0 ? (
                                         <span className="text-xs text-muted-foreground ml-1">(+{diff})</span>
                                       ) : null;
@@ -658,16 +710,16 @@ export default function DeltaVirginDumpingPage() {
                           </div>
                           <div className="flex flex-row items-center gap-2 mt-1">
                             <Image
-                              src={getAirlineLogo(flight.flight_numbers)}
-                              alt={flight.flight_numbers.startsWith('DL') ? 'Delta' : 'Virgin Atlantic'}
+                              src={getAirlineLogo(flight.FlightNumbers)}
+                              alt={flight.FlightNumbers.startsWith('DL') ? 'Delta' : 'Virgin Atlantic'}
                               width={20}
                               height={20}
                               className="inline-block align-middle rounded-md"
                               style={{ objectFit: 'contain' }}
                             />
-                            <span className="font-mono text-sm">{flight.flight_numbers}</span>
+                            <span className="font-mono text-sm">{flight.FlightNumbers}</span>
                             <span className="text-xs text-muted-foreground ml-1">
-                              ({flight.aircraft.join(', ')})
+                              ({flight.Aircraft.join(', ')})
                             </span>
                           </div>
                         </div>
@@ -690,12 +742,14 @@ export default function DeltaVirginDumpingPage() {
         />
       </div>
 
-      {/* Korean Air Flights Section */}
+
+
+      {/* Saudi Airlines Flights Section */}
       {(koreanAirFlights.length > 0 || koreanAirLoading) && (
         <div className="mt-12">
           <div className="mb-6">
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">"Dumping" Flights</h2>
-        <p className="text-gray-600 dark:text-gray-300">Available selected "dumping" flights for the selected date</p>
+        <p className="text-gray-600 dark:text-gray-300">Available "dumping" flights for the selected date</p>
           </div>
           
           {koreanAirLoading ? (
@@ -773,8 +827,8 @@ export default function DeltaVirginDumpingPage() {
                       <div className="flex flex-wrap gap-2 items-center">
                         <span className="flex items-center gap-1">
                           <Image
-                            src="/KE.png"
-                            alt="Korean Air"
+                            src="/SV.png"
+                            alt="Saudi Airlines"
                             width={24}
                             height={24}
                             className="inline-block align-middle rounded-md"
@@ -808,7 +862,7 @@ export default function DeltaVirginDumpingPage() {
                               </span>
                               +
                               <span className="font-mono text-sm">
-                                ${(flight.TotalTaxes / 100).toFixed(2)}
+                                ${convertTaxToUSD(flight.TotalTaxes, flight.OriginAirport, flight.DestinationAirport).toFixed(2)}
                               </span>
                             </span>
                           )}
@@ -835,7 +889,7 @@ export default function DeltaVirginDumpingPage() {
                               </span>
                               +
                               <span className="font-mono text-sm">
-                                ${(flight.TotalTaxes / 100).toFixed(2)}
+                                ${convertTaxToUSD(flight.TotalTaxes, flight.OriginAirport, flight.DestinationAirport).toFixed(2)}
                               </span>
                             </span>
                           )}
@@ -878,8 +932,8 @@ export default function DeltaVirginDumpingPage() {
                               </div>
                               <div className="flex flex-row items-center gap-2 mt-1">
                                 <Image
-                                  src="/KE.png"
-                                  alt="Korean Air"
+                                  src="/SV.png"
+                                  alt="Saudi Airlines"
                                   width={20}
                                   height={20}
                                   className="inline-block align-middle rounded-md"
@@ -928,16 +982,32 @@ export default function DeltaVirginDumpingPage() {
                     <div className="flex flex-col gap-3">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Selected Flights</h3>
                       
-                      {/* Delta Flight */}
+                      {/* Virgin Atlantic Flight */}
                       {(() => {
-                        const selectedDeltaFlight = flights.find(f => f.id === selectedFlight);
-                        if (!selectedDeltaFlight) return null;
+                        // Parse the unique identifier to find the exact flight
+                        // The format is: "VS26-2025-08-08T08:10:00-JFK-LHR"
+                        // We need to handle the date which contains hyphens
+                        const parts = selectedFlight.split('-');
+                        const flightNumber = parts[0];
+                        const destinationAirport = parts[parts.length - 1];
+                        const originAirport = parts[parts.length - 2];
+                        // Reconstruct the date by joining the middle parts
+                        const departsAt = parts.slice(1, -2).join('-');
+                        
+                        const selectedVirginFlight = flights.find(flight => 
+                          flight.FlightNumbers === flightNumber &&
+                          flight.DepartsAt === departsAt &&
+                          flight.OriginAirport === originAirport &&
+                          flight.DestinationAirport === destinationAirport
+                        );
+                        
+                        if (!selectedVirginFlight) return null;
                         
                         return (
                           <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border dark:border-gray-700">
                             <Image
-                              src={getAirlineLogo(selectedDeltaFlight.flight_numbers)}
-                              alt={selectedDeltaFlight.flight_numbers.startsWith('DL') ? 'Delta' : 'Virgin Atlantic'}
+                              src={getAirlineLogo(selectedVirginFlight.FlightNumbers)}
+                              alt="Virgin Atlantic"
                               width={20}
                               height={20}
                               className="rounded-md"
@@ -945,34 +1015,37 @@ export default function DeltaVirginDumpingPage() {
                             />
                             <div className="flex-1">
                               <div className="font-medium dark:text-gray-100">
-                                {selectedDeltaFlight.origin_airport} → {selectedDeltaFlight.destination_airport}
+                                {selectedVirginFlight.OriginAirport} → {selectedVirginFlight.DestinationAirport}
                               </div>
                               <div className="text-sm text-gray-600 dark:text-gray-400">
-                                {formatDate(selectedDeltaFlight.departs_at)} • {selectedDeltaFlight.flight_numbers}
+                                {formatDate(selectedVirginFlight.DepartsAt)} • {selectedVirginFlight.FlightNumbers}
                               </div>
                             </div>
                             <div className="text-right">
-                              <div className="font-medium dark:text-gray-100">{selectedDeltaFlight.mileage_cost.toLocaleString()} miles</div>
-                              <div className="text-sm text-gray-600 dark:text-gray-400">+ $1027.80</div>
+                              <div className="font-medium dark:text-gray-100">
+                                {(selectedVirginFlight.MileageCost / 2).toLocaleString()} miles
+                                <span className="text-xs text-gray-500 dark:text-gray-400 align-super">*</span>
+                              </div>
+                              <div className="text-sm text-gray-600 dark:text-gray-400">+ ${(selectedVirginFlight.TotalTaxes / 100).toFixed(2)}</div>
                             </div>
                           </div>
                         );
                       })()}
                       
-                      {/* Korean Air Flight */}
+                      {/* Saudi Airlines Flight */}
                       {(() => {
                         const [flightIndex, className] = selectedKoreanAirClass.split('-');
-                        const selectedKoreanFlight = paginatedKoreanAirFlights[parseInt(flightIndex)];
-                        if (!selectedKoreanFlight) return null;
+                        const selectedSaudiFlight = paginatedKoreanAirFlights[parseInt(flightIndex)];
+                        if (!selectedSaudiFlight) return null;
                         
-                        const miles = className === 'economy' ? selectedKoreanFlight.economyMiles : selectedKoreanFlight.businessMiles;
-                        const seats = className === 'economy' ? selectedKoreanFlight.economySeats : selectedKoreanFlight.businessSeats;
+                        const miles = className === 'economy' ? selectedSaudiFlight.economyMiles : selectedSaudiFlight.businessMiles;
+                        const seats = className === 'economy' ? selectedSaudiFlight.economySeats : selectedSaudiFlight.businessSeats;
                         
                         return (
                           <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border dark:border-gray-700">
                             <Image
-                              src="/KE.png"
-                              alt="Korean Air"
+                              src="/SV.png"
+                              alt="Saudi Airlines"
                               width={20}
                               height={20}
                               className="rounded-md"
@@ -980,19 +1053,24 @@ export default function DeltaVirginDumpingPage() {
                             />
                             <div className="flex-1">
                               <div className="font-medium dark:text-gray-100">
-                                {selectedKoreanFlight.OriginAirport} → {selectedKoreanFlight.DestinationAirport}
+                                {selectedSaudiFlight.OriginAirport} → {selectedSaudiFlight.DestinationAirport}
                               </div>
                               <div className="text-sm text-gray-600 dark:text-gray-400">
-                                {formatDate(selectedKoreanFlight.DepartsAt)} • {selectedKoreanFlight.FlightNumbers}
+                                {formatDate(selectedSaudiFlight.DepartsAt)} • {selectedSaudiFlight.FlightNumbers}
                               </div>
                             </div>
                             <div className="text-right">
                               <div className="font-medium dark:text-gray-100">{miles.toLocaleString()} miles</div>
-                              <div className="text-sm text-gray-600 dark:text-gray-400">+ ${(selectedKoreanFlight.TotalTaxes / 100).toFixed(2)}</div>
+                              <div className="text-sm text-gray-600 dark:text-gray-400">+ ${convertTaxToUSD(selectedSaudiFlight.TotalTaxes, selectedSaudiFlight.OriginAirport, selectedSaudiFlight.DestinationAirport).toFixed(2)}</div>
                             </div>
                           </div>
                         );
                       })()}
+                    </div>
+                    
+                    {/* Note about mileage */}
+                    <div className="text-xs text-gray-500 dark:text-gray-400 italic">
+                      * Virgin Atlantic mileage amounts are estimates and may vary slightly from actual booking rates
                     </div>
                     
                     {/* Total Calculation */}
@@ -1002,30 +1080,39 @@ export default function DeltaVirginDumpingPage() {
                           <div className="font-semibold text-lg dark:text-white">Total</div>
                           <div className="text-sm text-gray-600 dark:text-gray-400">
                             {(() => {
-                              const selectedDeltaFlight = flights.find(f => f.id === selectedFlight);
+                              // Parse the unique identifier to find the exact Virgin Atlantic flight
+                              // The format is: "VS26-2025-08-08T08:10:00-JFK-LHR"
+                              // We need to handle the date which contains hyphens
+                              const parts = selectedFlight.split('-');
+                              const flightNumber = parts[0];
+                              const destinationAirport = parts[parts.length - 1];
+                              const originAirport = parts[parts.length - 2];
+                              // Reconstruct the date by joining the middle parts
+                              const departsAt = parts.slice(1, -2).join('-');
+                              
+                              const selectedVirginFlight = flights.find(flight => 
+                                flight.FlightNumbers === flightNumber &&
+                                flight.DepartsAt === departsAt &&
+                                flight.OriginAirport === originAirport &&
+                                flight.DestinationAirport === destinationAirport
+                              );
+                              
                               const [flightIndex, className] = selectedKoreanAirClass.split('-');
-                              const selectedKoreanFlight = paginatedKoreanAirFlights[parseInt(flightIndex)];
+                              const selectedSaudiFlight = paginatedKoreanAirFlights[parseInt(flightIndex)];
                               
-                              if (!selectedDeltaFlight || !selectedKoreanFlight) return '';
+                              if (!selectedVirginFlight || !selectedSaudiFlight) return '';
                               
-                              const koreanMiles = className === 'economy' ? selectedKoreanFlight.economyMiles : selectedKoreanFlight.businessMiles;
-                              const totalMiles = selectedDeltaFlight.mileage_cost + koreanMiles;
+                              // Use half points for Virgin Atlantic (second row pricing)
+                              const virginMiles = selectedVirginFlight.MileageCost / 2;
+                              const saudiMiles = className === 'economy' ? selectedSaudiFlight.economyMiles : selectedSaudiFlight.businessMiles;
+                              const totalMiles = virginMiles + saudiMiles;
                               
-                              // Determine taxes based on Delta flight direction
-                              const originAirport = (airportsData as any[]).find((airport: any) => airport.IATA === selectedDeltaFlight.origin_airport);
-                              const destinationAirport = (airportsData as any[]).find((airport: any) => airport.IATA === selectedDeltaFlight.destination_airport);
+                              // Calculate combined taxes
+                              const virginTaxes = selectedVirginFlight.TotalTaxes / 100;
+                              const saudiTaxes = convertTaxToUSD(selectedSaudiFlight.TotalTaxes, selectedSaudiFlight.OriginAirport, selectedSaudiFlight.DestinationAirport);
+                              const totalTaxes = virginTaxes + saudiTaxes;
                               
-                              let totalTaxes = 1027.80 + (selectedKoreanFlight.TotalTaxes / 100);
-                              let taxDescription = '';
-                              
-                              if (destinationAirport?.copazone === 'Europe') {
-                                totalTaxes = 302.30;
-                                taxDescription = ' (to Europe)';
-                              } else if (originAirport?.copazone === 'Europe') {
-                                return `${totalMiles.toLocaleString()} miles + ~$500-$650`;
-                              }
-                              
-                              return `${totalMiles.toLocaleString()} miles + $${totalTaxes.toFixed(2)}${taxDescription}`;
+                              return `${totalMiles.toLocaleString()} miles + $${totalTaxes.toFixed(2)}`;
                             })()}
                           </div>
                         </div>
@@ -1033,16 +1120,32 @@ export default function DeltaVirginDumpingPage() {
                         {/* Booking Link */}
                         <Button
                           onClick={() => {
-                            const selectedDeltaFlight = flights.find(f => f.id === selectedFlight);
+                            // Parse the unique identifier to find the exact Virgin Atlantic flight
+                            // The format is: "VS26-2025-08-08T08:10:00-JFK-LHR"
+                            // We need to handle the date which contains hyphens
+                            const parts = selectedFlight.split('-');
+                            const flightNumber = parts[0];
+                            const destinationAirport = parts[parts.length - 1];
+                            const originAirport = parts[parts.length - 2];
+                            // Reconstruct the date by joining the middle parts
+                            const departsAt = parts.slice(1, -2).join('-');
+                            
+                            const selectedVirginFlight = flights.find(flight => 
+                              flight.FlightNumbers === flightNumber &&
+                              flight.DepartsAt === departsAt &&
+                              flight.OriginAirport === originAirport &&
+                              flight.DestinationAirport === destinationAirport
+                            );
+                            
                             const [flightIndex, className] = selectedKoreanAirClass.split('-');
-                            const selectedKoreanFlight = paginatedKoreanAirFlights[parseInt(flightIndex)];
+                            const selectedSaudiFlight = paginatedKoreanAirFlights[parseInt(flightIndex)];
                             
-                            if (!selectedDeltaFlight || !selectedKoreanFlight) return;
+                            if (!selectedVirginFlight || !selectedSaudiFlight) return;
                             
-                            const deltaDate = format(parseISO(selectedDeltaFlight.departs_at), 'yyyy-MM-dd');
-                            const koreanDate = format(parseISO(selectedKoreanFlight.DepartsAt), 'yyyy-MM-dd');
+                            const virginDate = format(parseISO(selectedVirginFlight.DepartsAt), 'yyyy-MM-dd');
+                            const saudiDate = format(parseISO(selectedSaudiFlight.DepartsAt), 'yyyy-MM-dd');
                             
-                            const url = `https://www.virginatlantic.com/flights/search/slice?awardSearch=true&origin=${selectedDeltaFlight.origin_airport}&origin=${selectedKoreanFlight.OriginAirport}&CTA=AbTest_SP_Flights&destination=${selectedDeltaFlight.destination_airport}&destination=${selectedKoreanFlight.DestinationAirport}&departing=${deltaDate}&departing=${koreanDate}&passengers=a1t0c0i0`;
+                            const url = `https://www.virginatlantic.com/flights/search/slice?awardSearch=true&origin=${selectedVirginFlight.OriginAirport}&origin=${selectedSaudiFlight.OriginAirport}&CTA=AbTest_SP_Flights&destination=${selectedVirginFlight.DestinationAirport}&destination=${selectedSaudiFlight.DestinationAirport}&departing=${virginDate}&departing=${saudiDate}&passengers=a1t0c0i0`;
                             
                             window.open(url, '_blank');
                           }}
