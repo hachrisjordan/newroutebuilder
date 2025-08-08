@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { API_BASE_URL } from '../../config/cloud';
+import { API_BASE_URL } from '../config/cloud';
 import { RegistrationDataItem } from '../types/seat-viewer';
 
 export const useFlightData = () => {

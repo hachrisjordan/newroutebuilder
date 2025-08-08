@@ -14,7 +14,6 @@ import {
   CALENDAR_CELL_MIN_HEIGHT 
 } from '../../lib/seat-viewer-constants';
 import { RegistrationCalendarProps, RegistrationDataItem } from '../../types/seat-viewer';
-import { getAirlineLogoSrc } from '../../lib/utils';
 
 // Configure dayjs with UTC plugin
 dayjs.extend(utc);

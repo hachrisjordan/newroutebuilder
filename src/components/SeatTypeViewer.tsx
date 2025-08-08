@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Select, Input, Button, Space, Modal, Checkbox } from 'antd';
 import { FilterOutlined } from '@ant-design/icons';
-import airlines from '../data/airlines_full';
+import airlines from '../../airlines_full';
 import { parseSearchInput, resolveVariant, isValidRegistration } from '../lib/seat-viewer-utils';
 import { ALLOWED_AIRLINES } from '../lib/seat-viewer-constants';
 import { AirlineOption, VariantStats } from '../types/seat-viewer';
@@ -53,24 +53,7 @@ const SeatTypeViewer: React.FC = () => {
       registrationData.forEach(item => {
         if (!isValidRegistration(item.registration, selectedAirline!)) return;
         
-        let variant = resolveVariant(seatData.tail_number_distribution[item.registration], item.date);
-        
-        // Handle date-based configuration changes
-        if (variant && typeof variant === 'object' && variant.changes) {
-          // Sort changes by date in descending order
-          const sortedChanges = [...variant.changes].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
-          
-          // Find the most recent change that applies to the given date
-          const applicableChange = sortedChanges.find((change: any) => new Date(item.date) >= new Date(change.date));
-          
-          // Use the applicable change's variant, or fall back to default
-          variant = applicableChange ? applicableChange.variant : variant.default;
-        }
-        
-        // Handle special case for object variants
-        if (variant && typeof variant === 'object' && variant.default) {
-          variant = variant.default;
-        }
+        const variant = resolveVariant(seatData.tail_number_distribution[item.registration], item.date);
         
         if (variant) {
           variants.add(variant);
@@ -119,41 +102,14 @@ const SeatTypeViewer: React.FC = () => {
     return registrationData.filter(item => {
       if (!isValidRegistration(item.registration, selectedAirline!)) return true;
       
-      let variant = resolveVariant(seatData.tail_number_distribution[item.registration], item.date);
+      const variant = resolveVariant(seatData.tail_number_distribution[item.registration], item.date);
       
-      // Handle date-based configuration changes
-      if (variant && typeof variant === 'object' && variant.changes) {
-        const sortedChanges = [...variant.changes].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        const applicableChange = sortedChanges.find((change: any) => new Date(item.date) >= new Date(change.date));
-        variant = applicableChange ? applicableChange.variant : variant.default;
-      }
-      
-      if (variant && typeof variant === 'object' && variant.default) {
-        variant = variant.default;
-      }
-      
-      return selectedVariants.includes(variant);
+      return variant ? selectedVariants.includes(variant) : false;
     });
   };
 
-  // Airport search configuration
-  const airportSelectProps = {
-    showSearch: true,
-    optionFilterProp: 'label' as const,
-    filterOption: (input: string, option: any) => {
-      if (!option || !option.children) return false;
-      const searchTerm = parseSearchInput(input);
-      if (!searchTerm) return true;
-      
-      const label = String(option.children || '').toLowerCase();
-      const value = String(option.value || '').toLowerCase();
-      
-      return label.includes(searchTerm) || value.includes(searchTerm);
-    },
-    allowClear: true,
-    placeholder: "Search airport...",
-    style: { width: 260 }
-  };
+  // For now, we'll disable advanced search functionality
+  // This can be re-enabled once the airport data import is properly configured
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Inter, sans-serif' }}>
@@ -236,37 +192,17 @@ const SeatTypeViewer: React.FC = () => {
           </Space>
         </div>
         
-        {/* Advanced Search */}
-        {isAdvancedOpen && (
-          <div style={{ 
-            borderTop: '1px solid #f0f0f0', 
-            paddingTop: '16px',
-            display: 'flex',
-            gap: '16px',
-            flexWrap: 'wrap'
-          }}>
-            <div>
-              <div style={{ fontWeight: 500, marginBottom: 4 }}>Origin</div>
-              <Select
-                {...airportSelectProps}
-                value={origin}
-                onChange={setOrigin}
-                placeholder="Select origin airport..."
-                style={{ width: 260 }}
-              />
-            </div>
-            <div>
-              <div style={{ fontWeight: 500, marginBottom: 4 }}>Arrival</div>
-              <Select
-                {...airportSelectProps}
-                value={arrival}
-                onChange={setArrival}
-                placeholder="Select arrival airport..."
-                style={{ width: 260 }}
-              />
-            </div>
-          </div>
-        )}
+                 {/* Advanced Search - Temporarily disabled */}
+         {isAdvancedOpen && (
+           <div style={{ 
+             borderTop: '1px solid #f0f0f0', 
+             paddingTop: '16px',
+             color: '#666',
+             fontStyle: 'italic'
+           }}>
+             Advanced search (origin/destination filtering) will be available in a future update.
+           </div>
+         )}
       </div>
       
       {/* Results */}

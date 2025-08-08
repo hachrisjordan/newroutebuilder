@@ -25,24 +25,7 @@ const VariantAnalysis: React.FC<VariantAnalysisProps> = ({
     
     // Count each variant appearance
     validData.forEach(item => {
-      let variant = resolveVariant(seatData.tail_number_distribution[item.registration], item.date);
-      
-      // Handle date-based configuration changes
-      if (variant && typeof variant === 'object' && variant.changes) {
-        // Sort changes by date in descending order
-        const sortedChanges = [...variant.changes].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        
-        // Find the most recent change that applies to the given date
-        const applicableChange = sortedChanges.find((change: any) => new Date(item.date) >= new Date(change.date));
-        
-        // Use the applicable change's variant, or fall back to default
-        variant = applicableChange ? applicableChange.variant : variant.default;
-      }
-      
-      // Handle special case for object variants
-      if (variant && typeof variant === 'object' && variant.default) {
-        variant = variant.default;
-      }
+      const variant = resolveVariant(seatData.tail_number_distribution[item.registration], item.date);
       
       if (variant) {
         variantCounts.set(variant, (variantCounts.get(variant) || 0) + 1);
@@ -109,25 +92,7 @@ const VariantAnalysis: React.FC<VariantAnalysisProps> = ({
       
       // Then count ones matching the selected variant
       const variantCount = allFlightsInPeriod.filter(item => {
-        let variant = resolveVariant(seatData.tail_number_distribution[item.registration], item.date);
-        
-        // Handle date-based configuration changes
-        if (variant && typeof variant === 'object' && variant.changes) {
-          // Sort changes by date in descending order
-          const sortedChanges = [...variant.changes].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
-          
-          // Find the most recent change that applies to the given date
-          const applicableChange = sortedChanges.find((change: any) => new Date(item.date) >= new Date(change.date));
-          
-          // Use the applicable change's variant, or fall back to default
-          variant = applicableChange ? applicableChange.variant : variant.default;
-        }
-        
-        // Handle special case for object variants
-        if (variant && typeof variant === 'object' && variant.default) {
-          variant = variant.default;
-        }
-        
+        const variant = resolveVariant(seatData.tail_number_distribution[item.registration], item.date);
         return variant === selectedVariant;
       }).length;
       

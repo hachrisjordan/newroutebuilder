@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Tooltip } from 'antd';
-import { CLOUD_STORAGE_BASE_URL } from '../../../config/cloud';
+import { CLOUD_STORAGE_BASE_URL } from '../../config/cloud';
 import { SeatMapTooltipProps } from '../../types/seat-viewer';
 
 const SeatMapTooltip: React.FC<SeatMapTooltipProps> = ({ 

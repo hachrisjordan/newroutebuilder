@@ -4,12 +4,12 @@ import { STATUS_COLORS } from './seat-viewer-constants';
 // Utility to resolve the correct variant for a registration and date
 export const resolveVariant = (variantObj: any, date: string): string | null => {
   let variant = variantObj;
-  if (variant && typeof variant === 'object' && variant.changes) {
+  if (variant && typeof variant === 'object' && 'changes' in variant && variant.changes) {
     const sortedChanges = [...variant.changes].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
     const applicableChange = sortedChanges.find((change: any) => new Date(date) >= new Date(change.date));
     variant = applicableChange ? applicableChange.variant : variant.default;
   }
-  if (variant && typeof variant === 'object' && variant.default) {
+  if (variant && typeof variant === 'object' && 'default' in variant && variant.default) {
     variant = variant.default;
   }
   return variant;

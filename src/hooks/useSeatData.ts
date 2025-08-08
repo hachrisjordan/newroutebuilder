@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { message } from 'antd';
-import { getSeatConfigUrl } from '../../config/cloud';
+import { getSeatConfigUrl } from '../config/cloud';
 import { SeatData } from '../types/seat-viewer';
 
 export const useSeatData = (selectedAirline: string | null) => {
