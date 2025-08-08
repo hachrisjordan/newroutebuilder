@@ -660,7 +660,7 @@ export default function VirginDumpingPage() {
                         <span className="flex items-center gap-2">
                           Business:
                           <span className="rounded px-2 py-0.5 font-mono font-bold text-sm" style={{ background: '#F3CD87', color: '#222' }}>
-                            {(flight.MileageCost / 2).toLocaleString()}
+                            {Math.max(29000, Math.floor(flight.MileageCost / 2)).toLocaleString()}
                           </span>
                           +
                           <span className="font-mono text-sm">
@@ -1023,7 +1023,7 @@ export default function VirginDumpingPage() {
                             </div>
                             <div className="text-right">
                               <div className="font-medium dark:text-gray-100">
-                                {(selectedVirginFlight.MileageCost / 2).toLocaleString()} miles
+                                {Math.max(29000, Math.floor(selectedVirginFlight.MileageCost / 2)).toLocaleString()} miles
                                 <span className="text-xs text-gray-500 dark:text-gray-400 align-super">*</span>
                               </div>
                               <div className="text-sm text-gray-600 dark:text-gray-400">+ ${(selectedVirginFlight.TotalTaxes / 100).toFixed(2)}</div>
@@ -1102,8 +1102,8 @@ export default function VirginDumpingPage() {
                               
                               if (!selectedVirginFlight || !selectedSaudiFlight) return '';
                               
-                              // Use half points for Virgin Atlantic (second row pricing)
-                              const virginMiles = selectedVirginFlight.MileageCost / 2;
+                              // Use half points for Virgin Atlantic (second row pricing) with minimum of 29,000
+                              const virginMiles = Math.max(29000, Math.floor(selectedVirginFlight.MileageCost / 2));
                               const saudiMiles = className === 'economy' ? selectedSaudiFlight.economyMiles : selectedSaudiFlight.businessMiles;
                               const totalMiles = virginMiles + saudiMiles;
                               
