@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Select, Input, Button, Space, message, Typography, Modal, Row, Col, Tooltip } from 'antd';
-import { LeftOutlined, RightOutlined, FilterOutlined, BarChartOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
+import { Select, Input, Button, Space, message, Typography, Modal, Tooltip } from 'antd';
+import { BarChartOutlined } from '@ant-design/icons';
 import airlines from '../data/airlines_full';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import seatAF from '../data/seat_AF.json';
 import { CLOUD_STORAGE_BASE_URL, API_BASE_URL, getSeatConfigUrl } from '../config/cloud';
 import { Checkbox } from './src/components/ui/checkbox';
 import { getAirlineLogoSrc } from './src/lib/utils';
@@ -22,6 +21,20 @@ const monthNames = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
+// Utility to resolve the correct variant for a registration and date
+const resolveVariant = (variantObj, date) => {
+  let variant = variantObj;
+  if (variant && typeof variant === 'object' && variant.changes) {
+    const sortedChanges = [...variant.changes].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const applicableChange = sortedChanges.find(change => new Date(date) >= new Date(change.date));
+    variant = applicableChange ? applicableChange.variant : variant.default;
+  }
+  if (variant && typeof variant === 'object' && variant.default) {
+    variant = variant.default;
+  }
+  return variant;
+};
+
 // Function to get aircraft details from registration number
 const getAircraftDetails = (registration, airline, seatData, date) => {
   if (!registration || registration === 'None' || !seatData) {
@@ -29,26 +42,7 @@ const getAircraftDetails = (registration, airline, seatData, date) => {
   }
   
   // Get the variant configuration
-  let variant = seatData.tail_number_distribution[registration];
-  
-  // Handle date-based configuration changes
-  if (variant && typeof variant === 'object' && variant.changes) {
-    // Sort changes by date in descending order
-    const sortedChanges = [...variant.changes].sort((a, b) => new Date(b.date) - new Date(a.date));
-    
-    // Find the most recent change that applies to the given date
-    const applicableChange = sortedChanges.find(change => new Date(date) >= new Date(change.date));
-    
-    // Use the applicable change's variant, or fall back to default
-    variant = applicableChange ? applicableChange.variant : variant.default;
-  }
-  
-  // If variant is still an object, use the default value
-  if (variant && typeof variant === 'object' && variant.default) {
-    variant = variant.default;
-  }
-  
-  if (!variant) return null;
+  let variant = resolveVariant(seatData.tail_number_distribution[registration], date);
   
   // Find aircraft type and config information
   const configsByType = seatData.configs_by_type || seatData.configurations_by_type;
@@ -390,7 +384,7 @@ const VariantAnalysis = ({ registrationData, airline, seatData }) => {
     
     // Count each variant appearance
     validData.forEach(item => {
-      let variant = seatData.tail_number_distribution[item.registration];
+      let variant = resolveVariant(seatData.tail_number_distribution[item.registration], item.date);
       
       // Handle date-based configuration changes
       if (variant && typeof variant === 'object' && variant.changes) {
@@ -451,7 +445,8 @@ const VariantAnalysis = ({ registrationData, airline, seatData }) => {
     if (variantStats.length > 0 && !selectedVariant) {
       setSelectedVariant(variantStats[0].variant);
     }
-  }, [variantStats, selectedVariant]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [variantStats]);
   
   // Calculate time-based percentages
   const timeAnalysis = useMemo(() => {
@@ -476,7 +471,7 @@ const VariantAnalysis = ({ registrationData, airline, seatData }) => {
       
       // Then count ones matching the selected variant
       const variantCount = allFlightsInPeriod.filter(item => {
-        let variant = seatData.tail_number_distribution[item.registration];
+        let variant = resolveVariant(seatData.tail_number_distribution[item.registration], item.date);
         
         // Handle date-based configuration changes
         if (variant && typeof variant === 'object' && variant.changes) {
@@ -528,7 +523,7 @@ const VariantAnalysis = ({ registrationData, airline, seatData }) => {
       if (dayOfWeek >= 0 && dayOfWeek < 7) {
         dayStats[dayOfWeek].total++;
         
-        let variant = seatData.tail_number_distribution[item.registration];
+        let variant = resolveVariant(seatData.tail_number_distribution[item.registration], item.date);
         
         // Handle date-based configuration changes
         if (variant && typeof variant === 'object' && variant.changes) {
@@ -641,7 +636,7 @@ const VariantAnalysis = ({ registrationData, airline, seatData }) => {
               
               // Then count ones matching the selected variant
               const variantCount = allFlightsInPeriod.filter(item => {
-                let variant = seatData.tail_number_distribution[item.registration];
+                let variant = resolveVariant(seatData.tail_number_distribution[item.registration], item.date);
                 
                 // Handle date-based configuration changes
                 if (variant && typeof variant === 'object' && variant.changes) {
@@ -733,7 +728,7 @@ const VariantAnalysis = ({ registrationData, airline, seatData }) => {
                   if (dayOfWeek === index) {
                     dayStats.total++;
                     
-                    let variant = seatData.tail_number_distribution[item.registration];
+                    let variant = resolveVariant(seatData.tail_number_distribution[item.registration], item.date);
                     
                     // Handle date-based configuration changes
                     if (variant && typeof variant === 'object' && variant.changes) {
@@ -1435,7 +1430,7 @@ const SeatTypeViewer = () => {
         data.forEach(item => {
           if (!isValidRegistration(item.registration, selectedAirline)) return;
           
-          let variant = seatData.tail_number_distribution[item.registration];
+          let variant = resolveVariant(seatData.tail_number_distribution[item.registration], item.date);
           
           // Handle date-based configuration changes
           if (variant && typeof variant === 'object' && variant.changes) {
@@ -1512,7 +1507,7 @@ const SeatTypeViewer = () => {
     return registrationData.filter(item => {
       if (!isValidRegistration(item.registration, selectedAirline)) return false;
       
-      let variant = seatData.tail_number_distribution[item.registration];
+      let variant = resolveVariant(seatData.tail_number_distribution[item.registration], item.date);
       
       // Handle date-based configuration changes
       if (variant && typeof variant === 'object' && variant.changes) {
