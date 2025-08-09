@@ -29,6 +29,7 @@ const specialAwards = [
   { name: 'Etihad on JetBlue', href: '/jetblue/etihad' },
   { name: 'Delta on Virgin Dumping', href: '/delta-virgin-dumping' },
   { name: 'Virgin Dumping', href: '/virgin-dumping' },
+  { name: 'Lufthansa Skiplag', href: '/lufthansa-skiplag' },
 ];
 
 export function Header() {

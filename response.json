@@ -1,0 +1,5946 @@
+{
+    "itineraries": [
+        {
+            "route": "FRA-VLC",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH1162-2025-08-10T15:35:00Z-2025-08-10T18:00:00Z"
+            ],
+            "totalDuration": 145,
+            "departureTime": "2025-08-10T15:35:00Z",
+            "arrivalTime": "2025-08-10T18:00:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 104360,
+            "y2": 5083,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6537,
+            "segmentDistances": [
+                5685,
+                852
+            ]
+        },
+        {
+            "route": "FRA-VLC",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH1162-2025-08-10T15:35:00Z-2025-08-10T18:00:00Z"
+            ],
+            "totalDuration": 145,
+            "departureTime": "2025-08-10T15:35:00Z",
+            "arrivalTime": "2025-08-10T18:00:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 104360,
+            "y2": 5083,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6537,
+            "segmentDistances": [
+                5685,
+                852
+            ]
+        },
+        {
+            "route": "FRA-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH190-2025-08-10T15:45:00Z-2025-08-10T16:55:00Z"
+            ],
+            "totalDuration": 70,
+            "departureTime": "2025-08-10T15:45:00Z",
+            "arrivalTime": "2025-08-10T16:55:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 114617,
+            "y2": 1749,
+            "j2": 3095,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5952,
+            "segmentDistances": [
+                5685,
+                267
+            ]
+        },
+        {
+            "route": "FRA-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH190-2025-08-10T15:45:00Z-2025-08-10T16:55:00Z"
+            ],
+            "totalDuration": 70,
+            "departureTime": "2025-08-10T15:45:00Z",
+            "arrivalTime": "2025-08-10T16:55:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 114617,
+            "y2": 1749,
+            "j2": 3095,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5952,
+            "segmentDistances": [
+                5685,
+                267
+            ]
+        },
+        {
+            "route": "FRA-LHR",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH914-2025-08-10T16:00:00Z-2025-08-10T16:40:00Z"
+            ],
+            "totalDuration": 100,
+            "departureTime": "2025-08-10T16:00:00Z",
+            "arrivalTime": "2025-08-10T16:40:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 112001,
+            "y2": 2733,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6091,
+            "segmentDistances": [
+                5685,
+                406
+            ]
+        },
+        {
+            "route": "FRA-LHR",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH914-2025-08-10T16:00:00Z-2025-08-10T16:40:00Z"
+            ],
+            "totalDuration": 100,
+            "departureTime": "2025-08-10T16:00:00Z",
+            "arrivalTime": "2025-08-10T16:40:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 112001,
+            "y2": 2733,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6091,
+            "segmentDistances": [
+                5685,
+                406
+            ]
+        },
+        {
+            "route": "FRA-BCN",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH1134-2025-08-10T16:05:00Z-2025-08-10T18:10:00Z"
+            ],
+            "totalDuration": 125,
+            "departureTime": "2025-08-10T16:05:00Z",
+            "arrivalTime": "2025-08-10T18:10:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 107180,
+            "y2": 4167,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6365,
+            "segmentDistances": [
+                5685,
+                680
+            ]
+        },
+        {
+            "route": "FRA-BCN",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH1134-2025-08-10T16:05:00Z-2025-08-10T18:10:00Z"
+            ],
+            "totalDuration": 125,
+            "departureTime": "2025-08-10T16:05:00Z",
+            "arrivalTime": "2025-08-10T18:10:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 107180,
+            "y2": 4167,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6365,
+            "segmentDistances": [
+                5685,
+                680
+            ]
+        },
+        {
+            "route": "FRA-BIO",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH1144-2025-08-10T16:10:00Z-2025-08-10T18:20:00Z"
+            ],
+            "totalDuration": 130,
+            "departureTime": "2025-08-10T16:10:00Z",
+            "arrivalTime": "2025-08-10T18:20:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 106594,
+            "y2": 4357,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6400,
+            "segmentDistances": [
+                5685,
+                715
+            ]
+        },
+        {
+            "route": "FRA-BLQ",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH288-2025-08-10T16:10:00Z-2025-08-10T17:35:00Z"
+            ],
+            "totalDuration": 85,
+            "departureTime": "2025-08-10T16:10:00Z",
+            "arrivalTime": "2025-08-10T17:35:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 112075,
+            "y2": 2576,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6087,
+            "segmentDistances": [
+                5685,
+                402
+            ]
+        },
+        {
+            "route": "FRA-BIO",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH1144-2025-08-10T16:10:00Z-2025-08-10T18:20:00Z"
+            ],
+            "totalDuration": 130,
+            "departureTime": "2025-08-10T16:10:00Z",
+            "arrivalTime": "2025-08-10T18:20:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 106594,
+            "y2": 4357,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6400,
+            "segmentDistances": [
+                5685,
+                715
+            ]
+        },
+        {
+            "route": "FRA-BLQ",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH288-2025-08-10T16:10:00Z-2025-08-10T17:35:00Z"
+            ],
+            "totalDuration": 85,
+            "departureTime": "2025-08-10T16:10:00Z",
+            "arrivalTime": "2025-08-10T17:35:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 112075,
+            "y2": 2576,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6087,
+            "segmentDistances": [
+                5685,
+                402
+            ]
+        },
+        {
+            "route": "FRA-MRS",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH1088-2025-08-10T16:20:00Z-2025-08-10T17:55:00Z"
+            ],
+            "totalDuration": 95,
+            "departureTime": "2025-08-10T16:20:00Z",
+            "arrivalTime": "2025-08-10T17:55:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 110603,
+            "y2": 3054,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6168,
+            "segmentDistances": [
+                5685,
+                483
+            ]
+        },
+        {
+            "route": "FRA-MRS",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH1088-2025-08-10T16:20:00Z-2025-08-10T17:55:00Z"
+            ],
+            "totalDuration": 95,
+            "departureTime": "2025-08-10T16:20:00Z",
+            "arrivalTime": "2025-08-10T17:55:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 110603,
+            "y2": 3054,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6168,
+            "segmentDistances": [
+                5685,
+                483
+            ]
+        },
+        {
+            "route": "FRA-CDG",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH1040-2025-08-10T16:35:00Z-2025-08-10T17:50:00Z"
+            ],
+            "totalDuration": 75,
+            "departureTime": "2025-08-10T16:35:00Z",
+            "arrivalTime": "2025-08-10T17:50:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 114386,
+            "y2": 1824,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5964,
+            "segmentDistances": [
+                5685,
+                279
+            ]
+        },
+        {
+            "route": "FRA-CDG",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH1040-2025-08-10T16:35:00Z-2025-08-10T17:50:00Z"
+            ],
+            "totalDuration": 75,
+            "departureTime": "2025-08-10T16:35:00Z",
+            "arrivalTime": "2025-08-10T17:50:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 114386,
+            "y2": 1824,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5964,
+            "segmentDistances": [
+                5685,
+                279
+            ]
+        },
+        {
+            "route": "FRA-VCE",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH328-2025-08-10T16:40:00Z-2025-08-10T18:00:00Z"
+            ],
+            "totalDuration": 80,
+            "departureTime": "2025-08-10T16:40:00Z",
+            "arrivalTime": "2025-08-10T18:00:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 112872,
+            "y2": 2317,
+            "j2": 4098,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6044,
+            "segmentDistances": [
+                5685,
+                359
+            ]
+        },
+        {
+            "route": "FRA-GYD",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH612-2025-08-10T16:40:00Z-2025-08-10T23:30:00Z"
+            ],
+            "totalDuration": 290,
+            "departureTime": "2025-08-10T16:40:00Z",
+            "arrivalTime": "2025-08-10T23:30:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 76745,
+            "y2": 11436,
+            "j2": 20989,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 7778,
+            "segmentDistances": [
+                5685,
+                2093
+            ]
+        },
+        {
+            "route": "FRA-NCE",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH1064-2025-08-10T16:40:00Z-2025-08-10T18:10:00Z"
+            ],
+            "totalDuration": 90,
+            "departureTime": "2025-08-10T16:40:00Z",
+            "arrivalTime": "2025-08-10T18:10:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 111271,
+            "y2": 2837,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6131,
+            "segmentDistances": [
+                5685,
+                446
+            ]
+        },
+        {
+            "route": "FRA-WAW",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH1350-2025-08-10T16:40:00Z-2025-08-10T18:15:00Z"
+            ],
+            "totalDuration": 95,
+            "departureTime": "2025-08-10T16:40:00Z",
+            "arrivalTime": "2025-08-10T18:15:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 109292,
+            "y2": 3480,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6242,
+            "segmentDistances": [
+                5685,
+                557
+            ]
+        },
+        {
+            "route": "FRA-WAW",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH1350-2025-08-10T16:40:00Z-2025-08-10T18:15:00Z"
+            ],
+            "totalDuration": 95,
+            "departureTime": "2025-08-10T16:40:00Z",
+            "arrivalTime": "2025-08-10T18:15:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 109292,
+            "y2": 3480,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6242,
+            "segmentDistances": [
+                5685,
+                557
+            ]
+        },
+        {
+            "route": "FRA-NCE",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH1064-2025-08-10T16:40:00Z-2025-08-10T18:10:00Z"
+            ],
+            "totalDuration": 90,
+            "departureTime": "2025-08-10T16:40:00Z",
+            "arrivalTime": "2025-08-10T18:10:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 111271,
+            "y2": 2837,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6131,
+            "segmentDistances": [
+                5685,
+                446
+            ]
+        },
+        {
+            "route": "FRA-VCE",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH328-2025-08-10T16:40:00Z-2025-08-10T18:00:00Z"
+            ],
+            "totalDuration": 80,
+            "departureTime": "2025-08-10T16:40:00Z",
+            "arrivalTime": "2025-08-10T18:00:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 112872,
+            "y2": 2317,
+            "j2": 4098,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6044,
+            "segmentDistances": [
+                5685,
+                359
+            ]
+        },
+        {
+            "route": "FRA-GYD",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH612-2025-08-10T16:40:00Z-2025-08-10T23:30:00Z"
+            ],
+            "totalDuration": 290,
+            "departureTime": "2025-08-10T16:40:00Z",
+            "arrivalTime": "2025-08-10T23:30:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 76745,
+            "y2": 11436,
+            "j2": 20989,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 7778,
+            "segmentDistances": [
+                5685,
+                2093
+            ]
+        },
+        {
+            "route": "FRA-LYS",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH1078-2025-08-10T16:45:00Z-2025-08-10T18:05:00Z"
+            ],
+            "totalDuration": 80,
+            "departureTime": "2025-08-10T16:45:00Z",
+            "arrivalTime": "2025-08-10T18:05:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 113228,
+            "y2": 2201,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6025,
+            "segmentDistances": [
+                5685,
+                340
+            ]
+        },
+        {
+            "route": "FRA-LYS",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH1078-2025-08-10T16:45:00Z-2025-08-10T18:05:00Z"
+            ],
+            "totalDuration": 80,
+            "departureTime": "2025-08-10T16:45:00Z",
+            "arrivalTime": "2025-08-10T18:05:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 113228,
+            "y2": 2201,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6025,
+            "segmentDistances": [
+                5685,
+                340
+            ]
+        },
+        {
+            "route": "FRA-AMM",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH692-2025-08-10T16:50:00Z-2025-08-10T22:10:00Z"
+            ],
+            "totalDuration": 260,
+            "departureTime": "2025-08-10T16:50:00Z",
+            "arrivalTime": "2025-08-10T22:10:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 78781,
+            "y2": 10612,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 7577,
+            "segmentDistances": [
+                5685,
+                1892
+            ]
+        },
+        {
+            "route": "FRA-PRG",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH1400-2025-08-10T16:50:00Z-2025-08-10T17:50:00Z"
+            ],
+            "totalDuration": 60,
+            "departureTime": "2025-08-10T16:50:00Z",
+            "arrivalTime": "2025-08-10T17:50:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 114907,
+            "y2": 1655,
+            "j2": 2929,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5937,
+            "segmentDistances": [
+                5685,
+                252
+            ]
+        },
+        {
+            "route": "FRA-PRG",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH1400-2025-08-10T16:50:00Z-2025-08-10T17:50:00Z"
+            ],
+            "totalDuration": 60,
+            "departureTime": "2025-08-10T16:50:00Z",
+            "arrivalTime": "2025-08-10T17:50:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 114907,
+            "y2": 1655,
+            "j2": 2929,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5937,
+            "segmentDistances": [
+                5685,
+                252
+            ]
+        },
+        {
+            "route": "FRA-AMM",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH692-2025-08-10T16:50:00Z-2025-08-10T22:10:00Z"
+            ],
+            "totalDuration": 260,
+            "departureTime": "2025-08-10T16:50:00Z",
+            "arrivalTime": "2025-08-10T22:10:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 78781,
+            "y2": 10612,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 7577,
+            "segmentDistances": [
+                5685,
+                1892
+            ]
+        },
+        {
+            "route": "FRA-LHR",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH916-2025-08-10T17:00:00Z-2025-08-10T17:40:00Z"
+            ],
+            "totalDuration": 100,
+            "departureTime": "2025-08-10T17:00:00Z",
+            "arrivalTime": "2025-08-10T17:40:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 112001,
+            "y2": 2733,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6091,
+            "segmentDistances": [
+                5685,
+                406
+            ]
+        },
+        {
+            "route": "FRA-LHR",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH916-2025-08-10T17:00:00Z-2025-08-10T17:40:00Z"
+            ],
+            "totalDuration": 100,
+            "departureTime": "2025-08-10T17:00:00Z",
+            "arrivalTime": "2025-08-10T17:40:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 112001,
+            "y2": 2733,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6091,
+            "segmentDistances": [
+                5685,
+                406
+            ]
+        },
+        {
+            "route": "FRA-MAD",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH1120-2025-08-10T17:10:00Z-2025-08-10T19:50:00Z"
+            ],
+            "totalDuration": 160,
+            "departureTime": "2025-08-10T17:10:00Z",
+            "arrivalTime": "2025-08-10T19:50:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 103851,
+            "y2": 5248,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6569,
+            "segmentDistances": [
+                5685,
+                884
+            ]
+        },
+        {
+            "route": "FRA-AMS",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH998-2025-08-10T17:10:00Z-2025-08-10T18:20:00Z"
+            ],
+            "totalDuration": 70,
+            "departureTime": "2025-08-10T17:10:00Z",
+            "arrivalTime": "2025-08-10T18:20:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 115392,
+            "y2": 1497,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5912,
+            "segmentDistances": [
+                5685,
+                227
+            ]
+        },
+        {
+            "route": "FRA-MAD",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH1120-2025-08-10T17:10:00Z-2025-08-10T19:50:00Z"
+            ],
+            "totalDuration": 160,
+            "departureTime": "2025-08-10T17:10:00Z",
+            "arrivalTime": "2025-08-10T19:50:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 103851,
+            "y2": 5248,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6569,
+            "segmentDistances": [
+                5685,
+                884
+            ]
+        },
+        {
+            "route": "FRA-AMS",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH998-2025-08-10T17:10:00Z-2025-08-10T18:20:00Z"
+            ],
+            "totalDuration": 70,
+            "departureTime": "2025-08-10T17:10:00Z",
+            "arrivalTime": "2025-08-10T18:20:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 115392,
+            "y2": 1497,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5912,
+            "segmentDistances": [
+                5685,
+                227
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z"
+            ],
+            "totalDuration": 55,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T18:10:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 116178,
+            "y2": 1242,
+            "j2": 2197,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5872,
+            "segmentDistances": [
+                5685,
+                187
+            ]
+        },
+        {
+            "route": "FRA-MUC-MAD",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1806-2025-08-10T19:40:00Z-2025-08-10T22:25:00Z"
+            ],
+            "totalDuration": 220,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:25:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 25,
+                "f": 0
+            },
+            "f1": 100294,
+            "y2": 1072,
+            "j2": 1897,
+            "f2": null,
+            "y3": 5332,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6802,
+            "segmentDistances": [
+                5685,
+                187,
+                930
+            ]
+        },
+        {
+            "route": "FRA-MUC-MAD",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1806-2025-08-10T19:40:00Z-2025-08-10T22:25:00Z"
+            ],
+            "totalDuration": 220,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:25:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 25,
+                "f": 0
+            },
+            "f1": 100294,
+            "y2": 1072,
+            "j2": 1897,
+            "f2": null,
+            "y3": 5332,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6802,
+            "segmentDistances": [
+                5685,
+                187,
+                930
+            ]
+        },
+        {
+            "route": "FRA-MUC-MAD",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1806-2025-08-10T19:40:00Z-2025-08-10T22:25:00Z"
+            ],
+            "totalDuration": 220,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:25:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 25,
+                "f": 0
+            },
+            "f1": 100294,
+            "y2": 1072,
+            "j2": 1897,
+            "f2": null,
+            "y3": 5332,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6802,
+            "segmentDistances": [
+                5685,
+                187,
+                930
+            ]
+        },
+        {
+            "route": "FRA-MUC-MAD",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1806-2025-08-10T19:40:00Z-2025-08-10T22:25:00Z"
+            ],
+            "totalDuration": 220,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:25:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 25,
+                "f": 0
+            },
+            "f1": 100294,
+            "y2": 1072,
+            "j2": 1897,
+            "f2": null,
+            "y3": 5332,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6802,
+            "segmentDistances": [
+                5685,
+                187,
+                930
+            ]
+        },
+        {
+            "route": "FRA-MUC-BIO",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1830-2025-08-10T21:05:00Z-2025-08-10T23:25:00Z"
+            ],
+            "totalDuration": 195,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T23:25:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 28,
+                "f": 0
+            },
+            "f1": 102448,
+            "y2": 1095,
+            "j2": 1938,
+            "f2": null,
+            "y3": 4609,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6659,
+            "segmentDistances": [
+                5685,
+                187,
+                787
+            ]
+        },
+        {
+            "route": "FRA-MUC-BIO",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1830-2025-08-10T21:05:00Z-2025-08-10T23:25:00Z"
+            ],
+            "totalDuration": 195,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T23:25:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 28,
+                "f": 0
+            },
+            "f1": 102448,
+            "y2": 1095,
+            "j2": 1938,
+            "f2": null,
+            "y3": 4609,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6659,
+            "segmentDistances": [
+                5685,
+                187,
+                787
+            ]
+        },
+        {
+            "route": "FRA-MUC-BIO",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1830-2025-08-10T21:05:00Z-2025-08-10T23:25:00Z"
+            ],
+            "totalDuration": 195,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T23:25:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 28,
+                "f": 0
+            },
+            "f1": 102448,
+            "y2": 1095,
+            "j2": 1938,
+            "f2": null,
+            "y3": 4609,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6659,
+            "segmentDistances": [
+                5685,
+                187,
+                787
+            ]
+        },
+        {
+            "route": "FRA-MUC-BIO",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1830-2025-08-10T21:05:00Z-2025-08-10T23:25:00Z"
+            ],
+            "totalDuration": 195,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T23:25:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 28,
+                "f": 0
+            },
+            "f1": 102448,
+            "y2": 1095,
+            "j2": 1938,
+            "f2": null,
+            "y3": 4609,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6659,
+            "segmentDistances": [
+                5685,
+                187,
+                787
+            ]
+        },
+        {
+            "route": "FRA-MUC-AMS",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH2310-2025-08-10T20:20:00Z-2025-08-10T21:55:00Z"
+            ],
+            "totalDuration": 150,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T21:55:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 37,
+                "f": 0
+            },
+            "f1": 108544,
+            "y2": 1160,
+            "j2": 2053,
+            "f2": null,
+            "y3": 2563,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6285,
+            "segmentDistances": [
+                5685,
+                187,
+                413
+            ]
+        },
+        {
+            "route": "FRA-MUC-AMS",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH2310-2025-08-10T20:20:00Z-2025-08-10T21:55:00Z"
+            ],
+            "totalDuration": 150,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T21:55:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 37,
+                "f": 0
+            },
+            "f1": 108544,
+            "y2": 1160,
+            "j2": 2053,
+            "f2": null,
+            "y3": 2563,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6285,
+            "segmentDistances": [
+                5685,
+                187,
+                413
+            ]
+        },
+        {
+            "route": "FRA-MUC-AMS",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH2310-2025-08-10T20:20:00Z-2025-08-10T21:55:00Z"
+            ],
+            "totalDuration": 150,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T21:55:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 37,
+                "f": 0
+            },
+            "f1": 108544,
+            "y2": 1160,
+            "j2": 2053,
+            "f2": null,
+            "y3": 2563,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6285,
+            "segmentDistances": [
+                5685,
+                187,
+                413
+            ]
+        },
+        {
+            "route": "FRA-MUC-AMS",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH2310-2025-08-10T20:20:00Z-2025-08-10T21:55:00Z"
+            ],
+            "totalDuration": 150,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T21:55:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 37,
+                "f": 0
+            },
+            "f1": 108544,
+            "y2": 1160,
+            "j2": 2053,
+            "f2": null,
+            "y3": 2563,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6285,
+            "segmentDistances": [
+                5685,
+                187,
+                413
+            ]
+        },
+        {
+            "route": "FRA-MUC-MAD",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1806-2025-08-10T19:40:00Z-2025-08-10T22:25:00Z"
+            ],
+            "totalDuration": 220,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:25:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 25,
+                "f": 0
+            },
+            "f1": 100294,
+            "y2": 1072,
+            "j2": 1897,
+            "f2": null,
+            "y3": 5332,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6802,
+            "segmentDistances": [
+                5685,
+                187,
+                930
+            ]
+        },
+        {
+            "route": "FRA-MUC-MAD",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1806-2025-08-10T19:40:00Z-2025-08-10T22:25:00Z"
+            ],
+            "totalDuration": 220,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:25:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 25,
+                "f": 0
+            },
+            "f1": 100294,
+            "y2": 1072,
+            "j2": 1897,
+            "f2": null,
+            "y3": 5332,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6802,
+            "segmentDistances": [
+                5685,
+                187,
+                930
+            ]
+        },
+        {
+            "route": "FRA-MUC-MAD",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1806-2025-08-10T19:40:00Z-2025-08-10T22:25:00Z"
+            ],
+            "totalDuration": 220,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:25:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 25,
+                "f": 0
+            },
+            "f1": 100294,
+            "y2": 1072,
+            "j2": 1897,
+            "f2": null,
+            "y3": 5332,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6802,
+            "segmentDistances": [
+                5685,
+                187,
+                930
+            ]
+        },
+        {
+            "route": "FRA-MUC-MAD",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1806-2025-08-10T19:40:00Z-2025-08-10T22:25:00Z"
+            ],
+            "totalDuration": 220,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:25:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 25,
+                "f": 0
+            },
+            "f1": 100294,
+            "y2": 1072,
+            "j2": 1897,
+            "f2": null,
+            "y3": 5332,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6802,
+            "segmentDistances": [
+                5685,
+                187,
+                930
+            ]
+        },
+        {
+            "route": "FRA-MUC",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z"
+            ],
+            "totalDuration": 55,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T18:10:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 116178,
+            "y2": 1242,
+            "j2": 2197,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5872,
+            "segmentDistances": [
+                5685,
+                187
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BIO",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1830-2025-08-10T21:05:00Z-2025-08-10T23:25:00Z"
+            ],
+            "totalDuration": 195,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T23:25:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 28,
+                "f": 0
+            },
+            "f1": 102448,
+            "y2": 1095,
+            "j2": 1938,
+            "f2": null,
+            "y3": 4609,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6659,
+            "segmentDistances": [
+                5685,
+                187,
+                787
+            ]
+        },
+        {
+            "route": "FRA-MUC-BIO",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1830-2025-08-10T21:05:00Z-2025-08-10T23:25:00Z"
+            ],
+            "totalDuration": 195,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T23:25:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 28,
+                "f": 0
+            },
+            "f1": 102448,
+            "y2": 1095,
+            "j2": 1938,
+            "f2": null,
+            "y3": 4609,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6659,
+            "segmentDistances": [
+                5685,
+                187,
+                787
+            ]
+        },
+        {
+            "route": "FRA-MUC-BIO",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1830-2025-08-10T21:05:00Z-2025-08-10T23:25:00Z"
+            ],
+            "totalDuration": 195,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T23:25:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 28,
+                "f": 0
+            },
+            "f1": 102448,
+            "y2": 1095,
+            "j2": 1938,
+            "f2": null,
+            "y3": 4609,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6659,
+            "segmentDistances": [
+                5685,
+                187,
+                787
+            ]
+        },
+        {
+            "route": "FRA-MUC-BIO",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH1830-2025-08-10T21:05:00Z-2025-08-10T23:25:00Z"
+            ],
+            "totalDuration": 195,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T23:25:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 28,
+                "f": 0
+            },
+            "f1": 102448,
+            "y2": 1095,
+            "j2": 1938,
+            "f2": null,
+            "y3": 4609,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6659,
+            "segmentDistances": [
+                5685,
+                187,
+                787
+            ]
+        },
+        {
+            "route": "FRA-MUC-AMS",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH2310-2025-08-10T20:20:00Z-2025-08-10T21:55:00Z"
+            ],
+            "totalDuration": 150,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T21:55:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 37,
+                "f": 0
+            },
+            "f1": 108544,
+            "y2": 1160,
+            "j2": 2053,
+            "f2": null,
+            "y3": 2563,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6285,
+            "segmentDistances": [
+                5685,
+                187,
+                413
+            ]
+        },
+        {
+            "route": "FRA-MUC-AMS",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH2310-2025-08-10T20:20:00Z-2025-08-10T21:55:00Z"
+            ],
+            "totalDuration": 150,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T21:55:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 37,
+                "f": 0
+            },
+            "f1": 108544,
+            "y2": 1160,
+            "j2": 2053,
+            "f2": null,
+            "y3": 2563,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6285,
+            "segmentDistances": [
+                5685,
+                187,
+                413
+            ]
+        },
+        {
+            "route": "FRA-MUC-AMS",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH2310-2025-08-10T20:20:00Z-2025-08-10T21:55:00Z"
+            ],
+            "totalDuration": 150,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T21:55:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 37,
+                "f": 0
+            },
+            "f1": 108544,
+            "y2": 1160,
+            "j2": 2053,
+            "f2": null,
+            "y3": 2563,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6285,
+            "segmentDistances": [
+                5685,
+                187,
+                413
+            ]
+        },
+        {
+            "route": "FRA-MUC-AMS",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z",
+                "LH2310-2025-08-10T20:20:00Z-2025-08-10T21:55:00Z"
+            ],
+            "totalDuration": 150,
+            "departureTime": "2025-08-10T17:15:00Z",
+            "arrivalTime": "2025-08-10T21:55:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 37,
+                "f": 0
+            },
+            "f1": 108544,
+            "y2": 1160,
+            "j2": 2053,
+            "f2": null,
+            "y3": 2563,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6285,
+            "segmentDistances": [
+                5685,
+                187,
+                413
+            ]
+        },
+        {
+            "route": "FRA-VCE",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH330-2025-08-10T17:20:00Z-2025-08-10T18:40:00Z"
+            ],
+            "totalDuration": 80,
+            "departureTime": "2025-08-10T17:20:00Z",
+            "arrivalTime": "2025-08-10T18:40:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 112872,
+            "y2": 2317,
+            "j2": 4098,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6044,
+            "segmentDistances": [
+                5685,
+                359
+            ]
+        },
+        {
+            "route": "FRA-CDG",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH1046-2025-08-10T17:20:00Z-2025-08-10T18:35:00Z"
+            ],
+            "totalDuration": 75,
+            "departureTime": "2025-08-10T17:20:00Z",
+            "arrivalTime": "2025-08-10T18:35:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 114386,
+            "y2": 1824,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5964,
+            "segmentDistances": [
+                5685,
+                279
+            ]
+        },
+        {
+            "route": "FRA-VCE",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH330-2025-08-10T17:20:00Z-2025-08-10T18:40:00Z"
+            ],
+            "totalDuration": 80,
+            "departureTime": "2025-08-10T17:20:00Z",
+            "arrivalTime": "2025-08-10T18:40:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 112872,
+            "y2": 2317,
+            "j2": 4098,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6044,
+            "segmentDistances": [
+                5685,
+                359
+            ]
+        },
+        {
+            "route": "FRA-CDG",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH1046-2025-08-10T17:20:00Z-2025-08-10T18:35:00Z"
+            ],
+            "totalDuration": 75,
+            "departureTime": "2025-08-10T17:20:00Z",
+            "arrivalTime": "2025-08-10T18:35:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 114386,
+            "y2": 1824,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5964,
+            "segmentDistances": [
+                5685,
+                279
+            ]
+        },
+        {
+            "route": "FRA-ATH",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH1284-2025-08-10T17:30:00Z-2025-08-10T21:20:00Z"
+            ],
+            "totalDuration": 170,
+            "departureTime": "2025-08-10T17:30:00Z",
+            "arrivalTime": "2025-08-10T21:20:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 100117,
+            "y2": 7125,
+            "j2": 11432,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6814,
+            "segmentDistances": [
+                5685,
+                1129
+            ]
+        },
+        {
+            "route": "FRA-ATH",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH1284-2025-08-10T17:30:00Z-2025-08-10T21:20:00Z"
+            ],
+            "totalDuration": 170,
+            "departureTime": "2025-08-10T17:30:00Z",
+            "arrivalTime": "2025-08-10T21:20:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 100117,
+            "y2": 7125,
+            "j2": 11432,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6814,
+            "segmentDistances": [
+                5685,
+                1129
+            ]
+        },
+        {
+            "route": "FRA-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH194-2025-08-10T17:45:00Z-2025-08-10T18:55:00Z"
+            ],
+            "totalDuration": 70,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T18:55:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 114617,
+            "y2": 1749,
+            "j2": 3095,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5952,
+            "segmentDistances": [
+                5685,
+                267
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z"
+            ],
+            "totalDuration": 55,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T18:40:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 116178,
+            "y2": 1242,
+            "j2": 2197,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5872,
+            "segmentDistances": [
+                5685,
+                187
+            ]
+        },
+        {
+            "route": "FRA-MUC-BIO",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1830-2025-08-10T21:05:00Z-2025-08-10T23:25:00Z"
+            ],
+            "totalDuration": 195,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T23:25:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 28,
+                "f": 0
+            },
+            "f1": 102448,
+            "y2": 1095,
+            "j2": 1938,
+            "f2": null,
+            "y3": 4609,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6659,
+            "segmentDistances": [
+                5685,
+                187,
+                787
+            ]
+        },
+        {
+            "route": "FRA-MUC-BIO",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1830-2025-08-10T21:05:00Z-2025-08-10T23:25:00Z"
+            ],
+            "totalDuration": 195,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T23:25:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 28,
+                "f": 0
+            },
+            "f1": 102448,
+            "y2": 1095,
+            "j2": 1938,
+            "f2": null,
+            "y3": 4609,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6659,
+            "segmentDistances": [
+                5685,
+                187,
+                787
+            ]
+        },
+        {
+            "route": "FRA-MUC-BIO",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1830-2025-08-10T21:05:00Z-2025-08-10T23:25:00Z"
+            ],
+            "totalDuration": 195,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T23:25:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 28,
+                "f": 0
+            },
+            "f1": 102448,
+            "y2": 1095,
+            "j2": 1938,
+            "f2": null,
+            "y3": 4609,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6659,
+            "segmentDistances": [
+                5685,
+                187,
+                787
+            ]
+        },
+        {
+            "route": "FRA-MUC-BIO",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1830-2025-08-10T21:05:00Z-2025-08-10T23:25:00Z"
+            ],
+            "totalDuration": 195,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T23:25:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 28,
+                "f": 0
+            },
+            "f1": 102448,
+            "y2": 1095,
+            "j2": 1938,
+            "f2": null,
+            "y3": 4609,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6659,
+            "segmentDistances": [
+                5685,
+                187,
+                787
+            ]
+        },
+        {
+            "route": "FRA-MUC-AMS",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH2310-2025-08-10T20:20:00Z-2025-08-10T21:55:00Z"
+            ],
+            "totalDuration": 150,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T21:55:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 37,
+                "f": 0
+            },
+            "f1": 108544,
+            "y2": 1160,
+            "j2": 2053,
+            "f2": null,
+            "y3": 2563,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6285,
+            "segmentDistances": [
+                5685,
+                187,
+                413
+            ]
+        },
+        {
+            "route": "FRA-MUC-AMS",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH2310-2025-08-10T20:20:00Z-2025-08-10T21:55:00Z"
+            ],
+            "totalDuration": 150,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T21:55:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 37,
+                "f": 0
+            },
+            "f1": 108544,
+            "y2": 1160,
+            "j2": 2053,
+            "f2": null,
+            "y3": 2563,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6285,
+            "segmentDistances": [
+                5685,
+                187,
+                413
+            ]
+        },
+        {
+            "route": "FRA-MUC-AMS",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH2310-2025-08-10T20:20:00Z-2025-08-10T21:55:00Z"
+            ],
+            "totalDuration": 150,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T21:55:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 37,
+                "f": 0
+            },
+            "f1": 108544,
+            "y2": 1160,
+            "j2": 2053,
+            "f2": null,
+            "y3": 2563,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6285,
+            "segmentDistances": [
+                5685,
+                187,
+                413
+            ]
+        },
+        {
+            "route": "FRA-MUC-AMS",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH2310-2025-08-10T20:20:00Z-2025-08-10T21:55:00Z"
+            ],
+            "totalDuration": 150,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T21:55:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 37,
+                "f": 0
+            },
+            "f1": 108544,
+            "y2": 1160,
+            "j2": 2053,
+            "f2": null,
+            "y3": 2563,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6285,
+            "segmentDistances": [
+                5685,
+                187,
+                413
+            ]
+        },
+        {
+            "route": "FRA-MUC",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z"
+            ],
+            "totalDuration": 55,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T18:40:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 116178,
+            "y2": 1242,
+            "j2": 2197,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5872,
+            "segmentDistances": [
+                5685,
+                187
+            ]
+        },
+        {
+            "route": "FRA-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH194-2025-08-10T17:45:00Z-2025-08-10T18:55:00Z"
+            ],
+            "totalDuration": 70,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T18:55:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 114617,
+            "y2": 1749,
+            "j2": 3095,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5952,
+            "segmentDistances": [
+                5685,
+                267
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z"
+            ],
+            "totalDuration": 120,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T22:35:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 46,
+                "f": 0
+            },
+            "f1": 110765,
+            "y2": 1184,
+            "j2": 2095,
+            "f2": null,
+            "y3": 1817,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6159,
+            "segmentDistances": [
+                5685,
+                187,
+                287
+            ]
+        },
+        {
+            "route": "FRA-MUC-BIO",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1830-2025-08-10T21:05:00Z-2025-08-10T23:25:00Z"
+            ],
+            "totalDuration": 195,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T23:25:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 28,
+                "f": 0
+            },
+            "f1": 102448,
+            "y2": 1095,
+            "j2": 1938,
+            "f2": null,
+            "y3": 4609,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6659,
+            "segmentDistances": [
+                5685,
+                187,
+                787
+            ]
+        },
+        {
+            "route": "FRA-MUC-BIO",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1830-2025-08-10T21:05:00Z-2025-08-10T23:25:00Z"
+            ],
+            "totalDuration": 195,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T23:25:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 28,
+                "f": 0
+            },
+            "f1": 102448,
+            "y2": 1095,
+            "j2": 1938,
+            "f2": null,
+            "y3": 4609,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6659,
+            "segmentDistances": [
+                5685,
+                187,
+                787
+            ]
+        },
+        {
+            "route": "FRA-MUC-BIO",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1830-2025-08-10T21:05:00Z-2025-08-10T23:25:00Z"
+            ],
+            "totalDuration": 195,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T23:25:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 28,
+                "f": 0
+            },
+            "f1": 102448,
+            "y2": 1095,
+            "j2": 1938,
+            "f2": null,
+            "y3": 4609,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6659,
+            "segmentDistances": [
+                5685,
+                187,
+                787
+            ]
+        },
+        {
+            "route": "FRA-MUC-BIO",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH1830-2025-08-10T21:05:00Z-2025-08-10T23:25:00Z"
+            ],
+            "totalDuration": 195,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T23:25:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 28,
+                "f": 0
+            },
+            "f1": 102448,
+            "y2": 1095,
+            "j2": 1938,
+            "f2": null,
+            "y3": 4609,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6659,
+            "segmentDistances": [
+                5685,
+                187,
+                787
+            ]
+        },
+        {
+            "route": "FRA-MUC-AMS",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH2310-2025-08-10T20:20:00Z-2025-08-10T21:55:00Z"
+            ],
+            "totalDuration": 150,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T21:55:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 37,
+                "f": 0
+            },
+            "f1": 108544,
+            "y2": 1160,
+            "j2": 2053,
+            "f2": null,
+            "y3": 2563,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6285,
+            "segmentDistances": [
+                5685,
+                187,
+                413
+            ]
+        },
+        {
+            "route": "FRA-MUC-AMS",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH2310-2025-08-10T20:20:00Z-2025-08-10T21:55:00Z"
+            ],
+            "totalDuration": 150,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T21:55:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 37,
+                "f": 0
+            },
+            "f1": 108544,
+            "y2": 1160,
+            "j2": 2053,
+            "f2": null,
+            "y3": 2563,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6285,
+            "segmentDistances": [
+                5685,
+                187,
+                413
+            ]
+        },
+        {
+            "route": "FRA-MUC-AMS",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH2310-2025-08-10T20:20:00Z-2025-08-10T21:55:00Z"
+            ],
+            "totalDuration": 150,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T21:55:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 37,
+                "f": 0
+            },
+            "f1": 108544,
+            "y2": 1160,
+            "j2": 2053,
+            "f2": null,
+            "y3": 2563,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6285,
+            "segmentDistances": [
+                5685,
+                187,
+                413
+            ]
+        },
+        {
+            "route": "FRA-MUC-AMS",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z",
+                "LH2310-2025-08-10T20:20:00Z-2025-08-10T21:55:00Z"
+            ],
+            "totalDuration": 150,
+            "departureTime": "2025-08-10T17:45:00Z",
+            "arrivalTime": "2025-08-10T21:55:00Z",
+            "connections": [
+                "MUC"
+            ],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 37,
+                "f": 0
+            },
+            "f1": 108544,
+            "y2": 1160,
+            "j2": 2053,
+            "f2": null,
+            "y3": 2563,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6285,
+            "segmentDistances": [
+                5685,
+                187,
+                413
+            ]
+        },
+        {
+            "route": "FRA-LHR",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH918-2025-08-10T18:00:00Z-2025-08-10T18:40:00Z"
+            ],
+            "totalDuration": 100,
+            "departureTime": "2025-08-10T18:00:00Z",
+            "arrivalTime": "2025-08-10T18:40:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 112001,
+            "y2": 2733,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6091,
+            "segmentDistances": [
+                5685,
+                406
+            ]
+        },
+        {
+            "route": "FRA-LHR",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH918-2025-08-10T18:00:00Z-2025-08-10T18:40:00Z"
+            ],
+            "totalDuration": 100,
+            "departureTime": "2025-08-10T18:00:00Z",
+            "arrivalTime": "2025-08-10T18:40:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 112001,
+            "y2": 2733,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6091,
+            "segmentDistances": [
+                5685,
+                406
+            ]
+        },
+        {
+            "route": "FRA-VIE",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH1242-2025-08-10T18:10:00Z-2025-08-10T19:35:00Z"
+            ],
+            "totalDuration": 85,
+            "departureTime": "2025-08-10T18:10:00Z",
+            "arrivalTime": "2025-08-10T19:35:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 112389,
+            "y2": 2474,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6070,
+            "segmentDistances": [
+                5685,
+                385
+            ]
+        },
+        {
+            "route": "FRA-VIE",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH1242-2025-08-10T18:10:00Z-2025-08-10T19:35:00Z"
+            ],
+            "totalDuration": 85,
+            "departureTime": "2025-08-10T18:10:00Z",
+            "arrivalTime": "2025-08-10T19:35:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 112389,
+            "y2": 2474,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6070,
+            "segmentDistances": [
+                5685,
+                385
+            ]
+        },
+        {
+            "route": "FRA-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH196-2025-08-10T18:45:00Z-2025-08-10T19:55:00Z"
+            ],
+            "totalDuration": 70,
+            "departureTime": "2025-08-10T18:45:00Z",
+            "arrivalTime": "2025-08-10T19:55:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 114617,
+            "y2": 1749,
+            "j2": 3095,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5952,
+            "segmentDistances": [
+                5685,
+                267
+            ]
+        },
+        {
+            "route": "FRA-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH196-2025-08-10T18:45:00Z-2025-08-10T19:55:00Z"
+            ],
+            "totalDuration": 70,
+            "departureTime": "2025-08-10T18:45:00Z",
+            "arrivalTime": "2025-08-10T19:55:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 114617,
+            "y2": 1749,
+            "j2": 3095,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5952,
+            "segmentDistances": [
+                5685,
+                267
+            ]
+        },
+        {
+            "route": "FRA-HAM",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH30-2025-08-10T19:00:00Z-2025-08-10T20:05:00Z"
+            ],
+            "totalDuration": 65,
+            "departureTime": "2025-08-10T19:00:00Z",
+            "arrivalTime": "2025-08-10T20:05:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 114848,
+            "y2": 1674,
+            "j2": 2962,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5940,
+            "segmentDistances": [
+                5685,
+                255
+            ]
+        },
+        {
+            "route": "FRA-HAM",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH30-2025-08-10T19:00:00Z-2025-08-10T20:05:00Z"
+            ],
+            "totalDuration": 65,
+            "departureTime": "2025-08-10T19:00:00Z",
+            "arrivalTime": "2025-08-10T20:05:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 114848,
+            "y2": 1674,
+            "j2": 2962,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5940,
+            "segmentDistances": [
+                5685,
+                255
+            ]
+        },
+        {
+            "route": "FRA-MUC",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH118-2025-08-10T19:15:00Z-2025-08-10T20:10:00Z"
+            ],
+            "totalDuration": 55,
+            "departureTime": "2025-08-10T19:15:00Z",
+            "arrivalTime": "2025-08-10T20:10:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 116178,
+            "y2": 1242,
+            "j2": 2197,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5872,
+            "segmentDistances": [
+                5685,
+                187
+            ]
+        },
+        {
+            "route": "FRA-MUC",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH118-2025-08-10T19:15:00Z-2025-08-10T20:10:00Z"
+            ],
+            "totalDuration": 55,
+            "departureTime": "2025-08-10T19:15:00Z",
+            "arrivalTime": "2025-08-10T20:10:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 116178,
+            "y2": 1242,
+            "j2": 2197,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5872,
+            "segmentDistances": [
+                5685,
+                187
+            ]
+        },
+        {
+            "route": "FRA-BER",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH198-2025-08-10T19:45:00Z-2025-08-10T20:55:00Z"
+            ],
+            "totalDuration": 70,
+            "departureTime": "2025-08-10T19:45:00Z",
+            "arrivalTime": "2025-08-10T20:55:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 114617,
+            "y2": 1749,
+            "j2": 3095,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5952,
+            "segmentDistances": [
+                5685,
+                267
+            ]
+        },
+        {
+            "route": "FRA-BER",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH198-2025-08-10T19:45:00Z-2025-08-10T20:55:00Z"
+            ],
+            "totalDuration": 70,
+            "departureTime": "2025-08-10T19:45:00Z",
+            "arrivalTime": "2025-08-10T20:55:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 114617,
+            "y2": 1749,
+            "j2": 3095,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5952,
+            "segmentDistances": [
+                5685,
+                267
+            ]
+        },
+        {
+            "route": "FRA-LIS",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH1170-2025-08-10T19:55:00Z-2025-08-10T22:05:00Z"
+            ],
+            "totalDuration": 190,
+            "departureTime": "2025-08-10T19:55:00Z",
+            "arrivalTime": "2025-08-10T22:05:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 99591,
+            "y2": 6633,
+            "j2": 11735,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6850,
+            "segmentDistances": [
+                5685,
+                1165
+            ]
+        },
+        {
+            "route": "FRA-LIS",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH1170-2025-08-10T19:55:00Z-2025-08-10T22:05:00Z"
+            ],
+            "totalDuration": 190,
+            "departureTime": "2025-08-10T19:55:00Z",
+            "arrivalTime": "2025-08-10T22:05:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 99591,
+            "y2": 6633,
+            "j2": 11735,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6850,
+            "segmentDistances": [
+                5685,
+                1165
+            ]
+        },
+        {
+            "route": "FRA-LHR",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH920-2025-08-10T20:00:00Z-2025-08-10T20:40:00Z"
+            ],
+            "totalDuration": 100,
+            "departureTime": "2025-08-10T20:00:00Z",
+            "arrivalTime": "2025-08-10T20:40:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 112001,
+            "y2": 2733,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6091,
+            "segmentDistances": [
+                5685,
+                406
+            ]
+        },
+        {
+            "route": "FRA-LHR",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH920-2025-08-10T20:00:00Z-2025-08-10T20:40:00Z"
+            ],
+            "totalDuration": 100,
+            "departureTime": "2025-08-10T20:00:00Z",
+            "arrivalTime": "2025-08-10T20:40:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 112001,
+            "y2": 2733,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6091,
+            "segmentDistances": [
+                5685,
+                406
+            ]
+        },
+        {
+            "route": "FRA-MLA",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH1314-2025-08-10T20:10:00Z-2025-08-10T22:45:00Z"
+            ],
+            "totalDuration": 155,
+            "departureTime": "2025-08-10T20:10:00Z",
+            "arrivalTime": "2025-08-10T22:45:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 101669,
+            "y2": 5958,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6710,
+            "segmentDistances": [
+                5685,
+                1025
+            ]
+        },
+        {
+            "route": "FRA-MLA",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH1314-2025-08-10T20:10:00Z-2025-08-10T22:45:00Z"
+            ],
+            "totalDuration": 155,
+            "departureTime": "2025-08-10T20:10:00Z",
+            "arrivalTime": "2025-08-10T22:45:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 0,
+                "f": 0
+            },
+            "f1": 101669,
+            "y2": 5958,
+            "j2": null,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 6710,
+            "segmentDistances": [
+                5685,
+                1025
+            ]
+        },
+        {
+            "route": "FRA-MUC",
+            "date": "2025-08-10",
+            "itinerary": [
+                "LH120-2025-08-10T20:15:00Z-2025-08-10T21:10:00Z"
+            ],
+            "totalDuration": 55,
+            "departureTime": "2025-08-10T20:15:00Z",
+            "arrivalTime": "2025-08-10T21:10:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 116178,
+            "y2": 1242,
+            "j2": 2197,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5872,
+            "segmentDistances": [
+                5685,
+                187
+            ]
+        },
+        {
+            "route": "FRA-MUC",
+            "date": "2025-08-11",
+            "itinerary": [
+                "LH120-2025-08-10T20:15:00Z-2025-08-10T21:10:00Z"
+            ],
+            "totalDuration": 55,
+            "departureTime": "2025-08-10T20:15:00Z",
+            "arrivalTime": "2025-08-10T21:10:00Z",
+            "connections": [],
+            "classPercentages": {
+                "y": 100,
+                "w": 0,
+                "j": 100,
+                "f": 0
+            },
+            "f1": 116178,
+            "y2": 1242,
+            "j2": 2197,
+            "f2": null,
+            "y3": null,
+            "j3": null,
+            "f3": null,
+            "totalRouteDistance": 5872,
+            "segmentDistances": [
+                5685,
+                187
+            ]
+        }
+    ],
+    "flights": {
+        "LH30-2025-08-10T19:00:00Z-2025-08-10T20:05:00Z": {
+            "FlightNumbers": "LH30",
+            "TotalDuration": 65,
+            "Aircraft": "Airbus A320",
+            "DepartsAt": "2025-08-10T19:00:00Z",
+            "ArrivesAt": "2025-08-10T20:05:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 1,
+            "FCount": 0,
+            "distance": 255,
+            "originAirport": "FRA",
+            "destinationAirport": "HAM"
+        },
+        "LH194-2025-08-10T17:45:00Z-2025-08-10T18:55:00Z": {
+            "FlightNumbers": "LH194",
+            "TotalDuration": 70,
+            "Aircraft": "Airbus A319",
+            "DepartsAt": "2025-08-10T17:45:00Z",
+            "ArrivesAt": "2025-08-10T18:55:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 1,
+            "FCount": 0,
+            "distance": 268,
+            "originAirport": "FRA",
+            "destinationAirport": "BER"
+        },
+        "LH108-2025-08-10T17:45:00Z-2025-08-10T18:40:00Z": {
+            "FlightNumbers": "LH108",
+            "TotalDuration": 55,
+            "Aircraft": "Airbus A320neo",
+            "DepartsAt": "2025-08-10T17:45:00Z",
+            "ArrivesAt": "2025-08-10T18:40:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 1,
+            "FCount": 0,
+            "distance": 186,
+            "originAirport": "FRA",
+            "destinationAirport": "MUC"
+        },
+        "LH1962-2025-08-10T21:30:00Z-2025-08-10T22:35:00Z": {
+            "FlightNumbers": "LH1962",
+            "TotalDuration": 65,
+            "Aircraft": "Airbus A320",
+            "DepartsAt": "2025-08-10T21:30:00Z",
+            "ArrivesAt": "2025-08-10T22:35:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 0,
+            "FCount": 0,
+            "distance": 288,
+            "originAirport": "MUC",
+            "destinationAirport": "BER"
+        },
+        "LH114-2025-08-10T17:15:00Z-2025-08-10T18:10:00Z": {
+            "FlightNumbers": "LH114",
+            "TotalDuration": 55,
+            "Aircraft": "Airbus A320",
+            "DepartsAt": "2025-08-10T17:15:00Z",
+            "ArrivesAt": "2025-08-10T18:10:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 1,
+            "FCount": 0,
+            "distance": 186,
+            "originAirport": "FRA",
+            "destinationAirport": "MUC"
+        },
+        "LH190-2025-08-10T15:45:00Z-2025-08-10T16:55:00Z": {
+            "FlightNumbers": "LH190",
+            "TotalDuration": 70,
+            "Aircraft": "Airbus A321",
+            "DepartsAt": "2025-08-10T15:45:00Z",
+            "ArrivesAt": "2025-08-10T16:55:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 1,
+            "FCount": 0,
+            "distance": 268,
+            "originAirport": "FRA",
+            "destinationAirport": "BER"
+        },
+        "LH196-2025-08-10T18:45:00Z-2025-08-10T19:55:00Z": {
+            "FlightNumbers": "LH196",
+            "TotalDuration": 70,
+            "Aircraft": "Airbus A319",
+            "DepartsAt": "2025-08-10T18:45:00Z",
+            "ArrivesAt": "2025-08-10T19:55:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 1,
+            "FCount": 0,
+            "distance": 268,
+            "originAirport": "FRA",
+            "destinationAirport": "BER"
+        },
+        "LH198-2025-08-10T19:45:00Z-2025-08-10T20:55:00Z": {
+            "FlightNumbers": "LH198",
+            "TotalDuration": 70,
+            "Aircraft": "Airbus A321",
+            "DepartsAt": "2025-08-10T19:45:00Z",
+            "ArrivesAt": "2025-08-10T20:55:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 1,
+            "FCount": 0,
+            "distance": 268,
+            "originAirport": "FRA",
+            "destinationAirport": "BER"
+        },
+        "LH692-2025-08-10T16:50:00Z-2025-08-10T22:10:00Z": {
+            "FlightNumbers": "LH692",
+            "TotalDuration": 260,
+            "Aircraft": "Airbus A321",
+            "DepartsAt": "2025-08-10T16:50:00Z",
+            "ArrivesAt": "2025-08-10T22:10:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 0,
+            "FCount": 0,
+            "distance": 1893,
+            "originAirport": "FRA",
+            "destinationAirport": "AMM"
+        },
+        "LH330-2025-08-10T17:20:00Z-2025-08-10T18:40:00Z": {
+            "FlightNumbers": "LH330",
+            "TotalDuration": 80,
+            "Aircraft": "Airbus A320",
+            "DepartsAt": "2025-08-10T17:20:00Z",
+            "ArrivesAt": "2025-08-10T18:40:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 1,
+            "FCount": 0,
+            "distance": 359,
+            "originAirport": "FRA",
+            "destinationAirport": "VCE"
+        },
+        "LH328-2025-08-10T16:40:00Z-2025-08-10T18:00:00Z": {
+            "FlightNumbers": "LH328",
+            "TotalDuration": 80,
+            "Aircraft": "Airbus A320",
+            "DepartsAt": "2025-08-10T16:40:00Z",
+            "ArrivesAt": "2025-08-10T18:00:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 1,
+            "FCount": 0,
+            "distance": 359,
+            "originAirport": "FRA",
+            "destinationAirport": "VCE"
+        },
+        "LH1134-2025-08-10T16:05:00Z-2025-08-10T18:10:00Z": {
+            "FlightNumbers": "LH1134",
+            "TotalDuration": 125,
+            "Aircraft": "Airbus A321",
+            "DepartsAt": "2025-08-10T16:05:00Z",
+            "ArrivesAt": "2025-08-10T18:10:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 0,
+            "FCount": 0,
+            "distance": 680,
+            "originAirport": "FRA",
+            "destinationAirport": "BCN"
+        },
+        "LH1170-2025-08-10T19:55:00Z-2025-08-10T22:05:00Z": {
+            "FlightNumbers": "LH1170",
+            "TotalDuration": 190,
+            "Aircraft": "Airbus A320",
+            "DepartsAt": "2025-08-10T19:55:00Z",
+            "ArrivesAt": "2025-08-10T22:05:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 1,
+            "FCount": 0,
+            "distance": 1165,
+            "originAirport": "FRA",
+            "destinationAirport": "LIS"
+        },
+        "LH1400-2025-08-10T16:50:00Z-2025-08-10T17:50:00Z": {
+            "FlightNumbers": "LH1400",
+            "TotalDuration": 60,
+            "Aircraft": "Airbus A321",
+            "DepartsAt": "2025-08-10T16:50:00Z",
+            "ArrivesAt": "2025-08-10T17:50:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 1,
+            "FCount": 0,
+            "distance": 252,
+            "originAirport": "FRA",
+            "destinationAirport": "PRG"
+        },
+        "LH1088-2025-08-10T16:20:00Z-2025-08-10T17:55:00Z": {
+            "FlightNumbers": "LH1088",
+            "TotalDuration": 95,
+            "Aircraft": "Airbus A320",
+            "DepartsAt": "2025-08-10T16:20:00Z",
+            "ArrivesAt": "2025-08-10T17:55:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 0,
+            "FCount": 0,
+            "distance": 482,
+            "originAirport": "FRA",
+            "destinationAirport": "MRS"
+        },
+        "LH118-2025-08-10T19:15:00Z-2025-08-10T20:10:00Z": {
+            "FlightNumbers": "LH118",
+            "TotalDuration": 55,
+            "Aircraft": "Airbus A319",
+            "DepartsAt": "2025-08-10T19:15:00Z",
+            "ArrivesAt": "2025-08-10T20:10:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 1,
+            "FCount": 0,
+            "distance": 186,
+            "originAirport": "FRA",
+            "destinationAirport": "MUC"
+        },
+        "LH120-2025-08-10T20:15:00Z-2025-08-10T21:10:00Z": {
+            "FlightNumbers": "LH120",
+            "TotalDuration": 55,
+            "Aircraft": "Airbus A320",
+            "DepartsAt": "2025-08-10T20:15:00Z",
+            "ArrivesAt": "2025-08-10T21:10:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 1,
+            "FCount": 0,
+            "distance": 186,
+            "originAirport": "FRA",
+            "destinationAirport": "MUC"
+        },
+        "LH612-2025-08-10T16:40:00Z-2025-08-10T23:30:00Z": {
+            "FlightNumbers": "LH612",
+            "TotalDuration": 290,
+            "Aircraft": "Airbus A320",
+            "DepartsAt": "2025-08-10T16:40:00Z",
+            "ArrivesAt": "2025-08-10T23:30:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 1,
+            "FCount": 0,
+            "distance": 2094,
+            "originAirport": "FRA",
+            "destinationAirport": "GYD"
+        },
+        "LH1284-2025-08-10T17:30:00Z-2025-08-10T21:20:00Z": {
+            "FlightNumbers": "LH1284",
+            "TotalDuration": 170,
+            "Aircraft": "Airbus A321",
+            "DepartsAt": "2025-08-10T17:30:00Z",
+            "ArrivesAt": "2025-08-10T21:20:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 1,
+            "FCount": 0,
+            "distance": 1129,
+            "originAirport": "FRA",
+            "destinationAirport": "ATH"
+        },
+        "LH1120-2025-08-10T17:10:00Z-2025-08-10T19:50:00Z": {
+            "FlightNumbers": "LH1120",
+            "TotalDuration": 160,
+            "Aircraft": "Airbus A321",
+            "DepartsAt": "2025-08-10T17:10:00Z",
+            "ArrivesAt": "2025-08-10T19:50:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 0,
+            "FCount": 0,
+            "distance": 884,
+            "originAirport": "FRA",
+            "destinationAirport": "MAD"
+        },
+        "LH1806-2025-08-10T19:40:00Z-2025-08-10T22:25:00Z": {
+            "FlightNumbers": "LH1806",
+            "TotalDuration": 165,
+            "Aircraft": "Airbus A321neo",
+            "DepartsAt": "2025-08-10T19:40:00Z",
+            "ArrivesAt": "2025-08-10T22:25:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 0,
+            "FCount": 0,
+            "distance": 931,
+            "originAirport": "MUC",
+            "destinationAirport": "MAD"
+        },
+        "LH1064-2025-08-10T16:40:00Z-2025-08-10T18:10:00Z": {
+            "FlightNumbers": "LH1064",
+            "TotalDuration": 90,
+            "Aircraft": "Airbus A320",
+            "DepartsAt": "2025-08-10T16:40:00Z",
+            "ArrivesAt": "2025-08-10T18:10:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 0,
+            "FCount": 0,
+            "distance": 445,
+            "originAirport": "FRA",
+            "destinationAirport": "NCE"
+        },
+        "LH1162-2025-08-10T15:35:00Z-2025-08-10T18:00:00Z": {
+            "FlightNumbers": "LH1162",
+            "TotalDuration": 145,
+            "Aircraft": "Airbus A320",
+            "DepartsAt": "2025-08-10T15:35:00Z",
+            "ArrivesAt": "2025-08-10T18:00:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 0,
+            "FCount": 0,
+            "distance": 852,
+            "originAirport": "FRA",
+            "destinationAirport": "VLC"
+        },
+        "LH1144-2025-08-10T16:10:00Z-2025-08-10T18:20:00Z": {
+            "FlightNumbers": "LH1144",
+            "TotalDuration": 130,
+            "Aircraft": "Airbus A320",
+            "DepartsAt": "2025-08-10T16:10:00Z",
+            "ArrivesAt": "2025-08-10T18:20:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 0,
+            "FCount": 0,
+            "distance": 715,
+            "originAirport": "FRA",
+            "destinationAirport": "BIO"
+        },
+        "LH1830-2025-08-10T21:05:00Z-2025-08-10T23:25:00Z": {
+            "FlightNumbers": "LH1830",
+            "TotalDuration": 140,
+            "Aircraft": "Airbus A320",
+            "DepartsAt": "2025-08-10T21:05:00Z",
+            "ArrivesAt": "2025-08-10T23:25:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 0,
+            "FCount": 0,
+            "distance": 788,
+            "originAirport": "MUC",
+            "destinationAirport": "BIO"
+        },
+        "LH918-2025-08-10T18:00:00Z-2025-08-10T18:40:00Z": {
+            "FlightNumbers": "LH918",
+            "TotalDuration": 100,
+            "Aircraft": "Airbus A320neo",
+            "DepartsAt": "2025-08-10T18:00:00Z",
+            "ArrivesAt": "2025-08-10T18:40:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 0,
+            "FCount": 0,
+            "distance": 407,
+            "originAirport": "FRA",
+            "destinationAirport": "LHR"
+        },
+        "LH914-2025-08-10T16:00:00Z-2025-08-10T16:40:00Z": {
+            "FlightNumbers": "LH914",
+            "TotalDuration": 100,
+            "Aircraft": "Airbus A320neo",
+            "DepartsAt": "2025-08-10T16:00:00Z",
+            "ArrivesAt": "2025-08-10T16:40:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 0,
+            "FCount": 0,
+            "distance": 407,
+            "originAirport": "FRA",
+            "destinationAirport": "LHR"
+        },
+        "LH916-2025-08-10T17:00:00Z-2025-08-10T17:40:00Z": {
+            "FlightNumbers": "LH916",
+            "TotalDuration": 100,
+            "Aircraft": "Airbus A320neo",
+            "DepartsAt": "2025-08-10T17:00:00Z",
+            "ArrivesAt": "2025-08-10T17:40:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 0,
+            "FCount": 0,
+            "distance": 407,
+            "originAirport": "FRA",
+            "destinationAirport": "LHR"
+        },
+        "LH920-2025-08-10T20:00:00Z-2025-08-10T20:40:00Z": {
+            "FlightNumbers": "LH920",
+            "TotalDuration": 100,
+            "Aircraft": "Airbus A320neo",
+            "DepartsAt": "2025-08-10T20:00:00Z",
+            "ArrivesAt": "2025-08-10T20:40:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 0,
+            "FCount": 0,
+            "distance": 407,
+            "originAirport": "FRA",
+            "destinationAirport": "LHR"
+        },
+        "LH1314-2025-08-10T20:10:00Z-2025-08-10T22:45:00Z": {
+            "FlightNumbers": "LH1314",
+            "TotalDuration": 155,
+            "Aircraft": "Airbus A321",
+            "DepartsAt": "2025-08-10T20:10:00Z",
+            "ArrivesAt": "2025-08-10T22:45:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 0,
+            "FCount": 0,
+            "distance": 1024,
+            "originAirport": "FRA",
+            "destinationAirport": "MLA"
+        },
+        "LH1350-2025-08-10T16:40:00Z-2025-08-10T18:15:00Z": {
+            "FlightNumbers": "LH1350",
+            "TotalDuration": 95,
+            "Aircraft": "Airbus A321",
+            "DepartsAt": "2025-08-10T16:40:00Z",
+            "ArrivesAt": "2025-08-10T18:15:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 0,
+            "FCount": 0,
+            "distance": 557,
+            "originAirport": "FRA",
+            "destinationAirport": "WAW"
+        },
+        "LH998-2025-08-10T17:10:00Z-2025-08-10T18:20:00Z": {
+            "FlightNumbers": "LH998",
+            "TotalDuration": 70,
+            "Aircraft": "Airbus A319",
+            "DepartsAt": "2025-08-10T17:10:00Z",
+            "ArrivesAt": "2025-08-10T18:20:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 0,
+            "FCount": 0,
+            "distance": 228,
+            "originAirport": "FRA",
+            "destinationAirport": "AMS"
+        },
+        "LH2310-2025-08-10T20:20:00Z-2025-08-10T21:55:00Z": {
+            "FlightNumbers": "LH2310",
+            "TotalDuration": 95,
+            "Aircraft": "Airbus A320neo",
+            "DepartsAt": "2025-08-10T20:20:00Z",
+            "ArrivesAt": "2025-08-10T21:55:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 0,
+            "FCount": 0,
+            "distance": 413,
+            "originAirport": "MUC",
+            "destinationAirport": "AMS"
+        },
+        "LH1040-2025-08-10T16:35:00Z-2025-08-10T17:50:00Z": {
+            "FlightNumbers": "LH1040",
+            "TotalDuration": 75,
+            "Aircraft": "Airbus A320neo",
+            "DepartsAt": "2025-08-10T16:35:00Z",
+            "ArrivesAt": "2025-08-10T17:50:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 0,
+            "FCount": 0,
+            "distance": 279,
+            "originAirport": "FRA",
+            "destinationAirport": "CDG"
+        },
+        "LH1046-2025-08-10T17:20:00Z-2025-08-10T18:35:00Z": {
+            "FlightNumbers": "LH1046",
+            "TotalDuration": 75,
+            "Aircraft": "Airbus A321",
+            "DepartsAt": "2025-08-10T17:20:00Z",
+            "ArrivesAt": "2025-08-10T18:35:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 0,
+            "FCount": 0,
+            "distance": 279,
+            "originAirport": "FRA",
+            "destinationAirport": "CDG"
+        },
+        "LH288-2025-08-10T16:10:00Z-2025-08-10T17:35:00Z": {
+            "FlightNumbers": "LH288",
+            "TotalDuration": 85,
+            "Aircraft": "Airbus A320neo",
+            "DepartsAt": "2025-08-10T16:10:00Z",
+            "ArrivesAt": "2025-08-10T17:35:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 0,
+            "FCount": 0,
+            "distance": 402,
+            "originAirport": "FRA",
+            "destinationAirport": "BLQ"
+        },
+        "LH1078-2025-08-10T16:45:00Z-2025-08-10T18:05:00Z": {
+            "FlightNumbers": "LH1078",
+            "TotalDuration": 80,
+            "Aircraft": "Airbus A319",
+            "DepartsAt": "2025-08-10T16:45:00Z",
+            "ArrivesAt": "2025-08-10T18:05:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 0,
+            "FCount": 0,
+            "distance": 339,
+            "originAirport": "FRA",
+            "destinationAirport": "LYS"
+        },
+        "LH1242-2025-08-10T18:10:00Z-2025-08-10T19:35:00Z": {
+            "FlightNumbers": "LH1242",
+            "TotalDuration": 85,
+            "Aircraft": "Airbus A320",
+            "DepartsAt": "2025-08-10T18:10:00Z",
+            "ArrivesAt": "2025-08-10T19:35:00Z",
+            "YCount": 1,
+            "WCount": 0,
+            "JCount": 0,
+            "FCount": 0,
+            "distance": 385,
+            "originAirport": "FRA",
+            "destinationAirport": "VIE"
+        }
+    },
+    "totalCount": 172,
+    "inboundArrivalTime": "2025-08-10T14:25:00+00:00",
+    "origin": "SFO",
+    "destination": "FRA"
+}
