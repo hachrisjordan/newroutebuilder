@@ -137,7 +137,12 @@ export default function LufthansaSkiplagPage() {
 
   const formatTime = (dateString: string) => {
     try {
-      return format(parseISO(dateString), 'HH:mm');
+      // Extract time from UTC string without timezone conversion
+      const match = dateString.match(/(\d{2}):(\d{2}):\d{2}/);
+      if (match) {
+        return `${match[1]}:${match[2]}`;
+      }
+      return dateString;
     } catch {
       return dateString;
     }
