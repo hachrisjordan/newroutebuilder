@@ -22,6 +22,7 @@ interface VirginAtlanticFlight {
   total_duration: number;
   remaining_seats: number;
   mileage_cost: number;
+  total_taxes: number;
   origin_airport: string;
   destination_airport: string;
   aircraft: string[];
@@ -61,6 +62,7 @@ export default function DeltaVirginDumpingPage() {
   const [sortBy, setSortBy] = useState<string>('departs_at');
   const [date, setDate] = useState<DateRange | undefined>(undefined);
   const [europeFilter, setEuropeFilter] = useState<string>('any');
+  const [selectedAirlines, setSelectedAirlines] = useState<Set<string>>(new Set());
   const [selectedFlight, setSelectedFlight] = useState<string | null>(null);
   const [selectedKoreanAirClass, setSelectedKoreanAirClass] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -158,10 +160,9 @@ export default function DeltaVirginDumpingPage() {
   };
 
   const getAirlineLogo = (flightNumber: string) => {
-    if (flightNumber.startsWith('DL')) {
-      return '/DL.png';
-    }
-    return '/VS.png';
+    // Always use first 2 characters of flight number for logo
+    const airlineCode = flightNumber.slice(0, 2);
+    return `/${airlineCode}.png`;
   };
 
   const getDateLabel = () => {
@@ -217,10 +218,17 @@ export default function DeltaVirginDumpingPage() {
       return true;
     })();
 
+    // Airline filtering
+    const matchesAirlineFilter = (() => {
+      if (selectedAirlines.size === 0) return true;
+      const airlineCode = flight.flight_numbers.slice(0, 2);
+      return selectedAirlines.has(airlineCode);
+    })();
+
     // Selected flight filtering
     const matchesSelectedFlight = selectedFlight ? flight.id === selectedFlight : true;
     
-    return matchesSearch && matchesDateRange && matchesEuropeFilter && matchesSelectedFlight;
+    return matchesSearch && matchesDateRange && matchesEuropeFilter && matchesAirlineFilter && matchesSelectedFlight;
   });
 
   const sortedFlights = [...filteredFlights].sort((a, b) => {
@@ -251,6 +259,18 @@ export default function DeltaVirginDumpingPage() {
 
   const handleExpandToggle = (flightId: string) => {
     setExpandedId(expandedId === flightId ? null : flightId);
+  };
+
+  const handleAirlineToggle = (airlineCode: string) => {
+    setSelectedAirlines(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(airlineCode)) {
+        newSet.delete(airlineCode);
+      } else {
+        newSet.add(airlineCode);
+      }
+      return newSet;
+    });
   };
 
   const handleFlightSelect = (flightId: string) => {
@@ -324,7 +344,7 @@ export default function DeltaVirginDumpingPage() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading Virgin Atlantic flights...</p>
+            <p className="text-muted-foreground">Loading flights...</p>
           </div>
         </div>
       </div>
@@ -347,7 +367,7 @@ export default function DeltaVirginDumpingPage() {
     <div className="max-w-[1000px] mx-auto px-4 py-6">
       {/* Filters */}
       <div className="mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Search */}
           <div className="flex flex-col justify-center">
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-100 mb-2">
@@ -423,6 +443,40 @@ export default function DeltaVirginDumpingPage() {
                 <SelectItem value="to_europe">To Europe</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Airline Filter */}
+          <div className="flex flex-col justify-center">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-100 mb-2">
+              Airlines
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { code: 'AF', name: 'Air France' },
+                { code: 'DL', name: 'Delta' },
+                { code: 'KL', name: 'KLM' }
+              ].map(airline => (
+                <button
+                  key={airline.code}
+                  onClick={() => handleAirlineToggle(airline.code)}
+                  className={`flex items-center gap-2 p-2 rounded-lg border transition-colors ${
+                    selectedAirlines.has(airline.code)
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-card hover:bg-muted border-border'
+                  }`}
+                >
+                  <Image
+                    src={`/${airline.code}.png`}
+                    alt={airline.name}
+                    width={20}
+                    height={20}
+                    className="rounded-sm"
+                    style={{ objectFit: 'contain' }}
+                  />
+                  <span className="text-xs font-medium">{airline.code}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -578,7 +632,7 @@ export default function DeltaVirginDumpingPage() {
                     <span className="flex items-center gap-1">
                       <Image
                         src={getAirlineLogo(flight.flight_numbers)}
-                        alt={flight.flight_numbers.startsWith('DL') ? 'Delta' : 'Virgin Atlantic'}
+                        alt={flight.flight_numbers.slice(0, 2)}
                         width={24}
                         height={24}
                         className="inline-block align-middle rounded-md"
@@ -587,14 +641,32 @@ export default function DeltaVirginDumpingPage() {
                       <span className="font-mono">{flight.flight_numbers}</span>
                       <button
                         onClick={() => handleFlightSelect(flight.id)}
+                        disabled={(() => {
+                          const destinationAirport = (airportsData as any[]).find((airport: any) => airport.IATA === flight.destination_airport);
+                          return (flight.flight_numbers.startsWith('KL') || flight.flight_numbers.startsWith('AF')) && 
+                                 destinationAirport?.copazone === 'Europe';
+                        })()}
                         className={`ml-2 px-2 py-1 text-xs rounded transition-colors ${
                           selectedFlight === flight.id
                             ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                            : (() => {
+                                const destinationAirport = (airportsData as any[]).find((airport: any) => airport.IATA === flight.destination_airport);
+                                return ((flight.flight_numbers.startsWith('KL') || flight.flight_numbers.startsWith('AF')) && 
+                                        destinationAirport?.copazone === 'Europe')
+                                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                  : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                              })()
                         }`}
                         aria-label={selectedFlight === flight.id ? "Deselect flight" : "Select flight"}
                       >
-                        {selectedFlight === flight.id ? 'Selected' : 'Select'}
+                        {(() => {
+                          const destinationAirport = (airportsData as any[]).find((airport: any) => airport.IATA === flight.destination_airport);
+                          if ((flight.flight_numbers.startsWith('KL') || flight.flight_numbers.startsWith('AF')) && 
+                              destinationAirport?.copazone === 'Europe') {
+                            return 'Disabled';
+                          }
+                          return selectedFlight === flight.id ? 'Selected' : 'Select';
+                        })()}
                       </button>
                     </span>
                   </div>
@@ -613,7 +685,16 @@ export default function DeltaVirginDumpingPage() {
                         </span>
                         +
                         <span className="font-mono text-sm">
-                          $1027.80
+                          ${(() => {
+                            if (flight.total_taxes == null) return '0.00';
+                            let taxAmount = flight.total_taxes / 100;
+                            // Convert EUR to USD for KL and AF flights from AMS or CDG
+                            if ((flight.flight_numbers.startsWith('KL') || flight.flight_numbers.startsWith('AF')) && 
+                                (flight.origin_airport === 'AMS' || flight.origin_airport === 'CDG')) {
+                              taxAmount = taxAmount * 1.17; // 1 EUR = 1.17 USD
+                            }
+                            return taxAmount.toFixed(2);
+                          })()}
                         </span>
                       </span>
                     </span>
@@ -659,7 +740,7 @@ export default function DeltaVirginDumpingPage() {
                           <div className="flex flex-row items-center gap-2 mt-1">
                             <Image
                               src={getAirlineLogo(flight.flight_numbers)}
-                              alt={flight.flight_numbers.startsWith('DL') ? 'Delta' : 'Virgin Atlantic'}
+                              alt={flight.flight_numbers.slice(0, 2)}
                               width={20}
                               height={20}
                               className="inline-block align-middle rounded-md"
@@ -918,7 +999,7 @@ export default function DeltaVirginDumpingPage() {
             <div className="mt-8">
               <div className="mb-6">
                         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Combined Booking</h2>
-        <p className="text-gray-600 dark:text-gray-300">Book your complete itinerary with Virgin Atlantic</p>
+        <p className="text-gray-600 dark:text-gray-300">Book your complete itinerary</p>
               </div>
               
               <Card className="rounded-xl border bg-card shadow">
@@ -937,7 +1018,7 @@ export default function DeltaVirginDumpingPage() {
                           <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border dark:border-gray-700">
                             <Image
                               src={getAirlineLogo(selectedDeltaFlight.flight_numbers)}
-                              alt={selectedDeltaFlight.flight_numbers.startsWith('DL') ? 'Delta' : 'Virgin Atlantic'}
+                              alt={selectedDeltaFlight.flight_numbers.slice(0, 2)}
                               width={20}
                               height={20}
                               className="rounded-md"
@@ -953,7 +1034,16 @@ export default function DeltaVirginDumpingPage() {
                             </div>
                             <div className="text-right">
                               <div className="font-medium dark:text-gray-100">{selectedDeltaFlight.mileage_cost.toLocaleString()} miles</div>
-                              <div className="text-sm text-gray-600 dark:text-gray-400">+ $1027.80</div>
+                              <div className="text-sm text-gray-600 dark:text-gray-400">+ ${(() => {
+                                if (selectedDeltaFlight.total_taxes == null) return '0.00';
+                                let taxAmount = selectedDeltaFlight.total_taxes / 100;
+                                // Convert EUR to USD for KL and AF flights from AMS or CDG
+                                if ((selectedDeltaFlight.flight_numbers.startsWith('KL') || selectedDeltaFlight.flight_numbers.startsWith('AF')) && 
+                                    (selectedDeltaFlight.origin_airport === 'AMS' || selectedDeltaFlight.origin_airport === 'CDG')) {
+                                  taxAmount = taxAmount * 1.17; // 1 EUR = 1.17 USD
+                                }
+                                return taxAmount.toFixed(2);
+                              })()}</div>
                             </div>
                           </div>
                         );
@@ -1015,14 +1105,30 @@ export default function DeltaVirginDumpingPage() {
                               const originAirport = (airportsData as any[]).find((airport: any) => airport.IATA === selectedDeltaFlight.origin_airport);
                               const destinationAirport = (airportsData as any[]).find((airport: any) => airport.IATA === selectedDeltaFlight.destination_airport);
                               
-                              let totalTaxes = 1027.80 + (selectedKoreanFlight.TotalTaxes / 100);
+                              let deltaFlightTaxes = 0;
+                              if (selectedDeltaFlight.total_taxes != null) {
+                                deltaFlightTaxes = selectedDeltaFlight.total_taxes / 100;
+                                // Convert EUR to USD for KL and AF flights from AMS or CDG
+                                if ((selectedDeltaFlight.flight_numbers.startsWith('KL') || selectedDeltaFlight.flight_numbers.startsWith('AF')) && 
+                                    (selectedDeltaFlight.origin_airport === 'AMS' || selectedDeltaFlight.origin_airport === 'CDG')) {
+                                  deltaFlightTaxes = deltaFlightTaxes * 1.17; // 1 EUR = 1.17 USD
+                                }
+                              }
+                              let totalTaxes = deltaFlightTaxes + (selectedKoreanFlight.TotalTaxes / 100);
                               let taxDescription = '';
                               
                               if (destinationAirport?.copazone === 'Europe') {
                                 totalTaxes = 302.30;
                                 taxDescription = ' (to Europe)';
                               } else if (originAirport?.copazone === 'Europe') {
-                                return `${totalMiles.toLocaleString()} miles + ~$500-$650`;
+                                // Special tax amounts for flights from Europe (no Korean Air taxes added)
+                                if (selectedDeltaFlight.flight_numbers.startsWith('KL')) {
+                                  totalTaxes = 178.24;
+                                } else if (selectedDeltaFlight.flight_numbers.startsWith('AF')) {
+                                  totalTaxes = 285.41;
+                                } else {
+                                  return `${totalMiles.toLocaleString()} miles + ~$500-$650`;
+                                }
                               }
                               
                               return `${totalMiles.toLocaleString()} miles + $${totalTaxes.toFixed(2)}${taxDescription}`;
@@ -1048,7 +1154,7 @@ export default function DeltaVirginDumpingPage() {
                           }}
                           className="bg-primary hover:bg-primary/90 text-primary-foreground"
                         >
-                          Book on Virgin Atlantic
+                          Book Flight
                         </Button>
                       </div>
                     </div>
