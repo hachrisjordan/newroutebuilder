@@ -1107,7 +1107,7 @@ export default function LufthansaSkiplagPage() {
                                             {selectedKoreanAirClasses.has(`${index}-${i}-first`) ? 'Selected' : 'Select'}
                                           </button>
                                           <span className="text-sm font-medium">First:</span>
-                                          <span className="rounded px-2 py-0.5 font-mono font-bold text-sm" style={{ background: '#FFD700', color: '#222' }}>
+                                          <span className="rounded px-2 py-0.5 font-mono font-bold text-sm" style={{ background: '#D88A3F', color: '#222' }}>
                                             {i === 0 ? (flight.f2 || 0).toLocaleString() : (flight.f3 || 0).toLocaleString()}
                                           </span>
                                           <span className="font-mono text-sm">miles</span>
