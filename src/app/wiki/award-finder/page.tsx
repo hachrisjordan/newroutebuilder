@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Award Finder Wiki - NewRouteBuilder',
+  title: 'Award Finder Wiki - bbairtools',
   description: 'Complete guide to using the Award Finder tool for finding award flight availability',
 }
 
