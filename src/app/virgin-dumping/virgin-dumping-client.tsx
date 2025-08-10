@@ -11,7 +11,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { Plane, ChevronDown, ChevronUp, Loader2, CalendarIcon, X } from 'lucide-react';
 import Image from 'next/image';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
-import { format, parseISO, addYears } from 'date-fns';
+import { format, parseISO, addYears, addDays } from 'date-fns';
 import { Pagination } from '@/components/ui/pagination';
 import ExpandFade from '@/components/ui/expand-fade';
 import airportsData from '@/data/airports.json';
@@ -61,7 +61,7 @@ export default function VirginDumpingPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<string>('departs_at');
   const [date, setDate] = useState<DateRange | undefined>(undefined);
-  const [europeFilter, setEuropeFilter] = useState<string>('any');
+  const [europeFilter, setEuropeFilter] = useState<string>('from_europe');
   const [selectedFlight, setSelectedFlight] = useState<string | null>(null);
   const [selectedKoreanAirClass, setSelectedKoreanAirClass] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -79,13 +79,18 @@ export default function VirginDumpingPage() {
       setLoading(true);
       setError(null);
       
+      // Clear all selected states when starting a new search
+      setSelectedFlight(null);
+      setSelectedKoreanAirClass(null);
+      setKoreanAirFlights([]);
+      setCurrentPage(1);
+      setKoreanAirCurrentPage(1);
+      
       // Build API URL with parameters
       const params = new URLSearchParams();
       
-      // Add direction parameter
-      if (europeFilter !== 'any') {
-        params.append('direction', europeFilter);
-      }
+      // Add direction parameter (always required now)
+      params.append('direction', europeFilter);
       
       // Add date range parameters
       if (date?.from && date?.to) {
@@ -226,8 +231,6 @@ export default function VirginDumpingPage() {
 
     // Europe filtering
     const matchesEuropeFilter = (() => {
-      if (europeFilter === 'any') return true;
-      
       const originAirport = (airportsData as any[]).find((airport: any) => airport.IATA === flight.OriginAirport);
       const destinationAirport = (airportsData as any[]).find((airport: any) => airport.IATA === flight.DestinationAirport);
       
@@ -239,7 +242,7 @@ export default function VirginDumpingPage() {
         return destinationAirport?.copazone === 'Europe';
       }
       
-      return true;
+      return false; // Should not reach here with valid filter values
     })();
 
     // Selected flight filtering - create unique identifier for each flight
@@ -389,7 +392,6 @@ export default function VirginDumpingPage() {
                 <SelectValue placeholder="Select direction" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="any">Any</SelectItem>
                 <SelectItem value="from_europe">From Europe</SelectItem>
                 <SelectItem value="to_europe">To Europe</SelectItem>
               </SelectContent>
@@ -432,7 +434,7 @@ export default function VirginDumpingPage() {
                   selected={date}
                   month={currentMonth}
                   fromDate={new Date()}
-                  toDate={addYears(new Date(), 1)}
+                  toDate={addDays(new Date(), 21)}
                   onMonthChange={setCurrentMonth}
                   onSelect={(range) => {
                     setDate(range);
@@ -457,22 +459,24 @@ export default function VirginDumpingPage() {
 
 
       {/* Sort By - Outside the card */}
-      <div className="mb-6">
-        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-100 mb-2">
-          Sort By
-        </label>
-        <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="w-full md:w-48 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100">
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="departs_at">Departure Date</SelectItem>
-            <SelectItem value="mileage_cost">Mileage Cost</SelectItem>
-            <SelectItem value="remaining_seats">Available Seats</SelectItem>
-            <SelectItem value="total_duration">Flight Duration</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      {flights.length > 0 && (
+        <div className="mb-6">
+          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-100 mb-2">
+            Sort By
+          </label>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-full md:w-48 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="departs_at">Departure Date</SelectItem>
+              <SelectItem value="mileage_cost">Mileage Cost</SelectItem>
+              <SelectItem value="remaining_seats">Available Seats</SelectItem>
+              <SelectItem value="total_duration">Flight Duration</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {/* Data Age Notification */}
       {(() => {
@@ -545,7 +549,10 @@ export default function VirginDumpingPage() {
 
       {/* Flight Cards */}
       <div className="flex flex-col gap-4">
-        {paginatedFlights.length === 0 ? (
+        {flights.length === 0 ? (
+          // Don't show anything when no search has been performed
+          null
+        ) : paginatedFlights.length === 0 ? (
           <Card>
             <CardContent className="text-center py-8">
               <Plane className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
