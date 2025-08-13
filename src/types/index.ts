@@ -6,15 +6,26 @@ export type {
   AdminUser 
 } from './admin';
 export type { 
-  AwardFinderResult, 
-  FlightSegment, 
-  Bundle, 
+  AwardFinderResults, 
+  Flight, 
+  FlightId, 
   Itinerary, 
-  Airport as AwardAirport,
-  Airline as AwardAirline 
+  AwardFinderSearchParams,
+  AwardFinderSearchRequest
 } from './award-finder-results';
-export type { FilterMetadata, FilterValue } from './filter-metadata';
-export type { Route, RouteSegment } from './route';
+export type { 
+  FilterMetadata, 
+  FilterMetadataResponse, 
+  AirportMeta, 
+  AirlineMeta, 
+  AirportFilterState 
+} from './filter-metadata';
+export type { 
+  Airport, 
+  Path, 
+  IntraRoute, 
+  FullRoutePathResult 
+} from './route';
 export type { 
   RegistrationDataItem,
   AircraftDetails,
