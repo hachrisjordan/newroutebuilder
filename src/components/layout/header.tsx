@@ -23,6 +23,7 @@ const navigation = [
 
 const aviationData = [
   { name: 'Load Factor', href: '/load-factor' },
+  { name: 'United PZ', href: '/united-pz' },
 ];
 
 const specialAwards = [
