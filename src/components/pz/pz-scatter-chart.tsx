@@ -28,7 +28,10 @@ interface PZScatterChartProps {
  * Example: if today is 2025-08-13 and date is 2025-08-18, returns "T-5"
  */
 const formatDateToT = (dateStr: string): string => {
-  const date = new Date(dateStr);
+  // Parse date in local timezone to avoid UTC conversion issues
+  // dateStr format: YYYY-MM-DD
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const date = new Date(year, month - 1, day); // month is 0-indexed
   const today = new Date();
   
   // Reset time components for accurate day calculation
@@ -51,7 +54,11 @@ const CustomTooltip = ({ active, payload }: any) => {
     return (
       <div className="bg-white dark:bg-gray-800 p-3 border rounded-lg shadow-lg">
         <p className="font-medium">{`Flight: ${data.flight_number}`}</p>
-        <p className="text-sm">{`Date: ${format(new Date(data.departure_date), 'MMM dd, yyyy')}`}</p>
+        <p className="text-sm">{`Date: ${(() => {
+          const [year, month, day] = data.departure_date.split('-').map(Number);
+          const date = new Date(year, month - 1, day);
+          return format(date, 'MMM dd, yyyy');
+        })()}`}</p>
         <p className="text-sm">{`T-Format: ${data.tFormat}`}</p>
         <p className="text-sm text-blue-600 dark:text-blue-400">{`PZ: ${data.pz}`}</p>
       </div>
