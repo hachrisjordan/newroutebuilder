@@ -1,10 +1,33 @@
-// Re-export all types from individual modules
-export * from './admin';
-export * from './award-finder-results';
-export * from './filter-metadata';
-export * from './route';
-export * from './seat-viewer';
-export * from './shortest-route';
+// Re-export specific types to avoid conflicts
+export type { 
+  AircraftConfig as AdminAircraftConfig, 
+  TailNumber, 
+  AircraftType, 
+  AdminUser 
+} from './admin';
+export type { 
+  AwardFinderResult, 
+  FlightSegment, 
+  Bundle, 
+  Itinerary, 
+  Airport as AwardAirport,
+  Airline as AwardAirline 
+} from './award-finder-results';
+export type { FilterMetadata, FilterValue } from './filter-metadata';
+export type { Route, RouteSegment } from './route';
+export type { 
+  RegistrationDataItem,
+  AircraftDetails,
+  OnTimeStatus,
+  VariantConfig,
+  AircraftConfig as SeatViewerAircraftConfig
+} from './seat-viewer';
+export type { 
+  Alliance,
+  ShortestRouteChallenge,
+  ShortestRouteGuess,
+  PathRow
+} from './shortest-route';
 
 // PZ (United specific data) types
 export interface PZSearchParams {
