@@ -71,7 +71,10 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
 
   // Helper to get allowed max stops based on x and apiKey
   const getAllowedMaxStops = (x: number, hasApiKey: boolean) => {
-    if (!hasApiKey) return 2;
+    if (!hasApiKey) {
+      // If API is null, only allow maxstop = 2 if origin * destination = 1, otherwise maxstop = 1
+      return x === 1 ? 2 : 1;
+    }
     if (x === 0) return 4;
     if (x === 1) return 4;
     if (x > 1 && x <= 5) return 3;
