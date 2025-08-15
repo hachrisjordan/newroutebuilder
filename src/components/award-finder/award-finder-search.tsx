@@ -76,15 +76,15 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
       // If API is null, only allow maxstop = 2 if origin * destination = 1, otherwise maxstop = 1
       return x === 1 ? 2 : 1;
     }
-    if (x === 0) return 4;
-    if (x === 1) return 4;
-    if (x > 1 && x <= 5) return 3;
+    if (x === 0) return 3;
+    if (x === 1) return 3;
+    if (x > 1 && x <= 5) return 2;
     if (x >= 6 && x <= 9) return 2;
     return 2; // fallback, should not happen
   };
 
   // Helper to get allowed max combinations based on apiKey
-  const getAllowedMaxCombination = (hasApiKey: boolean) => (hasApiKey ? 9 : 4);
+  const getAllowedMaxCombination = (hasApiKey: boolean) => (hasApiKey ? 9 : 3);
 
   // Effect: enforce maxStops and combination limits when apiKey changes
   useEffect(() => {
@@ -183,7 +183,7 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
     !!date?.from &&
     !!date?.to &&
     maxStops >= 0 &&
-    maxStops <= 4 &&
+    maxStops <= 3 &&
     !apiKeyError &&
     !maxStopsError &&
     combinationCount <= getAllowedMaxCombination(!!apiKey.trim());
