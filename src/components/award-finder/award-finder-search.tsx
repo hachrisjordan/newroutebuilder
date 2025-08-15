@@ -79,7 +79,7 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
     if (x === 0) return 3;
     if (x === 1) return 3;
     if (x > 1 && x <= 5) return 2;
-    if (x >= 6 && x <= 9) return 2;
+    if (x >= 6 && x <= 9) return 1;
     return 2; // fallback, should not happen
   };
 
