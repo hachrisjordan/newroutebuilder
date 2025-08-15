@@ -24,7 +24,7 @@ export default function TermsPage() {
         <p>For the purposes of these Terms and Conditions:</p>
         <ul className="list-disc ml-6 space-y-1">
           <li><b>Affiliate</b> means an entity that controls, is controlled by or is under common control with a party, where "control" means ownership of 50% or more of the shares, equity interest or other securities entitled to vote for election of directors or other managing authority.</li>
-          <li><b>Country</b> refers to: Ohio, United States</li>
+          <li><b>Country</b> refers to: Vietnam</li>
           <li><b>Company</b> (referred to as either "the Company", "We", "Us" or "Our" in this Agreement) refers to bbairtools.</li>
           <li><b>Device</b> means any device that can access the Service such as a computer, a cellphone or a digital tablet.</li>
           <li><b>Service</b> refers to the Website.</li>

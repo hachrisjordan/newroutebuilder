@@ -221,7 +221,31 @@ export default function AwardFinderPage() {
     });
     if (!res.ok) {
       setIsLoading(false);
-      throw new Error('API error');
+      // Extract detailed error information from API response
+      let errorMessage = 'API error';
+      let errorDetails = '';
+      
+      try {
+        const errorData = await res.json();
+        if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+        if (errorData.details) {
+          errorDetails = errorData.details;
+        }
+      } catch {
+        // If we can't parse the error response, use status text
+        errorMessage = res.statusText || `HTTP ${res.status}`;
+      }
+      
+      // Create structured error object
+      const apiError = {
+        status: res.status,
+        message: errorMessage,
+        details: errorDetails || undefined,
+      };
+      
+      throw new Error(JSON.stringify(apiError));
     }
     const data = await res.json();
     

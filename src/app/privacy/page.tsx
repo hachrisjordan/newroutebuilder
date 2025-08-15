@@ -35,7 +35,7 @@ export default function PrivacyPolicyPage() {
           <li><b>Application</b> refers to bbairtools, the software program provided by the Company.</li>
           <li><b>Company</b> (referred to as either "the Company", "We", "Us" or "Our" in this Agreement) refers to bbairtools.</li>
           <li><b>Cookies</b> are small files that are placed on Your computer, mobile device or any other device by a website, containing the details of Your browsing history on that website among its many uses.</li>
-          <li><b>Country</b> refers to: Ohio, United States</li>
+          <li><b>Country</b> refers to: Vietnam</li>
           <li><b>Device</b> means any device that can access the Service such as a computer, a cellphone or a digital tablet.</li>
           <li><b>Personal Data</b> is any information that relates to an identified or identifiable individual.</li>
           <li><b>Service</b> refers to the Application or the Website or both.</li>

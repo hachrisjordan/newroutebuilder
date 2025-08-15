@@ -16,6 +16,7 @@ import type { AwardFinderResults, AwardFinderSearchRequest } from '@/types/award
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { TooltipTouch } from '@/components/ui/tooltip-touch';
+import { ApiErrorDisplay } from '@/components/ui/api-error-display';
 
 interface AwardFinderSearchProps {
   onSearch: (searchParams: any, isNewSearchFromForm?: boolean) => void;
@@ -498,7 +499,11 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
           </div>
         </div>
       )}
-      {error && <div className="text-red-600 text-sm mt-2">{error}</div>}
+      {error && (
+        <div className="mt-4">
+          <ApiErrorDisplay error={error} />
+        </div>
+      )}
       {combinationCount > maxCombination && !error && (
         <div className="text-red-600 text-sm mt-2">
           Too many combinations: Please select fewer airports.
