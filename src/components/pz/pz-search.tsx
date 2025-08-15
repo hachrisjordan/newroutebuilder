@@ -3,6 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState } from 'react';
 import { Loader2, CalendarIcon, X } from 'lucide-react';
 import { AirportMultiSearch } from '@/components/airport-multi-search';
@@ -35,6 +36,7 @@ export function PZSearch({ onSearch }: PZSearchProps) {
   const [departureAirports, setDepartureAirports] = useState<string[]>([]);
   const [arrivalAirports, setArrivalAirports] = useState<string[]>([]);
   const [date, setDate] = useState<DateRange | undefined>();
+  const [fareClass, setFareClass] = useState<'IN' | 'XN' | 'PZ' | 'PN' | 'ZN' | 'RN'>('PZ');
   const [isSearching, setIsSearching] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -78,8 +80,8 @@ export function PZSearch({ onSearch }: PZSearchProps) {
       onSearch({
         departureAirports,
         arrivalAirports,
-        startDate: format(searchFromDate, 'yyyy-MM-dd'),
-        endDate: format(searchToDate, 'yyyy-MM-dd'),
+        date: { from: searchFromDate, to: searchToDate },
+        fareClass,
       });
     } catch (error) {
       console.error('Error during search:', error);
@@ -131,67 +133,83 @@ export function PZSearch({ onSearch }: PZSearchProps) {
             </div>
           </div>
 
-          {/* Date Range Selection */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium">
-                Date Range (Today to 330 days from today)
-              </Label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleClearDateRange}
-              >
-                Clear
-              </Button>
-            </div>
-            
-            <div className="flex flex-col gap-2">
-              <Popover open={open} onOpenChange={setOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="justify-start text-left font-normal h-10"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    <span className="truncate">
-                      {getDateLabel(date)}
-                    </span>
-                    {date?.from && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDate(undefined);
-                        }}
-                        className="ml-2 p-1 hover:bg-muted rounded transition-colors"
-                      >
-                        <X className="h-3 w-3 text-muted-foreground" />
-                      </button>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="p-0 w-auto" align="start">
-                  <Calendar
-                    mode="range"
-                    selected={date}
-                    fromDate={today}
-                    toDate={maxDate}
-                    onSelect={(range) => {
-                      setDate(range);
-                      if (range?.from && range?.to) setOpen(false);
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
+          {/* Date Range and Fare Class Selection */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Date Range Selection */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">
+                  Date Range (Today to 330 days from today)
+                </Label>
+              </div>
               
+              <div className="flex flex-col gap-2">
+                <Popover open={open} onOpenChange={setOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="justify-start text-left font-normal h-10"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      <span className="truncate">
+                        {getDateLabel(date)}
+                      </span>
+                      {date?.from && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDate(undefined);
+                          }}
+                          className="ml-2 p-1 hover:bg-muted rounded transition-colors"
+                        >
+                          <X className="h-3 w-3 text-muted-foreground" />
+                        </button>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="p-0 w-auto" align="start">
+                    <Calendar
+                      mode="range"
+                      selected={date}
+                      fromDate={today}
+                      toDate={maxDate}
+                      onSelect={(range) => {
+                        setDate(range);
+                        if (range?.from && range?.to) setOpen(false);
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
+                
+                <p className="text-xs text-muted-foreground">
+                  {date?.from && date?.to 
+                    ? `${Math.ceil((date.to.getTime() - date.from.getTime()) / (1000 * 60 * 60 * 24)) + 1} days selected`
+                    : `Default: ${format(defaultFromDate, 'MMM d, yyyy')} - ${format(defaultToDate, 'MMM d, yyyy')} (30 days)`
+                  }
+                </p>
+              </div>
+            </div>
+
+            {/* Fare Class Selection */}
+            <div className="space-y-4">
+              <Label className="text-sm font-medium">Fare Class</Label>
+              <Select value={fareClass} onValueChange={(value: 'IN' | 'XN' | 'PZ' | 'PN' | 'ZN' | 'RN') => setFareClass(value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select fare class" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="IN">IN</SelectItem>
+                  <SelectItem value="XN">XN</SelectItem>
+                  <SelectItem value="PZ">PZ</SelectItem>
+                  <SelectItem value="PN">PN</SelectItem>
+                  <SelectItem value="ZN">ZN</SelectItem>
+                  <SelectItem value="RN">RN</SelectItem>
+                </SelectContent>
+              </Select>
               <p className="text-xs text-muted-foreground">
-                {date?.from && date?.to 
-                  ? `${Math.ceil((date.to.getTime() - date.from.getTime()) / (1000 * 60 * 60 * 24)) + 1} days selected`
-                  : `Default: ${format(defaultFromDate, 'MMM d, yyyy')} - ${format(defaultToDate, 'MMM d, yyyy')} (30 days)`
-                }
+                Select which fare class to analyze
               </p>
             </div>
           </div>
@@ -211,7 +229,7 @@ export function PZSearch({ onSearch }: PZSearchProps) {
                   Analyzing
                 </>
               ) : (
-                'Analyze PZ Data'
+                `Analyze ${fareClass} Data`
               )}
             </Button>
           </div>

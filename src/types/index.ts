@@ -44,8 +44,8 @@ export type {
 export interface PZSearchParams {
   departureAirports: string[];
   arrivalAirports: string[];
-  startDate: string; // YYYY-MM-DD format
-  endDate: string; // YYYY-MM-DD format
+  date: { from?: Date; to?: Date };
+  fareClass: 'IN' | 'XN' | 'PZ' | 'PN' | 'ZN' | 'RN';
 }
 
 export interface PZRecord {
@@ -54,6 +54,11 @@ export interface PZRecord {
   origin_airport: string | null;
   destination_airport: string | null;
   pz: string | null;
+  pn: string | null;
+  in: string | null;
+  rn: string | null;
+  xn: string | null;
+  zn: string | null;
   id: string;
 }
 

@@ -48,7 +48,7 @@ const formatDateToT = (dateStr: string): string => {
 /**
  * Custom tooltip for the scatter plot
  */
-const CustomTooltip = ({ active, payload }: any) => {
+const CustomTooltip = ({ active, payload, fareClass }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
@@ -60,7 +60,7 @@ const CustomTooltip = ({ active, payload }: any) => {
           return format(date, 'MMM dd, yyyy');
         })()}`}</p>
         <p className="text-sm">{`T-Format: ${data.tFormat}`}</p>
-        <p className="text-sm text-blue-600 dark:text-blue-400">{`PZ: ${data.pz}`}</p>
+        <p className="text-sm text-blue-600 dark:text-blue-400">{`${fareClass}: ${data.pz}`}</p>
       </div>
     );
   }
@@ -87,27 +87,28 @@ export function PZScatterChart({ isOpen, onClose, route, searchParams, viewMode 
           },
           body: JSON.stringify({
             route,
-            startDate: searchParams.startDate,
-            endDate: searchParams.endDate,
+            startDate: format(searchParams.date.from!, 'yyyy-MM-dd'),
+            endDate: format(searchParams.date.to!, 'yyyy-MM-dd'),
+            fareClass: searchParams.fareClass,
           }),
         });
 
         if (!response.ok) {
-          throw new Error('Failed to fetch PZ details');
+          throw new Error(`Failed to fetch ${searchParams.fareClass} details`);
         }
 
         const result = await response.json();
         setData(result.data || []);
       } catch (err) {
-        console.error('Error fetching PZ details:', err);
-        setError('Failed to load chart data');
+        console.error(`Error fetching ${searchParams.fareClass} details:`, err);
+        setError(`Failed to load ${searchParams.fareClass} chart data`);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [isOpen, route, searchParams.startDate, searchParams.endDate]);
+  }, [isOpen, route, searchParams.date.from, searchParams.date.to, searchParams.fareClass]);
 
   // Get unique T-formats and create a mapping for X positions
   const uniqueTFormats = [...new Set(data.map(record => formatDateToT(record.departure_date)))]
@@ -171,35 +172,35 @@ export function PZScatterChart({ isOpen, onClose, route, searchParams, viewMode 
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-auto">
         <DialogHeader>
           <DialogTitle>
-            PZ Distribution - {route} ({viewMode === 'flight' ? 'Per Flight' : 'Per Day'})
+            {searchParams.fareClass} Distribution - {route} ({viewMode === 'flight' ? 'Per Flight' : 'Per Day'})
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin mr-3" />
-              <span>Loading chart data...</span>
-            </div>
+                     {isLoading ? (
+             <div className="flex items-center justify-center py-12">
+               <Loader2 className="h-8 w-8 animate-spin mr-3" />
+               <span>Loading {searchParams.fareClass} chart data...</span>
+             </div>
           ) : error ? (
             <div className="text-center py-12 text-red-500">
               {error}
             </div>
-          ) : sortedData.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              No PZ data available for this route and date range.
-            </div>
+                     ) : sortedData.length === 0 ? (
+             <div className="text-center py-12 text-muted-foreground">
+               No {searchParams.fareClass} data available for this route and date range.
+             </div>
           ) : (
             <>
-              <div className="text-sm text-muted-foreground mb-4">
-                <p>
-                  Showing {sortedData.length} {viewMode === 'flight' ? 'flights' : 'days'} with PZ data
-                  {viewMode === 'day' && ' (Y-axis shows sum of PZ per day)'}
-                </p>
-                <p className="text-xs">
-                  T-Format: T = today, T+X = X days ago, T-X = X days from now
-                </p>
-              </div>
+                             <div className="text-sm text-muted-foreground mb-4">
+                 <p>
+                   Showing {sortedData.length} {viewMode === 'flight' ? 'flights' : 'days'} with {searchParams.fareClass} data
+                   {viewMode === 'day' && ` (Y-axis shows sum of ${searchParams.fareClass} per day)`}
+                 </p>
+                 <p className="text-xs">
+                   T-Format: T = today, T+X = X days ago, T-X = X days from now
+                 </p>
+               </div>
               
               <div style={{ width: '100%', height: '500px' }}>
                 <ResponsiveContainer>
@@ -224,12 +225,12 @@ export function PZScatterChart({ isOpen, onClose, route, searchParams, viewMode 
                       ticks={uniqueTFormats.map((_, index) => index)}
                       tickFormatter={(value) => uniqueTFormats[value] || ''}
                     />
-                    <YAxis 
-                      dataKey="y"
-                      type="number"
-                      label={{ value: `PZ ${viewMode === 'day' ? '(Sum per Day)' : ''}`, angle: -90, position: 'insideLeft' }}
-                    />
-                    <Tooltip content={<CustomTooltip />} />
+                                         <YAxis 
+                       dataKey="y"
+                       type="number"
+                       label={{ value: `${searchParams.fareClass} ${viewMode === 'day' ? '(Sum per Day)' : ''}`, angle: -90, position: 'insideLeft' }}
+                     />
+                                          <Tooltip content={<CustomTooltip fareClass={searchParams.fareClass} />} />
                     <Scatter 
                       dataKey="y" 
                       fill="#3b82f6"

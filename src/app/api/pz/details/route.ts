@@ -10,6 +10,7 @@ const PZDetailsRequestSchema = z.object({
   route: z.string(), // Format: "ORIGIN-DESTINATION"
   startDate: z.string(), // Format: YYYY-MM-DD
   endDate: z.string(), // Format: YYYY-MM-DD
+  fareClass: z.enum(['IN', 'XN', 'PZ', 'PN', 'ZN', 'RN']),
 });
 
 export interface PZDetailRecord {
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const validatedData = PZDetailsRequestSchema.parse(body);
 
-    const { route, startDate, endDate } = validatedData;
+    const { route, startDate, endDate, fareClass } = validatedData;
     
     // Parse route
     const [origin, destination] = route.split('-');
@@ -36,10 +37,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // Build the query
+    // Build the query - select all fare class columns
     let query = supabase
       .from('pz')
-      .select('departure_date, flight_number, pz, origin_airport, destination_airport')
+      .select('departure_date, flight_number, pz, pn, in, rn, xn, zn, origin_airport, destination_airport')
       .eq('origin_airport', origin)
       .eq('destination_airport', destination)
       .gte('departure_date', startDate)
@@ -56,13 +57,16 @@ export async function POST(request: Request) {
       );
     }
 
-    // Filter and process the data
+    // Filter and process the data based on selected fare class
     const processedData: PZDetailRecord[] = data
-      .filter(record => record.pz !== null && record.pz !== '')
+      .filter(record => {
+        const fareValue = record[fareClass.toLowerCase() as keyof typeof record];
+        return fareValue !== null && fareValue !== '';
+      })
       .map(record => ({
         departure_date: record.departure_date,
         flight_number: record.flight_number,
-        pz: parseFloat(record.pz),
+        pz: parseFloat(record[fareClass.toLowerCase() as keyof typeof record] as string),
         origin_airport: record.origin_airport,
         destination_airport: record.destination_airport,
       }))

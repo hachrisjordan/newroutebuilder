@@ -58,7 +58,7 @@ export function PZResults({ results, searchParams, isLoading }: PZResultsProps) 
         <CardContent className="p-6">
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin mr-4" />
-            <span className="text-lg">Analyzing PZ data...</span>
+            <span className="text-lg">Analyzing {searchParams?.fareClass || 'PZ'} data...</span>
           </div>
         </CardContent>
       </Card>
@@ -74,7 +74,7 @@ export function PZResults({ results, searchParams, isLoading }: PZResultsProps) 
       <Card className="w-full max-w-7xl">
         <CardContent className="p-6">
           <div className="text-center py-8">
-            <p className="text-lg text-muted-foreground">No PZ data found for the selected criteria.</p>
+            <p className="text-lg text-muted-foreground">No {searchParams?.fareClass || 'PZ'} data found for the selected criteria.</p>
           </div>
         </CardContent>
       </Card>
@@ -157,7 +157,7 @@ export function PZResults({ results, searchParams, isLoading }: PZResultsProps) 
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <CardTitle>PZ Analysis Results</CardTitle>
+                                      <CardTitle>{searchParams?.fareClass || 'PZ'} Analysis Results</CardTitle>
               <Badge variant="secondary">
                 {results.routes.length} routes
               </Badge>
@@ -215,7 +215,7 @@ export function PZResults({ results, searchParams, isLoading }: PZResultsProps) 
       <CardContent>
         <div className="mb-4">
           <p className="text-sm text-muted-foreground">
-            💡 Click on any row to view a scatter plot of PZ distribution over time
+            💡 Click on any row to view a scatter plot of {searchParams?.fareClass || 'PZ'} distribution over time
           </p>
         </div>
         <div className="overflow-x-auto">
@@ -236,7 +236,7 @@ export function PZResults({ results, searchParams, isLoading }: PZResultsProps) 
                   onClick={() => handleSort('average')}
                 >
                   <div className="flex items-center justify-end gap-1">
-                    Average PZ
+                    Average {searchParams?.fareClass || 'PZ'}
                     {getSortIcon('average')}
                   </div>
                 </TableHead>
@@ -245,7 +245,7 @@ export function PZResults({ results, searchParams, isLoading }: PZResultsProps) 
                   onClick={() => handleSort('median')}
                 >
                   <div className="flex items-center justify-end gap-1">
-                    Median PZ
+                    Median {searchParams?.fareClass || 'PZ'}
                     {getSortIcon('median')}
                   </div>
                 </TableHead>
@@ -254,7 +254,7 @@ export function PZResults({ results, searchParams, isLoading }: PZResultsProps) 
                   onClick={() => handleSort('percentage')}
                 >
                   <div className="flex items-center justify-end gap-1">
-                    %
+                    % with {searchParams?.fareClass || 'PZ'}
                     {getSortIcon('percentage')}
                   </div>
                 </TableHead>

@@ -19,7 +19,13 @@ export default function UnitedPZPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(params),
+        body: JSON.stringify({
+          ...params,
+          date: {
+            from: params.date.from,
+            to: params.date.to,
+          },
+        }),
       });
 
       if (!response.ok) {

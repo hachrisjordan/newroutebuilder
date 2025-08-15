@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { format } from 'date-fns';
 import type { PZRecord, PZRouteAnalysis, PZAnalysisResults } from '@/types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -10,8 +11,11 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const PZRequestSchema = z.object({
   departureAirports: z.array(z.string()),
   arrivalAirports: z.array(z.string()),
-  startDate: z.string(), // Format: YYYY-MM-DD
-  endDate: z.string(), // Format: YYYY-MM-DD
+  date: z.object({
+    from: z.string().transform((val) => new Date(val)),
+    to: z.string().transform((val) => new Date(val)),
+  }),
+  fareClass: z.enum(['IN', 'XN', 'PZ', 'PN', 'ZN', 'RN']),
 });
 
 /**
@@ -42,7 +46,7 @@ function calculatePercentage(part: number, total: number): number {
 /**
  * Process PZ data to calculate statistics per route
  */
-function processPZData(data: PZRecord[]): PZAnalysisResults {
+function processPZData(data: PZRecord[], fareClass: 'IN' | 'XN' | 'PZ' | 'PN' | 'ZN' | 'RN'): PZAnalysisResults {
   // Group data by route (origin-destination)
   const routeGroups = new Map<string, PZRecord[]>();
   
@@ -73,22 +77,27 @@ function processPZData(data: PZRecord[]): PZAnalysisResults {
     });
 
     // Flight-level statistics
-    // Get all flights with valid PZ data (>= 0)
+    // Get all flights with valid fare class data (>= 0)
     const allFlightsWithData = records.filter(r => {
-      if (r.pz === null || r.pz === '') return false;
-      const pzValue = parseFloat(r.pz);
-      return !isNaN(pzValue) && pzValue >= 0;
+      const fareValue = r[fareClass.toLowerCase() as keyof PZRecord];
+      if (fareValue === null || fareValue === '') return false;
+      const fareValueNum = parseFloat(fareValue as string);
+      return !isNaN(fareValueNum) && fareValueNum >= 0;
     });
     
-    // Get flights with PZ > 0 (for percentage calculation)
+    // Get flights with fare class > 0 (for percentage calculation)
     const flightsWithPZ = allFlightsWithData.filter(r => {
-      const pzValue = parseFloat(r.pz!);
-      return pzValue > 0;
+      const fareValue = r[fareClass.toLowerCase() as keyof PZRecord];
+      const fareValueNum = parseFloat(fareValue as string);
+      return fareValueNum > 0;
     });
     
-    // Use all valid PZ values (including 0) for average/median calculation
+    // Use all valid fare class values (including 0) for average/median calculation
     const flightPZValues = allFlightsWithData
-      .map(r => parseFloat(r.pz!))
+      .map(r => {
+        const fareValue = r[fareClass.toLowerCase() as keyof PZRecord];
+        return parseFloat(fareValue as string);
+      })
       .filter(val => !isNaN(val));
     
     const flightStats = calculateStats(flightPZValues);
@@ -98,30 +107,35 @@ function processPZData(data: PZRecord[]): PZAnalysisResults {
     const dayPZValues: number[] = [];
 
     dayGroups.forEach((dayRecords, date) => {
-      // Get all flights with valid PZ data (>= 0) for the day
+      // Get all flights with valid fare class data (>= 0) for the day
       const allDayFlightsWithData = dayRecords.filter(r => {
-        if (r.pz === null || r.pz === '') return false;
-        const pzValue = parseFloat(r.pz);
-        return !isNaN(pzValue) && pzValue >= 0;
+        const fareValue = r[fareClass.toLowerCase() as keyof PZRecord];
+        if (fareValue === null || fareValue === '') return false;
+        const fareValueNum = parseFloat(fareValue as string);
+        return !isNaN(fareValueNum) && fareValueNum >= 0;
       });
       
-      // Get flights with PZ > 0 for percentage calculation
+      // Get flights with fare class > 0 for percentage calculation
       const dayFlightsWithPZ = allDayFlightsWithData.filter(r => {
-        const pzValue = parseFloat(r.pz!);
-        return pzValue > 0;
+        const fareValue = r[fareClass.toLowerCase() as keyof PZRecord];
+        const fareValueNum = parseFloat(fareValue as string);
+        return fareValueNum > 0;
       });
       
       if (allDayFlightsWithData.length > 0) {
-        // Sum all PZ values >= 0 for the day (for average/median calculation)
+        // Sum all fare class values >= 0 for the day (for average/median calculation)
         const dayPZSum = allDayFlightsWithData
-          .map(r => parseFloat(r.pz!))
+          .map(r => {
+            const fareValue = r[fareClass.toLowerCase() as keyof PZRecord];
+            return parseFloat(fareValue as string);
+          })
           .filter(val => !isNaN(val))
           .reduce((sum, val) => sum + val, 0);
         
         // Always include the day sum (even if it's 0)
         dayPZValues.push(dayPZSum);
         
-        // Only count as "day with PZ" if there's at least one flight with PZ > 0
+        // Only count as "day with fare class" if there's at least one flight with fare class > 0
         if (dayFlightsWithPZ.length > 0) {
           daysWithPZ.push(date);
         }
@@ -170,7 +184,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const validatedData = PZRequestSchema.parse(body);
 
-    const { departureAirports, arrivalAirports, startDate, endDate } = validatedData;
+    const { departureAirports, arrivalAirports, date, fareClass } = validatedData;
 
     // Build the query
     let query = supabase
@@ -178,8 +192,8 @@ export async function POST(request: Request) {
       .select('*')
       .in('origin_airport', departureAirports)
       .in('destination_airport', arrivalAirports)
-      .gte('departure_date', startDate)
-      .lte('departure_date', endDate);
+      .gte('departure_date', format(date.from, 'yyyy-MM-dd'))
+      .lte('departure_date', format(date.to, 'yyyy-MM-dd'));
 
     const { data, error } = await query;
 
@@ -192,7 +206,7 @@ export async function POST(request: Request) {
     }
 
     // Process the data to calculate PZ statistics
-    const processedData = processPZData(data as PZRecord[]);
+    const processedData = processPZData(data as PZRecord[], fareClass);
 
     return NextResponse.json({
       data: processedData,
