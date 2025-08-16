@@ -1043,8 +1043,7 @@ export default function APDDumpingPage() {
                         const selectedSaudiFlight = paginatedKoreanAirFlights[parseInt(flightIndex)];
                         if (!selectedSaudiFlight) return null;
                         
-                        const miles = className === 'economy' ? selectedSaudiFlight.economyMiles : selectedSaudiFlight.businessMiles;
-                        const seats = className === 'economy' ? selectedSaudiFlight.economySeats : selectedSaudiFlight.businessSeats;
+
                         
                         return (
                           <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border dark:border-gray-700">
