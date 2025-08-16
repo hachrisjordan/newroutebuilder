@@ -744,19 +744,18 @@ export default function APDDumpingPage() {
             <div className="flex flex-col gap-4">
               {paginatedKoreanAirFlights.map((flight, index) => {
                 const isExpanded = expandedId === `korean-${index}`;
-                const economyClassKey = `${index}-economy`;
+                const premiumClassKey = `${index}-premium`;
                 const businessClassKey = `${index}-business`;
-                const isEconomySelected = selectedKoreanAirClass === economyClassKey;
+                const firstClassKey = `${index}-first`;
+                const isPremiumSelected = selectedKoreanAirClass === premiumClassKey;
                 const isBusinessSelected = selectedKoreanAirClass === businessClassKey;
+                const isFirstSelected = selectedKoreanAirClass === firstClassKey;
                 
                 // Filter logic: if a class is selected, only show that specific flight and class
                 const selectedClassKey = selectedKoreanAirClass;
-                const isPremiumSelected = selectedKoreanAirClass === `${index}-premium`;
-                const isFirstSelected = selectedKoreanAirClass === `${index}-first`;
-                const shouldShowFlight = !selectedClassKey || isEconomySelected || isBusinessSelected || isPremiumSelected || isFirstSelected;
-                const shouldShowEconomy = !selectedClassKey || isEconomySelected;
-                const shouldShowBusiness = !selectedClassKey || isBusinessSelected;
+                const shouldShowFlight = !selectedClassKey || isPremiumSelected || isBusinessSelected || isFirstSelected;
                 const shouldShowPremium = !selectedClassKey || isPremiumSelected;
+                const shouldShowBusiness = !selectedClassKey || isBusinessSelected;
                 const shouldShowFirst = !selectedClassKey || isFirstSelected;
                 
                 // If no flight should be shown, don't render this card
@@ -766,7 +765,7 @@ export default function APDDumpingPage() {
                 
                 return (
                   <Card key={`korean-${index}`} className={`rounded-xl border bg-card shadow transition-all ${
-                    (isEconomySelected || isBusinessSelected) ? 'ring-2 ring-primary ring-offset-2' : ''
+                    (isPremiumSelected || isBusinessSelected || isFirstSelected) ? 'ring-2 ring-primary ring-offset-2' : ''
                   }`}>
                     <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between py-4 gap-2 p-4 w-full">
                       <div className="flex flex-col md:flex-row md:items-center gap-2 w-full">
@@ -829,13 +828,13 @@ export default function APDDumpingPage() {
                               <button
                                 onClick={() => handleKoreanAirClassSelect(index, 'premium')}
                                 className={`px-2 py-1 text-xs rounded transition-colors ${
-                                  isEconomySelected
+                                  isPremiumSelected
                                     ? 'bg-primary text-primary-foreground'
                                     : 'bg-muted hover:bg-muted/80 text-muted-foreground'
                                 }`}
-                                aria-label={isEconomySelected ? "Deselect Premium" : "Select Premium"}
+                                aria-label={isPremiumSelected ? "Deselect Premium" : "Select Premium"}
                               >
-                                {isEconomySelected ? 'Selected' : 'Select'}
+                                {isPremiumSelected ? 'Selected' : 'Select'}
                               </button>
                               Seats:
                               <span className="rounded px-2 py-0.5 font-mono font-bold text-sm" style={{ background: '#B8A4CC', color: '#222' }}>
@@ -1033,13 +1032,7 @@ export default function APDDumpingPage() {
                                 {formatDate(selectedVirginFlight.DepartsAt)} • {selectedVirginFlight.FlightNumbers}
                               </div>
                             </div>
-                            <div className="text-right">
-                              <div className="font-medium dark:text-gray-100">
-                                {Math.max(29000, Math.floor(selectedVirginFlight.MileageCost / 2)).toLocaleString()} miles
-                                <span className="text-xs text-gray-500 dark:text-gray-400 align-super">*</span>
-                              </div>
-                              <div className="text-sm text-gray-600 dark:text-gray-400">+ ${(selectedVirginFlight.TotalTaxes / 100).toFixed(2)}</div>
-                            </div>
+
                           </div>
                         );
                       })()}
@@ -1071,39 +1064,7 @@ export default function APDDumpingPage() {
                                 {formatDate(selectedSaudiFlight.DepartsAt)} • {selectedSaudiFlight.FlightNumbers}
                               </div>
                             </div>
-                            <div className="text-right">
-                              <div className="font-medium dark:text-gray-100">
-                                {(() => {
-                                  const [flightIndex, className] = selectedKoreanAirClass.split('-');
-                                  const selectedBAFlight = paginatedKoreanAirFlights[parseInt(flightIndex)];
-                                  if (!selectedBAFlight) return '0';
-                                  
-                                  if (className === 'premium' && selectedBAFlight.premiumMiles) {
-                                    return selectedBAFlight.premiumMiles.toLocaleString();
-                                  } else if (className === 'business' && selectedBAFlight.businessMiles) {
-                                    return selectedBAFlight.businessMiles.toLocaleString();
-                                  } else if (className === 'first' && selectedBAFlight.firstMiles) {
-                                    return selectedBAFlight.firstMiles.toLocaleString();
-                                  }
-                                  return '0';
-                                })()} miles
-                              </div>
-                              <div className="text-sm text-gray-600 dark:text-gray-400">+ ${(() => {
-                                const [flightIndex, className] = selectedKoreanAirClass.split('-');
-                                const selectedBAFlight = paginatedKoreanAirFlights[parseInt(flightIndex)];
-                                if (!selectedBAFlight) return '0.00';
-                                
-                                let tax = 0;
-                                if (className === 'premium' && selectedBAFlight.premiumTax) {
-                                  tax = selectedBAFlight.premiumTax / 100;
-                                } else if (className === 'business' && selectedBAFlight.businessTax) {
-                                  tax = selectedBAFlight.businessTax / 100;
-                                } else if (className === 'first' && selectedBAFlight.firstTax) {
-                                  tax = selectedBAFlight.firstTax / 100;
-                                }
-                                return tax.toFixed(2);
-                              })()}</div>
-                            </div>
+
                           </div>
                         );
                       })()}
