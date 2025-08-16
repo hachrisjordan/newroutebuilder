@@ -321,7 +321,7 @@ export default function APDDumpingPage() {
         
         if (!hasValidFirstClass) {
           isValid = false;
-          errorMessage = `First flight ${selectedAPDFlight.FlightNumbers} doesn't have valid ${expectedFirstClass} class`;
+          errorMessage = `❌ Mixed cabin is not available`;
         }
       }
       
@@ -334,7 +334,7 @@ export default function APDDumpingPage() {
         
         if (!hasValidSecondClass) {
           isValid = false;
-          errorMessage = `Second flight ${selectedBAFlight.FlightNumbers} doesn't have valid ${selectedClass} class`;
+          errorMessage = `❌ Second flight ${selectedBAFlight.FlightNumbers} doesn't have valid ${selectedClass} class`;
         }
       }
       
