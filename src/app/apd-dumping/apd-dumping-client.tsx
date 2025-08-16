@@ -449,7 +449,7 @@ export default function APDDumpingPage() {
                   selected={date}
                   month={currentMonth}
                   fromDate={new Date()}
-                  toDate={addDays(new Date(), 21)}
+                  toDate={addDays(new Date(), 1)}
                   onMonthChange={setCurrentMonth}
                   onSelect={(range) => {
                     setDate(range);
@@ -512,49 +512,7 @@ export default function APDDumpingPage() {
           
           return (
             <div className="mb-6">
-              <Card className="border-orange-200 bg-orange-50">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                        <h3 className="font-semibold text-orange-800">Data May Be Outdated</h3>
-                      </div>
-                      <p className="text-sm text-orange-700 mb-3">
-                        This flight data was last updated{' '}
-                        {ageInHoursFloor > 0 
-                          ? `${ageInHoursFloor} hour${ageInHoursFloor > 1 ? 's' : ''} and ${ageInMinutes % 60} minute${ageInMinutes % 60 !== 1 ? 's' : ''} ago`
-                          : `${ageInMinutes} minute${ageInMinutes !== 1 ? 's' : ''} ago`
-                        }. 
-                        For the most current availability, consider refreshing the data.
-                      </p>
-                      <Button
-                        onClick={async () => {
-                          try {
-                            setLoading(true);
-                            const response = await fetch('https://api.bbairtools.com/api/seats-aero-virginatlantic');
-                            if (response.ok) {
-                              // Wait a moment for the database to update, then refetch
-                              setTimeout(() => {
-                                fetchFlights();
-                              }, 3000);
-                            }
-                          } catch (error) {
-                            // Error handling without console logging
-                          } finally {
-                            setLoading(false);
-                          }
-                        }}
-                        variant="outline"
-                        size="sm"
-                        className="border-orange-300 text-orange-700 hover:bg-orange-100"
-                      >
-                        Refresh Data
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+
             </div>
           );
         }
