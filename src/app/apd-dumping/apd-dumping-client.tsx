@@ -793,24 +793,24 @@ export default function APDDumpingPage() {
             const flightUniqueId = `${flight.FlightNumbers}-${flight.DepartsAt}-${flight.OriginAirport}-${flight.DestinationAirport}`;
             const isExpanded = expandedId === flightUniqueId;
             return (
-              <Card key={flightUniqueId} className={`rounded-xl border bg-card shadow transition-all ${
+              <Card key={flightUniqueId} className={`rounded-xl border bg-card shadow transition-all overflow-hidden ${
                 selectedFlight === flightUniqueId ? 'ring-2 ring-primary ring-offset-2' : ''
               }`}>
                 <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between py-4 gap-2 p-4 w-full">
-                  <div className="flex flex-col md:flex-row md:items-center gap-2 w-full">
-                    <span className="font-semibold text-lg text-primary">
+                  <div className="flex flex-col md:flex-row md:items-center gap-2 w-full min-w-0">
+                    <span className="font-semibold text-lg text-primary break-words">
                       {flight.OriginAirport} → {flight.DestinationAirport}
                     </span>
-                    <span className="text-muted-foreground text-sm md:ml-4">
+                    <span className="text-muted-foreground text-sm md:ml-4 flex-shrink-0">
                       {formatDate(flight.DepartsAt)}
                     </span>
                   </div>
-                  <div className="flex flex-col md:flex-row md:items-center w-full md:w-auto gap-1 md:gap-6 mt-2 md:mt-0 ml-auto">
-                    <div className="flex items-center gap-6">
-                      <span className="text-sm font-mono text-muted-foreground font-bold whitespace-nowrap">
+                  <div className="flex flex-col md:flex-row md:items-center w-full md:w-auto gap-1 md:gap-6 mt-2 md:mt-0 ml-auto min-w-0">
+                    <div className="flex items-center gap-6 min-w-0">
+                      <span className="text-sm font-mono text-muted-foreground font-bold whitespace-nowrap flex-shrink-0">
                         {formatDuration(flight.Duration)}
                       </span>
-                      <div className="flex items-center gap-2 whitespace-nowrap">
+                      <div className="flex items-center gap-2 whitespace-nowrap flex-shrink-0">
                         <span className="text-sm font-medium">
                           {formatTime(flight.DepartsAt)}
                         </span>
@@ -829,7 +829,7 @@ export default function APDDumpingPage() {
                   </div>
                   <button
                     onClick={() => handleExpandToggle(flightUniqueId)}
-                    className="ml-2 p-1 hover:bg-muted rounded transition-colors self-start md:self-center"
+                    className="ml-2 p-1 hover:bg-muted rounded transition-colors self-start md:self-center flex-shrink-0"
                     aria-label={isExpanded ? "Collapse details" : "Expand details"}
                   >
                     {isExpanded ? (
@@ -840,20 +840,20 @@ export default function APDDumpingPage() {
                   </button>
                 </CardContent>
                 <div className="px-6 pb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2 text-sm">
-                  <div className="flex flex-wrap gap-2 items-center">
-                    <span className="flex items-center gap-1">
+                  <div className="flex flex-wrap gap-2 items-center min-w-0">
+                    <span className="flex items-center gap-1 min-w-0">
                       <Image
                         src={getAirlineLogo(flight.FlightNumbers)}
                         alt={flight.FlightNumbers.startsWith('DL') ? 'Delta' : 'British Airways'}
                         width={24}
                         height={24}
-                        className="inline-block align-middle rounded-md"
+                        className="inline-block align-middle rounded-md flex-shrink-0"
                         style={{ objectFit: 'contain' }}
                       />
-                      <span className="font-mono">{flight.FlightNumbers}</span>
+                      <span className="font-mono break-words">{flight.FlightNumbers}</span>
                       <button
                         onClick={() => handleFlightSelect(flightUniqueId)}
-                        className={`ml-2 px-2 py-1 text-xs rounded transition-colors ${
+                        className={`ml-2 px-2 py-1 text-xs rounded transition-colors flex-shrink-0 ${
                           selectedFlight === flightUniqueId
                             ? 'bg-primary text-primary-foreground'
                             : 'bg-muted hover:bg-muted/80 text-muted-foreground'
@@ -978,24 +978,24 @@ export default function APDDumpingPage() {
                 }
                 
                 return (
-                  <Card key={`korean-${index}`} className={`rounded-xl border bg-card shadow transition-all ${
+                  <Card key={`korean-${index}`} className={`rounded-xl border bg-card shadow transition-all overflow-hidden ${
                     (isPremiumSelected || isBusinessSelected || isFirstSelected) ? 'ring-2 ring-primary ring-offset-2' : ''
                   }`}>
                     <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between py-4 gap-2 p-4 w-full">
-                      <div className="flex flex-col md:flex-row md:items-center gap-2 w-full">
-                        <span className="font-semibold text-lg text-primary">
+                      <div className="flex flex-col md:flex-row md:items-center gap-2 w-full min-w-0">
+                        <span className="font-semibold text-lg text-primary break-words">
                           {flight.OriginAirport} → {flight.DestinationAirport}
                         </span>
-                        <span className="text-muted-foreground text-sm md:ml-4">
+                        <span className="text-muted-foreground text-sm md:ml-4 flex-shrink-0">
                           {formatDate(flight.DepartsAt)}
                         </span>
                       </div>
-                      <div className="flex flex-col md:flex-row md:items-center w-full md:w-auto gap-1 md:gap-6 mt-2 md:mt-0 ml-auto">
-                        <div className="flex items-center gap-6">
-                          <span className="text-sm font-mono text-muted-foreground font-bold whitespace-nowrap">
+                      <div className="flex flex-col md:flex-row md:items-center w-full md:w-auto gap-1 md:gap-6 mt-2 md:mt-0 ml-auto min-w-0">
+                        <div className="flex items-center gap-6 min-w-0">
+                          <span className="text-sm font-mono text-muted-foreground font-bold whitespace-nowrap flex-shrink-0">
                             {formatDuration(calculateDuration(flight.DepartsAt, flight.ArrivesAt))}
                           </span>
-                          <div className="flex items-center gap-2 whitespace-nowrap">
+                          <div className="flex items-center gap-2 whitespace-nowrap flex-shrink-0">
                             <span className="text-sm font-medium">
                               {formatTime(flight.DepartsAt)}
                             </span>
@@ -1011,7 +1011,7 @@ export default function APDDumpingPage() {
                       </div>
                       <button
                         onClick={() => handleExpandToggle(`korean-${index}`)}
-                        className="ml-2 p-1 hover:bg-muted rounded transition-colors self-start md:self-center"
+                        className="ml-2 p-1 hover:bg-muted rounded transition-colors self-start md:self-center flex-shrink-0"
                         aria-label={isExpanded ? "Collapse details" : "Expand details"}
                       >
                         {isExpanded ? (
@@ -1022,26 +1022,26 @@ export default function APDDumpingPage() {
                       </button>
                     </CardContent>
                     <div className="px-6 pb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2 text-sm">
-                      <div className="flex flex-wrap gap-2 items-center">
-                        <span className="flex items-center gap-1">
+                      <div className="flex flex-wrap gap-2 items-center min-w-0">
+                        <span className="flex items-center gap-1 min-w-0">
                           <Image
                             src="/BA.png"
                             alt="British Airways"
                             width={24}
                             height={24}
-                            className="inline-block align-middle rounded-md"
+                            className="inline-block align-middle rounded-md flex-shrink-0"
                             style={{ objectFit: 'contain' }}
                           />
-                          <span className="font-mono">{flight.FlightNumbers}</span>
+                          <span className="font-mono break-words">{flight.FlightNumbers}</span>
                         </span>
                       </div>
-                      <div className="flex flex-wrap gap-4 items-center">
-                        <span className="text-sm font-medium flex flex-col gap-1">
+                      <div className="flex flex-wrap gap-4 items-center min-w-0 w-full md:w-auto">
+                        <span className="text-sm font-medium flex flex-col gap-1 min-w-0 w-full">
                           {flight.premiumSeats && shouldShowPremium && (
-                            <span className="flex items-center gap-2">
+                            <span className="flex flex-wrap items-center gap-2 min-w-0 w-full">
                               <button
                                 onClick={() => handleKoreanAirClassSelect(index, 'premium')}
-                                className={`px-2 py-1 text-xs rounded transition-colors ${
+                                className={`px-2 py-1 text-xs rounded transition-colors flex-shrink-0 ${
                                   isPremiumSelected
                                     ? 'bg-primary text-primary-foreground'
                                     : 'bg-muted hover:bg-muted/80 text-muted-foreground'
@@ -1050,25 +1050,27 @@ export default function APDDumpingPage() {
                               >
                                 {isPremiumSelected ? 'Selected' : 'Select'}
                               </button>
-                              Seats:
-                              <span className="rounded px-2 py-0.5 font-mono font-bold text-sm" style={{ background: '#B8A4CC', color: '#222' }}>
-                                {flight.premiumSeats}
-                              </span>
-                              Premium:
-                              <span className="rounded px-2 py-0.5 font-mono font-bold text-sm" style={{ background: '#B8A4CC', color: '#222' }}>
-                                {flight.premiumMiles?.toLocaleString()}
-                              </span>
-                              +
-                              <span className="font-mono text-sm">
-                                ${(flight.premiumTax ? flight.premiumTax / 100 : 0).toFixed(2)}
+                              <span className="flex flex-wrap items-center gap-1 min-w-0 flex-1">
+                                <span className="text-xs text-muted-foreground">Seats:</span>
+                                <span className="rounded px-2 py-0.5 font-mono font-bold text-sm flex-shrink-0" style={{ background: '#B8A4CC', color: '#222' }}>
+                                  {flight.premiumSeats}
+                                </span>
+                                <span className="text-xs text-muted-foreground">Premium:</span>
+                                <span className="rounded px-2 py-0.5 font-mono font-bold text-sm flex-shrink-0" style={{ background: '#B8A4CC', color: '#222' }}>
+                                  {flight.premiumMiles?.toLocaleString()}
+                                </span>
+                                <span className="text-xs text-muted-foreground">+</span>
+                                <span className="font-mono text-sm break-words">
+                                  ${(flight.premiumTax ? flight.premiumTax / 100 : 0).toFixed(2)}
+                                </span>
                               </span>
                             </span>
                           )}
                           {flight.businessSeats && shouldShowBusiness && (
-                            <span className="flex items-center gap-2">
+                            <span className="flex flex-wrap items-center gap-2 min-w-0 w-full">
                               <button
                                 onClick={() => handleKoreanAirClassSelect(index, 'business')}
-                                className={`px-2 py-1 text-xs rounded transition-colors ${
+                                className={`px-2 py-1 text-xs rounded transition-colors flex-shrink-0 ${
                                   isBusinessSelected
                                     ? 'bg-primary text-primary-foreground'
                                     : 'bg-muted hover:bg-muted/80 text-muted-foreground'
@@ -1077,25 +1079,27 @@ export default function APDDumpingPage() {
                               >
                                 {isBusinessSelected ? 'Selected' : 'Select'}
                               </button>
-                              Seats:
-                              <span className="rounded px-2 py-0.5 font-mono font-bold text-sm" style={{ background: '#F3CD87', color: '#222' }}>
-                                {flight.businessSeats}
-                              </span>
-                              Business:
-                              <span className="rounded px-2 py-0.5 font-mono font-bold text-sm" style={{ background: '#F3CD87', color: '#222' }}>
-                                {flight.businessMiles?.toLocaleString()}
-                              </span>
-                              +
-                              <span className="font-mono text-sm">
-                                ${(flight.businessTax ? flight.businessTax / 100 : 0).toFixed(2)}
+                              <span className="flex flex-wrap items-center gap-1 min-w-0 flex-1">
+                                <span className="text-xs text-muted-foreground">Seats:</span>
+                                <span className="rounded px-2 py-0.5 font-mono font-bold text-sm flex-shrink-0" style={{ background: '#F3CD87', color: '#222' }}>
+                                  {flight.businessSeats}
+                                </span>
+                                <span className="text-xs text-muted-foreground">Business:</span>
+                                <span className="rounded px-2 py-0.5 font-mono font-bold text-sm flex-shrink-0" style={{ background: '#F3CD87', color: '#222' }}>
+                                  {flight.businessMiles?.toLocaleString()}
+                                </span>
+                                <span className="text-xs text-muted-foreground">+</span>
+                                <span className="font-mono text-sm break-words">
+                                  ${(flight.businessTax ? flight.businessTax / 100 : 0).toFixed(2)}
+                                </span>
                               </span>
                             </span>
                           )}
                           {flight.firstSeats && shouldShowFirst && (
-                            <span className="flex items-center gap-2">
+                            <span className="flex flex-wrap items-center gap-2 min-w-0 w-full">
                               <button
                                 onClick={() => handleKoreanAirClassSelect(index, 'first')}
-                                className={`px-2 py-1 text-xs rounded transition-colors ${
+                                className={`px-2 py-1 text-xs rounded transition-colors flex-shrink-0 ${
                                   selectedKoreanAirClass === `${index}-first`
                                     ? 'bg-primary text-primary-foreground'
                                     : 'bg-muted hover:bg-muted/80 text-muted-foreground'
@@ -1104,17 +1108,19 @@ export default function APDDumpingPage() {
                               >
                                 {selectedKoreanAirClass === `${index}-first` ? 'Selected' : 'Select'}
                               </button>
-                              Seats:
-                              <span className="rounded px-2 py-0.5 font-mono font-bold text-sm" style={{ background: '#D88A3F', color: '#FFFFFF' }}>
-                                {flight.firstSeats}
-                              </span>
-                              First:
-                              <span className="rounded px-2 py-0.5 font-mono font-bold text-sm" style={{ background: '#D88A3F', color: '#FFFFFF' }}>
-                                {flight.firstMiles?.toLocaleString()}
-                              </span>
-                              +
-                              <span className="font-mono text-sm">
-                                ${(flight.firstTax ? flight.firstTax / 100 : 0).toFixed(2)}
+                              <span className="flex flex-wrap items-center gap-1 min-w-0 flex-1">
+                                <span className="text-xs text-muted-foreground">Seats:</span>
+                                <span className="rounded px-2 py-0.5 font-mono font-bold text-sm flex-shrink-0" style={{ background: '#D88A3F', color: '#222' }}>
+                                  {flight.firstSeats}
+                                </span>
+                                <span className="text-xs text-muted-foreground">First:</span>
+                                <span className="rounded px-2 py-0.5 font-mono font-bold text-sm flex-shrink-0" style={{ background: '#D88A3F', color: '#222' }}>
+                                  {flight.firstMiles?.toLocaleString()}
+                                </span>
+                                <span className="text-xs text-muted-foreground">+</span>
+                                <span className="font-mono text-sm break-words">
+                                  ${(flight.firstTax ? flight.firstTax / 100 : 0).toFixed(2)}
+                                </span>
                               </span>
                             </span>
                           )}
