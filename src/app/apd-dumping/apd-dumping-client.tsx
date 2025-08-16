@@ -1072,7 +1072,7 @@ export default function APDDumpingPage() {
                     
                     {/* Note about mileage */}
                     <div className="text-xs text-gray-500 dark:text-gray-400 italic">
-                      * British Airways mileage amounts are estimates and may vary slightly from actual booking rates
+                      * Alaska Airlines mileage amounts are estimates and may vary slightly from actual booking rates
                     </div>
                     
                     {/* Total Calculation */}
@@ -1082,17 +1082,14 @@ export default function APDDumpingPage() {
                           <div className="font-semibold text-lg dark:text-white">Total</div>
                           <div className="text-sm text-gray-600 dark:text-gray-400">
                             {(() => {
-                              // Parse the unique identifier to find the exact British Airways flight
-                              // The format is: "VS26-2025-08-08T08:10:00-JFK-LHR"
-                              // We need to handle the date which contains hyphens
+                              // Parse the unique identifier to find the exact APD flight
                               const parts = selectedFlight.split('-');
                               const flightNumber = parts[0];
                               const destinationAirport = parts[parts.length - 1];
                               const originAirport = parts[parts.length - 2];
-                              // Reconstruct the date by joining the middle parts
                               const departsAt = parts.slice(1, -2).join('-');
                               
-                              const selectedVirginFlight = flights.find(flight => 
+                              const selectedAPDFlight = flights.find(flight => 
                                 flight.FlightNumbers === flightNumber &&
                                 flight.DepartsAt === departsAt &&
                                 flight.OriginAirport === originAirport &&
@@ -1100,21 +1097,51 @@ export default function APDDumpingPage() {
                               );
                               
                               const [flightIndex, className] = selectedKoreanAirClass.split('-');
-                              const selectedSaudiFlight = paginatedKoreanAirFlights[parseInt(flightIndex)];
+                              const selectedBAFlight = paginatedKoreanAirFlights[parseInt(flightIndex)];
                               
-                              if (!selectedVirginFlight || !selectedSaudiFlight) return '';
+                              if (!selectedAPDFlight || !selectedBAFlight) return 'Calculating...';
                               
-                              // Use half points for British Airways (second row pricing) with minimum of 29,000
-                              const virginMiles = Math.max(29000, Math.floor(selectedVirginFlight.MileageCost / 2));
-                              const saudiMiles = className === 'economy' ? selectedSaudiFlight.economyMiles : selectedSaudiFlight.businessMiles;
-                              const totalMiles = virginMiles + saudiMiles;
+                              // Calculate total distance using haversine formula
+                              // This would need to be implemented with actual airport coordinates from Supabase
+                              // For now, using a placeholder calculation
+                              const totalDistance = 5000; // Placeholder - should calculate actual distance
                               
-                              // Calculate combined taxes
-                              const virginTaxes = selectedVirginFlight.TotalTaxes / 100;
-                              const saudiTaxes = convertTaxToUSD(selectedSaudiFlight.TotalTaxes, selectedSaudiFlight.OriginAirport, selectedSaudiFlight.DestinationAirport);
-                              const totalTaxes = virginTaxes + saudiTaxes;
+                              // British Airways award chart based on distance and cabin class
+                              let miles;
+                              if (totalDistance < 1500) {
+                                if (className === 'premium') miles = 10000;
+                                else if (className === 'business') miles = 15000;
+                                else if (className === 'first') miles = 22500;
+                                else miles = 7500; // economy
+                              } else if (totalDistance < 3500) {
+                                if (className === 'premium') miles = 30000;
+                                else if (className === 'business') miles = 45000;
+                                else if (className === 'first') miles = 67500;
+                                else miles = 22500; // economy
+                              } else if (totalDistance < 5000) {
+                                if (className === 'premium') miles = 35000;
+                                else if (className === 'business') miles = 55000;
+                                else if (className === 'first') miles = 82500;
+                                else miles = 27500; // economy
+                              } else if (totalDistance < 7000) {
+                                if (className === 'premium') miles = 45000;
+                                else if (className === 'business') miles = 70000;
+                                else if (className === 'first') miles = 105000;
+                                else miles = 35000; // economy
+                              } else if (totalDistance < 10000) {
+                                if (className === 'premium') miles = 55000;
+                                else if (className === 'business') miles = 85000;
+                                else if (className === 'first') miles = 130000;
+                                else miles = 42500; // economy
+                              } else {
+                                if (className === 'premium') miles = 72500;
+                                else if (className === 'business') miles = 110000;
+                                else if (className === 'first') miles = 165000;
+                                else miles = 55000; // economy
+                              }
                               
-                              return `${totalMiles.toLocaleString()} miles + $${totalTaxes.toFixed(2)}`;
+                              // Tax range $200-$400
+                              return `${miles.toLocaleString()} miles + $200-$400`;
                             })()}
                           </div>
                         </div>
@@ -1122,17 +1149,14 @@ export default function APDDumpingPage() {
                         {/* Booking Link */}
                         <Button
                           onClick={() => {
-                            // Parse the unique identifier to find the exact British Airways flight
-                            // The format is: "VS26-2025-08-08T08:10:00-JFK-LHR"
-                            // We need to handle the date which contains hyphens
+                            // Parse the unique identifier to find the exact APD flight
                             const parts = selectedFlight.split('-');
                             const flightNumber = parts[0];
                             const destinationAirport = parts[parts.length - 1];
                             const originAirport = parts[parts.length - 2];
-                            // Reconstruct the date by joining the middle parts
                             const departsAt = parts.slice(1, -2).join('-');
                             
-                            const selectedVirginFlight = flights.find(flight => 
+                            const selectedAPDFlight = flights.find(flight => 
                               flight.FlightNumbers === flightNumber &&
                               flight.DepartsAt === departsAt &&
                               flight.OriginAirport === originAirport &&
@@ -1140,20 +1164,20 @@ export default function APDDumpingPage() {
                             );
                             
                             const [flightIndex, className] = selectedKoreanAirClass.split('-');
-                            const selectedSaudiFlight = paginatedKoreanAirFlights[parseInt(flightIndex)];
+                            const selectedBAFlight = paginatedKoreanAirFlights[parseInt(flightIndex)];
                             
-                            if (!selectedVirginFlight || !selectedSaudiFlight) return;
+                            if (!selectedAPDFlight || !selectedBAFlight) return;
                             
-                            const virginDate = format(parseISO(selectedVirginFlight.DepartsAt), 'yyyy-MM-dd');
-                            const saudiDate = format(parseISO(selectedSaudiFlight.DepartsAt), 'yyyy-MM-dd');
-                            
-                            const url = `https://www.virginatlantic.com/flights/search/slice?awardSearch=true&origin=${selectedVirginFlight.OriginAirport}&origin=${selectedSaudiFlight.OriginAirport}&CTA=AbTest_SP_Flights&destination=${selectedVirginFlight.DestinationAirport}&destination=${selectedSaudiFlight.DestinationAirport}&departing=${virginDate}&departing=${saudiDate}&passengers=a1t0c0i0`;
+                            // Alaska Airlines award search URL
+                            // Format: https://www.alaskaair.com/search/results?A=1&O=origin&D=destination&OD=date&OT=Anytime&RT=false&ShoppingMethod=onlineaward&UPG=none
+                            const alaskaDate = format(parseISO(selectedAPDFlight.DepartsAt), 'yyyy-MM-dd');
+                            const url = `https://www.alaskaair.com/search/results?A=1&O=${selectedAPDFlight.OriginAirport.toLowerCase()}&D=${selectedBAFlight.DestinationAirport.toLowerCase()}&OD=${alaskaDate}&OT=Anytime&RT=false&ShoppingMethod=onlineaward&UPG=none`;
                             
                             window.open(url, '_blank');
                           }}
                           className="bg-primary hover:bg-primary/90 text-primary-foreground"
                         >
-                          Book on British Airways
+                          Book on Alaska Airlines
                         </Button>
                       </div>
                     </div>

@@ -18,7 +18,6 @@ const navigation = [
   // { name: 'Home', href: '/' }, // Removed Home link
   { name: 'Seat Type / Delay', href: '/seat-type-delay' },
   { name: 'Award Finder', href: '/award-finder' },
-  { name: 'Live Search', href: '/live-search' },
 ];
 
 const aviationData = [
@@ -32,6 +31,7 @@ const specialAwards = [
   { name: 'Virgin Dumping', href: '/virgin-dumping' },
   { name: 'Lufthansa Skiplag', href: '/lufthansa-skiplag' },
   { name: 'ANA Skiplag', href: '/ana-skiplag' },
+  { name: 'BA APD Dumping on Alaska', href: '/apd-dumping' },
 ];
 
 export function Header() {
