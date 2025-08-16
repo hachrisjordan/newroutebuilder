@@ -449,7 +449,7 @@ export default function APDDumpingPage() {
                   selected={date}
                   month={currentMonth}
                   fromDate={new Date()}
-                  toDate={addDays(new Date(), 1)}
+                  toDate={addDays(new Date(), 361)}
                   onMonthChange={setCurrentMonth}
                   onSelect={(range) => {
                     setDate(range);
