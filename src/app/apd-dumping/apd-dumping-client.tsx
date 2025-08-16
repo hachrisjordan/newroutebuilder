@@ -27,6 +27,7 @@ interface APDFlight {
   DepartsAt: string;
   ArrivesAt: string;
   UpdatedAt: string;
+  Distance: number;
   economy: boolean;
   business: boolean;
   economySeats: number;
@@ -43,6 +44,7 @@ interface KoreanAirFlight {
   DepartsAt: string;
   ArrivesAt: string;
   UpdatedAt: string;
+  Distance: number;
   premiumSeats?: number;
   premiumMiles?: number;
   premiumTax?: number;
@@ -52,6 +54,48 @@ interface KoreanAirFlight {
   firstSeats?: number;
   firstMiles?: number;
   firstTax?: number;
+}
+
+interface BundleClass {
+  FClass?: string;
+  JClass?: string;
+  WClass?: string;
+  YClass?: string;
+}
+
+interface FlightSegment {
+  from: string;
+  to: string;
+  aircraft: string;
+  stops: number;
+  depart: string;
+  arrive: string;
+  flightnumber: string;
+  duration: number;
+  layover: number;
+  distance: number;
+  bundleClasses: BundleClass[];
+}
+
+interface Bundle {
+  class: string;
+  points: string;
+  fareTax: string;
+}
+
+interface Itinerary {
+  from: string;
+  to: string;
+  connections: string[];
+  depart: string;
+  arrive: string;
+  duration: number;
+  bundles: Bundle[];
+  segments: FlightSegment[];
+}
+
+interface LiveSearchResponse {
+  itinerary?: Itinerary[];
 }
 
 export default function APDDumpingPage() {
@@ -71,6 +115,13 @@ export default function APDDumpingPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [verifyingAvailability, setVerifyingAvailability] = useState(false);
+  const [verifiedPricing, setVerifiedPricing] = useState<{
+    miles: number;
+    tax: number;
+    isValid: boolean;
+    errorMessage?: string;
+  } | null>(null);
   const PAGE_SIZE = 10;
   const KOREAN_AIR_PAGE_SIZE = 10;
 
@@ -87,6 +138,7 @@ export default function APDDumpingPage() {
       setKoreanAirFlights([]);
       setCurrentPage(1);
       setKoreanAirCurrentPage(1);
+      setVerifiedPricing(null);
       
       // Prepare request body data
       
@@ -120,6 +172,201 @@ export default function APDDumpingPage() {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return `${hours}h ${mins}m`;
+  };
+
+  const verifyAvailabilityAndPricing = async () => {
+    if (!selectedFlight || !selectedKoreanAirClass) return;
+    
+    try {
+      setVerifyingAvailability(true);
+      
+      // Parse the unique identifier to find the exact APD flight
+      const parts = selectedFlight.split('-');
+      const flightNumber = parts[0];
+      const destinationAirport = parts[parts.length - 1];
+      const originAirport = parts[parts.length - 2];
+      const departsAt = parts.slice(1, -2).join('-');
+      
+      const selectedAPDFlight = flights.find(flight => 
+        flight.FlightNumbers === flightNumber &&
+        flight.DepartsAt === departsAt &&
+        flight.OriginAirport === originAirport &&
+        flight.DestinationAirport === destinationAirport
+      );
+      
+      const [flightIndex, className] = selectedKoreanAirClass.split('-');
+      const selectedBAFlight = paginatedKoreanAirFlights[parseInt(flightIndex)];
+      
+      if (!selectedAPDFlight || !selectedBAFlight) {
+        return;
+      }
+      
+      // Call the live-search-as API to verify availability
+      const apiUrl = 'https://api.bbairtools.com/api/live-search-as';
+      const requestBody = {
+        from: selectedAPDFlight.OriginAirport,
+        to: selectedBAFlight.DestinationAirport,
+        depart: format(parseISO(selectedAPDFlight.DepartsAt), 'yyyy-MM-dd'),
+        ADT: parseInt(seatsFilter)
+      };
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'accept': '*/*',
+          'accept-language': 'en-US,en;q=0.9',
+          'origin': 'https://www.bbairtools.com',
+          'referer': 'https://www.bbairtools.com/',
+          'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36'
+        },
+        body: JSON.stringify(requestBody)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Find the specific itinerary with the exact flight numbers
+      let foundItinerary: Itinerary | null = null;
+      
+      // The API response structure has an array of itineraries
+      if (data.itinerary && Array.isArray(data.itinerary)) {
+        console.log('=== DEBUG: Flight Number Matching ===');
+        console.log('Searching for first flight:', `"${selectedAPDFlight.FlightNumbers}"`);
+        console.log('Searching for second flight:', `"${selectedBAFlight.FlightNumbers}"`);
+        console.log('Total itineraries found:', data.itinerary.length);
+        
+        // Search through all itineraries to find one with both flight numbers
+        for (const itinerary of data.itinerary) {
+          if (itinerary.segments && Array.isArray(itinerary.segments)) {
+            console.log('Checking itinerary:', itinerary.from, '→', itinerary.to);
+            console.log('Available segments:', itinerary.segments.map((seg: FlightSegment) => `"${seg.flightnumber}"`));
+            
+            const hasFirstFlight = itinerary.segments.some((seg: FlightSegment) => seg.flightnumber === selectedAPDFlight.FlightNumbers);
+            const hasSecondFlight = itinerary.segments.some((seg: FlightSegment) => seg.flightnumber === selectedBAFlight.FlightNumbers);
+            
+            console.log('First flight found:', hasFirstFlight);
+            console.log('Second flight found:', hasSecondFlight);
+            
+            if (hasFirstFlight && hasSecondFlight) {
+              foundItinerary = itinerary;
+              console.log('✅ Found matching itinerary!');
+              break;
+            }
+          }
+        }
+        
+        console.log('=====================================');
+      }
+      
+      if (!foundItinerary) {
+        // Check which specific flights are missing for better error reporting
+        let foundFirstFlight = false;
+        let foundSecondFlight = false;
+        
+        if (data.itinerary && Array.isArray(data.itinerary)) {
+          // Check if we can find either flight in any itinerary
+          for (const itinerary of data.itinerary) {
+            if (itinerary.segments && Array.isArray(itinerary.segments)) {
+              const segments = itinerary.segments;
+              const hasFirstFlight = segments.some((seg: FlightSegment) => seg.flightnumber === selectedAPDFlight.FlightNumbers);
+              const hasSecondFlight = segments.some((seg: FlightSegment) => seg.flightnumber === selectedBAFlight.FlightNumbers);
+              
+              if (hasFirstFlight) foundFirstFlight = true;
+              if (hasSecondFlight) foundSecondFlight = true;
+            }
+          }
+        }
+        
+        // Build error message based on what's actually missing
+        let errorMessage = '❌ No matching itinerary found with the selected flight numbers';
+        if (!foundFirstFlight || !foundSecondFlight) {
+          const missingParts = [];
+          if (!foundFirstFlight) missingParts.push(`First flight ${selectedAPDFlight.FlightNumbers}`);
+          if (!foundSecondFlight) missingParts.push(`Second flight ${selectedBAFlight.FlightNumbers}`);
+          errorMessage = `❌ Missing: ${missingParts.join(', ')}`;
+        }
+          
+        setVerifiedPricing({
+          miles: 0,
+          tax: 0,
+          isValid: false,
+          errorMessage: errorMessage
+        });
+        return;
+      }
+      
+      // Check if the selected cabin class is available in bundles
+      const selectedClass = className === 'premium' ? 'W' : className === 'business' ? 'J' : className === 'first' ? 'F' : 'Y';
+      const matchingBundle = foundItinerary.bundles.find((bundle: Bundle) => bundle.class === selectedClass);
+      
+      if (!matchingBundle) {
+        return;
+      }
+      
+      // Verify bundle classes match the selected flights
+      let isValid = true;
+      let errorMessage = '';
+      
+      // Check first flight (APD flight) - should have Y class for economy, J for business, W for premium
+      const firstFlightSegment = foundItinerary.segments.find((seg: FlightSegment) => seg.flightnumber === selectedAPDFlight.FlightNumbers);
+      if (firstFlightSegment) {
+        const expectedFirstClass = className === 'premium' ? 'W' : className === 'business' ? 'J' : className === 'first' ? 'F' : 'Y';
+        const hasValidFirstClass = firstFlightSegment.bundleClasses.some((bc: BundleClass) => 
+          bc[`${expectedFirstClass}Class`] === 'Y'
+        );
+        
+        if (!hasValidFirstClass) {
+          isValid = false;
+          errorMessage = `First flight ${selectedAPDFlight.FlightNumbers} doesn't have valid ${expectedFirstClass} class`;
+        }
+      }
+      
+      // Check second flight (BA flight) - should have the selected class
+      const secondFlightSegment = foundItinerary.segments.find((seg: FlightSegment) => seg.flightnumber === selectedBAFlight.FlightNumbers);
+      if (secondFlightSegment) {
+        const hasValidSecondClass = secondFlightSegment.bundleClasses.some((bc: BundleClass) => 
+          bc[`${selectedClass}Class`] === selectedClass
+        );
+        
+        if (!hasValidSecondClass) {
+          isValid = false;
+          errorMessage = `Second flight ${selectedBAFlight.FlightNumbers} doesn't have valid ${selectedClass} class`;
+        }
+      }
+      
+      if (isValid) {
+        // Update the total calculation with actual values from API
+        const actualMiles = parseInt(matchingBundle.points);
+        const actualTax = parseFloat(matchingBundle.fareTax);
+        
+        // Store the verified data for use in total calculation
+        setVerifiedPricing({
+          miles: actualMiles,
+          tax: actualTax,
+          isValid: true
+        });
+      } else {
+        setVerifiedPricing({
+          miles: 0,
+          tax: 0,
+          isValid: false,
+          errorMessage: `❌ ${errorMessage}`
+        });
+      }
+    } catch (err: any) {
+      setVerifiedPricing({
+        miles: 0,
+        tax: 0,
+        isValid: false,
+        errorMessage: `❌ Error: ${err.message || 'Failed to verify availability'}`
+      });
+    } finally {
+      setVerifyingAvailability(false);
+    }
   };
 
   const calculateDuration = (departDate: string, arriveDate: string) => {
@@ -281,6 +528,9 @@ export default function APDDumpingPage() {
     setCurrentPage(1); // Reset to first page when selecting/deselecting
     setKoreanAirCurrentPage(1); // Reset Korean Air pagination when selecting new flight
     
+          // Reset verification when flight selection changes
+      setVerifiedPricing(null);
+    
     // If selecting a flight, call the BA-JF API
     if (selectedFlight !== flightId) {
       // The flightId is the unique identifier, so we need to find the flight by reconstructing it
@@ -363,6 +613,12 @@ export default function APDDumpingPage() {
 
   const handleKoreanAirClassSelect = (flightIndex: number, className: string) => {
     const classKey = `${flightIndex}-${className}`;
+    
+    // If selecting a different class or deselecting, reset verification
+    if (selectedKoreanAirClass !== classKey) {
+      setVerifiedPricing(null);
+    }
+    
     setSelectedKoreanAirClass(selectedKoreanAirClass === classKey ? null : classKey);
   };
 
@@ -1034,9 +1290,24 @@ export default function APDDumpingPage() {
                     
                     {/* Total Calculation */}
                     <div className="border-t dark:border-gray-700 pt-4">
-                      <div className="flex justify-between items-center">
+                      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
                         <div>
-                          <div className="font-semibold text-lg dark:text-white">Total</div>
+                          <div className="flex items-center gap-2 mb-2 md:mb-0">
+                            <div className="font-semibold text-lg dark:text-white">Total</div>
+                            <Button
+                              onClick={verifyAvailabilityAndPricing}
+                              disabled={verifyingAvailability}
+                              size="sm"
+                              variant="outline"
+                              className="h-6 px-2 text-xs"
+                            >
+                              {verifyingAvailability ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                'Verify Pricing / Availability'
+                              )}
+                            </Button>
+                          </div>
                           <div className="text-sm text-gray-600 dark:text-gray-400">
                             {(() => {
                               // Parse the unique identifier to find the exact APD flight
@@ -1058,10 +1329,8 @@ export default function APDDumpingPage() {
                               
                               if (!selectedAPDFlight || !selectedBAFlight) return 'Calculating...';
                               
-                              // Calculate total distance using haversine formula
-                              // This would need to be implemented with actual airport coordinates from Supabase
-                              // For now, using a placeholder calculation
-                              const totalDistance = 5000; // Placeholder - should calculate actual distance
+                              // Calculate total distance using the Distance field from both flights
+                              const totalDistance = selectedAPDFlight.Distance + selectedBAFlight.Distance;
                               
                               // British Airways award chart based on distance and cabin class
                               let miles;
@@ -1097,8 +1366,16 @@ export default function APDDumpingPage() {
                                 else miles = 55000; // economy
                               }
                               
-                              // Tax range $200-$400
-                              return `${miles.toLocaleString()} miles + $200-$400`;
+                              // Use verified pricing if available, otherwise use estimated pricing
+                              if (verifiedPricing && verifiedPricing.isValid) {
+                                return `${verifiedPricing.miles.toLocaleString()} miles + $${verifiedPricing.tax.toFixed(2)} (✅ Verified)`;
+                              } else if (verifiedPricing && !verifiedPricing.isValid && verifiedPricing.errorMessage) {
+                                // Show error message instead of pricing when verification fails
+                                return verifiedPricing.errorMessage;
+                              } else {
+                                // Tax range $200-$400
+                                return `${miles.toLocaleString()} miles + $200-$400`;
+                              }
                             })()}
                           </div>
                         </div>
@@ -1132,7 +1409,7 @@ export default function APDDumpingPage() {
                             
                             window.open(url, '_blank');
                           }}
-                          className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground w-full md:w-auto"
                         >
                           Book on Alaska Airlines
                         </Button>
