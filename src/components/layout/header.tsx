@@ -33,6 +33,7 @@ const specialAwards = [
   { name: 'Lufthansa Skiplag', href: '/lufthansa-skiplag' },
   { name: 'ANA Skiplag', href: '/ana-skiplag' },
   { name: 'BA APD Dumping on Alaska', href: '/apd-dumping' },
+  { name: 'JALSnipe (JL Married Segments)', href: '/jal-snipe' },
 ];
 
 export function Header() {
