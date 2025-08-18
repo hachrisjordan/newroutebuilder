@@ -189,9 +189,9 @@ export default function JALSnipeClient() {
               duration: routeData.duration,
               bundles: businessBundles,
               segments: routeData.segments || [],
-              __program: 'AS',
-              __currency: 'USD',
-              __type: 'Married Segment'
+                               __program: 'as',
+                 __currency: 'USD',
+                 __type: 'Married Segment'
             });
           });
         });
@@ -226,9 +226,9 @@ export default function JALSnipeClient() {
             layover: 0,
             distance: route.distance
           }],
-          __program: 'AS',
-          __currency: 'USD',
-          __type: 'Direct Search'
+                       __program: 'as',
+             __currency: 'USD',
+             __type: 'Direct Search'
         });
       });
     }
