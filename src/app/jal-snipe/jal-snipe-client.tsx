@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { CalendarIcon, X, Loader2 } from 'lucide-react';
+import { CalendarIcon, X, Loader2, Link as LinkIcon } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import LiveSearchResultsCards from '@/components/award-finder/live-search-results-cards';
@@ -457,7 +457,20 @@ export default function JALSnipeClient() {
         </Card>
       )}
 
-            {searchResults && !isSearching && (
+      {/* Alaska Airlines Link */}
+      <div className="mb-6">
+        <a
+          href={`https://www.alaskaair.com/plan/flights/award-flights?from=${airports.join(',')}&to=${airports.join(',')}&depart=${date?.from ? format(date.from, 'yyyy-MM-dd') : ''}&return=${date?.to ? format(date.to, 'yyyy-MM-dd') : ''}&adults=1&children=0&infants=0&class=premium`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ml-2 text-muted-foreground hover:text-primary transition-colors"
+          aria-label="Search Alaska Airlines"
+        >
+          <LinkIcon className="w-4 h-4" />
+        </a>
+      </div>
+
+      {searchResults && !isSearching && (
         <>
           {(() => {
             const allItineraries = transformResults(searchResults);

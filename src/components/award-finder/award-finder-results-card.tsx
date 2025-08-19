@@ -35,6 +35,7 @@ interface AwardFinderResultsCardProps {
   isLoading?: boolean;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  seats?: number; // Add seats prop
   // Filter state and handlers
   selectedStops: number[];
   setSelectedStops: (stops: number[]) => void;
@@ -93,6 +94,7 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
   isLoading = false,
   searchQuery,
   setSearchQuery,
+  seats,
   // Filter state and handlers
   selectedStops,
   setSelectedStops,
@@ -478,6 +480,7 @@ const AwardFinderResultsCard: React.FC<AwardFinderResultsCardProps> = ({
             flights={results.flights}
             reliability={reliability}
             minReliabilityPercent={minReliabilityPercent}
+            seats={seats}
           />
         )}
         <Pagination

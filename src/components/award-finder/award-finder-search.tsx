@@ -48,11 +48,12 @@ interface AwardFinderSearchProps {
   sortOrder: string;
   setSortOrder: (order: 'asc' | 'desc') => void;
   airlineList: string[];
+  onSeatsChange?: (seats: number) => void; // Add callback for seats changes
 }
 
 const SEARCH_CACHE_KEY = 'awardFinderSearchParams';
 
-export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedStops, setSelectedStops, selectedIncludeAirlines, setSelectedIncludeAirlines, selectedExcludeAirlines, setSelectedExcludeAirlines, yPercent, setYPercent, wPercent, setWPercent, jPercent, setJPercent, fPercent, setFPercent, duration, setDuration, depTime, setDepTime, arrTime, setArrTime, airportFilter, setAirportFilter, searchQuery, setSearchQuery, sortOrder, setSortOrder, airlineList }: AwardFinderSearchProps) {
+export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedStops, setSelectedStops, selectedIncludeAirlines, setSelectedIncludeAirlines, selectedExcludeAirlines, setSelectedExcludeAirlines, yPercent, setYPercent, wPercent, setWPercent, jPercent, setJPercent, fPercent, setFPercent, duration, setDuration, depTime, setDepTime, arrTime, setArrTime, airportFilter, setAirportFilter, searchQuery, setSearchQuery, sortOrder, setSortOrder, airlineList, onSeatsChange }: AwardFinderSearchProps) {
   const [origin, setOrigin] = useState<string[]>([]);
   const [destination, setDestination] = useState<string[]>([]);
   const [date, setDate] = useState<DateRange | undefined>(undefined);
@@ -161,6 +162,13 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
       localStorage.setItem(SEARCH_CACHE_KEY, JSON.stringify(toCache));
     }
   }, [origin, destination, date, maxStops, seats]);
+
+  // Effect: notify parent when seats change
+  useEffect(() => {
+    if (onSeatsChange) {
+      onSeatsChange(seats);
+    }
+  }, [seats, onSeatsChange]);
 
   const getDateLabel = () => {
     if (date?.from && date?.to) {

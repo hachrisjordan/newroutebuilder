@@ -83,6 +83,7 @@ export default function AwardFinderPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState<string>('asc');
   const [lastSearchBody, setLastSearchBody] = useState<any>(null);
+  const [seats, setSeats] = useState<number>(1); // Add seats state
   
   // Additional state for AwardFinderResultsCard (different types)
   const [selectedStopsNumbers, setSelectedStopsNumbers] = useState<number[]>([]);
@@ -456,6 +457,7 @@ export default function AwardFinderPage() {
         sortOrder={sortOrder}
         setSortOrder={handleSortOrderChange}
         airlineList={airlineList.map(airline => airline.code)}
+        onSeatsChange={setSeats}
       />
       {results && (
         <AwardFinderResultsCard
@@ -481,6 +483,7 @@ export default function AwardFinderPage() {
           isLoading={isLoading}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
+          seats={seats}
           // Filter state and handlers
           selectedStops={selectedStopsNumbers}
           setSelectedStops={setSelectedStopsNumbers}
