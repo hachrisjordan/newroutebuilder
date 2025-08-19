@@ -465,7 +465,7 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
                         <div className="flex flex-col items-center h-full min-h-[80px] gap-1 justify-between">
                           <div>
                             <div className="font-bold text-[15px] text-center leading-tight">
-                              {seatConfig.aircraftType} <span className="font-mono">({seatConfig.variant})</span>
+                              {seatConfig.aircraftType} <span className="font-mono"></span>
                             </div>
                             <div className="text-[12px] font-mono text-center">{seatConfig.config}</div>
                             <SeatMapTooltip airline={airline} variant={seatConfig.variant} aircraftType={seatConfig.aircraftType}>
@@ -692,7 +692,7 @@ export function FlightCalendar({ flightData }: FlightCalendarProps) {
                   {seatConfig && (
                     <>
                       <div className="font-bold text-[15px] text-center leading-tight">
-                        {seatConfig.aircraftType} <span className="font-mono">({seatConfig.variant})</span>
+                        {seatConfig.aircraftType} <span className="font-mono"></span>
                       </div>
                       <div className="text-[12px] font-mono text-center">{seatConfig.config}</div>
                       <SeatMapTooltip airline={airline} variant={seatConfig.variant} aircraftType={seatConfig.aircraftType}>

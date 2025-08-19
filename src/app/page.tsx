@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { MapPlus, SearchCheck, Armchair } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "bbairtools - Award Flight Planning Tools",
@@ -17,15 +18,18 @@ export default function Home() {
   return (
     <main className="flex flex-1 flex-col items-center justify-center bg-background">
       <div className="container py-10">
-        <h1 className="text-4xl font-bold mb-6 text-center">Welcome to bbairtools</h1>
+        <h1 className="text-4xl font-bold mb-6 text-center">bbairtools</h1>
         <p className="text-lg text-muted-foreground mb-8 text-center">
-          Award flight route planning tools. Plan routes with points and miles and optimize your flying experience.
+          Plan routes with points and miles and optimize your flying experience.
         </p>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {/* Seat Type / Delay */}
           <Card className="flex flex-col justify-between">
             <CardHeader>
-              <CardTitle>Seat Type / Delay</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Armchair className="h-5 w-5" />
+                Seat Type / Delay
+              </CardTitle>
               <CardDescription>
                 Analyze seat types and flight delay statistics for smarter travel planning.
               </CardDescription>
@@ -40,7 +44,10 @@ export default function Home() {
           {/* Award Finder */}
           <Card className="flex flex-col justify-between">
             <CardHeader>
-              <CardTitle>Award Finder</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <MapPlus className="h-5 w-5" />
+                Award Finder
+              </CardTitle>
               <CardDescription>
                 Find the best award flight options across multiple airlines and alliances.
               </CardDescription>
@@ -55,7 +62,10 @@ export default function Home() {
           {/* Live Search */}
           <Card className="flex flex-col justify-between">
             <CardHeader>
-              <CardTitle>Live Search</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <SearchCheck className="h-5 w-5" />
+                Live Search
+              </CardTitle>
               <CardDescription>
                 Search for flight availability and pricing with up-to-date data.
               </CardDescription>
