@@ -308,7 +308,7 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
                   type="button"
                   tabIndex={0}
                   aria-label="Wide date range warning"
-                  className="ml-1 align-middle p-1 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  className="ml-1 align-middle rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
                   style={{ touchAction: 'manipulation' }}
                 >
                   <AlertTriangle className="text-yellow-500 h-4 w-4" />
