@@ -143,11 +143,9 @@ function isCacheValid(entry: CacheEntry): boolean {
 function getCachedResult(cacheKey: string): any | null {
   const entry = liveSearchCache.get(cacheKey);
   if (entry && isCacheValid(entry)) {
-    console.log(`Cache hit for: ${cacheKey}`);
     return entry.data;
   }
   if (entry && !isCacheValid(entry)) {
-    console.log(`Cache expired for: ${cacheKey}`);
     liveSearchCache.delete(cacheKey);
   }
   return null;
@@ -161,7 +159,6 @@ function cacheResult(cacheKey: string, data: any): void {
     ttl: CACHE_TTL
   };
   liveSearchCache.set(cacheKey, entry);
-  console.log(`Cached result for: ${cacheKey}`);
 }
 
 // Minimal, robust helpers for local date and day diff
@@ -328,9 +325,7 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
   };
 
   const handleVerifyClick = async (cardKey: string) => {
-    console.log('Verify button clicked for card:', cardKey);
-    console.log('seats:', seats);
-    console.log('selectedPrograms:', selectedPrograms);
+
     
     // Set loading state for this card
     setVerifyingCards(prev => new Set(prev).add(cardKey));
@@ -338,11 +333,7 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
     const cardPrograms = selectedPrograms[cardKey] || {};
     const card = cards.find(c => `${c.route}-${c.date}-${cards.indexOf(c)}` === cardKey);
     
-    console.log('Found card:', card);
-    console.log('Card programs:', cardPrograms);
-    
     if (!card || !seats) {
-      console.log('Early return - no card or seats');
       setVerifyingCards(prev => {
         const newSet = new Set(prev);
         newSet.delete(cardKey);
@@ -355,20 +346,13 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
     const segments = card.route.split('-');
     const baseDate = new Date(card.date);
     
-    console.log('Segments:', segments);
-    console.log('Base date:', baseDate);
-    
     // Get the flights for this card
     const cardFlights = card.itinerary.map(id => flights[id]).filter(Boolean);
-    
-    console.log('Card flights:', cardFlights);
     
     // Get the actual selected segments from the verify dropdowns
     const selectedSegments = Object.keys(cardPrograms).filter(route => 
       cardPrograms[route] && cardPrograms[route] !== ''
     );
-    
-    console.log('Selected segments:', selectedSegments);
     
     // Check for consecutive segments with the same program to try merging first
     const mergeResults: Record<string, any> = {};
@@ -405,12 +389,9 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
       segmentGroups.push(currentGroup);
     }
     
-    console.log('Segment groups for merging:', segmentGroups);
-    
     // Try merged searches first for groups with multiple segments
     for (const group of segmentGroups) {
       if (group.routes.length > 1) {
-        console.log(`Trying merged search for ${group.startSegment}-${group.endSegment} with program ${group.program}`);
         
                  try {
            // Calculate departure date for the first segment
@@ -432,7 +413,6 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
            
            if (!mergeData) {
              // Try merged search if not in cache
-             console.log(`Cache miss for merged search, making API call: ${mergeCacheKey}`);
              const mergeResponse = await fetch(`https://api.bbairtools.com/api/live-search-${group.program.toLowerCase()}`, {
                method: "POST",
                headers: { "Content-Type": "application/json" },
@@ -452,7 +432,6 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
            }
            
            if (mergeData) {
-             console.log(`Merged search result for ${group.startSegment}-${group.endSegment}:`, mergeData);
              
              // Check if merged result contains all required flight numbers
              const requiredFlightNumbers = group.routes.map(route => {
@@ -469,7 +448,6 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
              });
              
              if (hasAllFlights) {
-               console.log(`Merged search successful for ${group.startSegment}-${group.endSegment}`);
                mergeResults[`${group.startSegment}-${group.endSegment}`] = {
                  data: mergeData,
                  routes: group.routes,
@@ -492,20 +470,14 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
       );
     });
     
-    console.log('Segments to search individually:', segmentsToSearchIndividually);
-    
     // Create an array of promises for parallel API calls for individual segments
     const apiCalls = segmentsToSearchIndividually.map(async (route) => {
       const [startSegment, endSegment] = route.split('-');
       
-      console.log(`Processing individual segment: ${route}`);
-      
       // Get the selected program for this segment
       const selectedProgram = cardPrograms[route];
-      console.log(`Selected program for ${route}:`, selectedProgram);
       
       if (!selectedProgram) {
-        console.log(`No selected program for ${route}, skipping`);
         return null;
       }
       
@@ -524,13 +496,7 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
       
       const departDate = segmentDate.toISOString().split('T')[0]; // YYYY-MM-DD format
       
-      console.log(`Making individual API call for ${route}:`, {
-        from: startSegment,
-        to: endSegment,
-        depart: departDate,
-        ADT: seats,
-        url: `https://api.bbairtools.com/api/live-search-${selectedProgram.toLowerCase()}`
-      });
+
       
       try {
         // Check cache first for individual segment search
@@ -539,7 +505,6 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
         
         if (!data) {
           // Make API call if not in cache
-          console.log(`Cache miss for individual search, making API call: ${individualCacheKey}`);
           const response = await fetch(`https://api.bbairtools.com/api/live-search-${selectedProgram.toLowerCase()}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -559,15 +524,10 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
           data = await response.json();
           // Cache the successful result
           cacheResult(individualCacheKey, data);
-        } else {
-          console.log(`Cache hit for individual search: ${individualCacheKey}`);
         }
-        
-        console.log(`Live search result for ${route}:`, data);
         
         // Find matching flights by comparing flight numbers
         const matchingFlights = findMatchingFlights(data, cardFlights, route);
-        console.log(`Matching flights for ${route}:`, matchingFlights);
         
         return { route, data, matchingFlights };
         
@@ -578,7 +538,6 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
     });
     
     // Execute all API calls in parallel
-    console.log(`Making ${apiCalls.length} individual API calls...`);
     const results = await Promise.all(apiCalls);
     
     // Combine merge results with individual results
@@ -595,14 +554,7 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
       [cardKey]: allResults
     }));
     
-    // Log all results
-    Object.values(allResults).forEach(result => {
-      if (result.error) {
-        console.error(`Failed for route:`, result.error);
-      } else {
-        console.log(`Success for route:`, result.data);
-      }
-    });
+
     
     // Clear loading state for this card
     setVerifyingCards(prev => {
@@ -1346,14 +1298,7 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                                return false;
                              }) as any;
                            
-                           // Debug logging
-                           console.log(`Route: ${route}, Selected Program: ${selectedProgram}`);
-                           console.log(`Merged Result:`, mergedResult);
-                           if (mergedResult) {
-                             console.log(`Merged Routes:`, mergedResult.routes);
-                             console.log(`Merged Data:`, mergedResult.data);
-                             console.log(`Direct Merge:`, mergedResult.from, '->', mergedResult.to);
-                           }
+
                            
                            // If this is a merged route and we have a program selected, show the merged route
                            if (selectedProgram && mergedResult && 
@@ -1458,26 +1403,21 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                                          // Use the cardFlights from the outer scope
                                          const requiredFlightNumbers = flightsArr.map((f: any) => f.FlightNumbers).filter(Boolean);
                                          
-                                         console.log('Looking for flight numbers:', requiredFlightNumbers);
-                                         
                                          // Find the itinerary option that contains all our flight numbers
                                          matchingItinerary = mergedResult.data.itinerary.find((option: any) => {
                                            if (!option.segments) return false;
                                            
                                            const optionFlightNumbers = option.segments.map((seg: any) => seg.flightnumber);
-                                           console.log('Checking itinerary option:', optionFlightNumbers);
                                            
                                            // Check if this option contains all our required flight numbers
                                            const hasAllFlights = requiredFlightNumbers.every((required: any) => 
                                              optionFlightNumbers.includes(required)
                                            );
                                            
-                                           console.log('Has all flights:', hasAllFlights);
                                            return hasAllFlights;
                                          });
                                          
                                          if (matchingItinerary) {
-                                           console.log('Found matching itinerary:', matchingItinerary);
                                            mergedPricing = matchingItinerary.bundles;
                                          }
                                        }
@@ -1785,9 +1725,75 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                                }
                                return false;
                              });
-                           const pricing = liveSearchData?.matchingFlights?.[0]?.pricing || 
-                                           liveSearchData?.data?.itinerary?.[0]?.bundles || 
-                                           liveSearchData?.bundles;
+                           
+                           // MUST FIND THE RIGHT FLIGHT NUMBERS LIKE THE MERGED API
+                           let pricing = null;
+                           let matchingItinerary: any = null;
+                           
+                           // Check for your API structure first (direct segments)
+                           if (liveSearchData?.segments) {
+                             // Your API structure: direct segments array
+                             // Get only the flights that belong to THIS route group, not all flights in the card
+                             const routeFlights: string[] = [];
+                             for (let i = group.start; i <= group.end; i++) {
+                               const flight = flightsArr[i];
+                               if (flight.FlightNumbers) {
+                                 routeFlights.push(flight.FlightNumbers);
+                               }
+                             }
+                             
+                             // Check if API segments contain the flights for THIS route
+                             const optionFlightNumbers = liveSearchData.segments.map((seg: any) => seg.flightnumber);
+                             const hasRouteFlights = routeFlights.every((required: any) => 
+                               optionFlightNumbers.includes(required)
+                             );
+                             
+                             if (hasRouteFlights) {
+                               // Use the EXACT same structure as merged view
+                               matchingItinerary = { 
+                                 segments: liveSearchData.segments,
+                                 data: { itinerary: [{ segments: liveSearchData.segments }] }
+                               };
+                               pricing = liveSearchData.bundles;
+                             }
+                           }
+                           // Check for standard API structure (data.itinerary)
+                           else if (liveSearchData?.data?.itinerary) {
+                             // Standard API structure: data.itinerary array
+                             // Get only the flights that belong to THIS route group, not all flights in the card
+                             const routeFlights: string[] = [];
+                             for (let i = group.start; i <= group.end; i++) {
+                               const flight = flightsArr[i];
+                               if (flight.FlightNumbers) {
+                                 routeFlights.push(flight.FlightNumbers);
+                               }
+                             }
+                             
+                             // Find the itinerary option that contains the flights for THIS route
+                             matchingItinerary = liveSearchData.data.itinerary.find((option: any) => {
+                               if (!option.segments) return false;
+                               
+                               const optionFlightNumbers = option.segments.map((seg: any) => seg.flightnumber);
+                               
+                               // Check if this option contains the flights for THIS route
+                               const hasRouteFlights = routeFlights.every((required: any) => 
+                                 optionFlightNumbers.includes(required)
+                               );
+                               
+                               return hasRouteFlights;
+                             });
+                             
+                             if (matchingItinerary) {
+                               pricing = matchingItinerary.bundles;
+                             }
+                           }
+                           
+                           // Fallback to other structures if no match found
+                           if (!pricing) {
+                             pricing = liveSearchData?.matchingFlights?.[0]?.pricing || 
+                                       liveSearchData?.data?.itinerary?.[0]?.bundles || 
+                                       liveSearchData?.bundles;
+                           }
                            
                                                        return (
                               <div key={groupIndex} className="flex flex-col gap-2 w-full">
@@ -1846,10 +1852,83 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                                                   +{Number(bundle.fareTax).toFixed(2)}
                                               </span>
                                               </span>
-                                              <div
-                                                className="w-full h-1 rounded-full mt-0.5"
-                                                style={{ background: bg }}
-                                              />
+                                              {/* Mixed-cabin bar logic for normal API results */}
+                                              {(() => {
+                                                if (!matchingItinerary?.segments) {
+                                                  return (
+                                                    <div
+                                                      className="w-full h-1 rounded-full mt-0.5"
+                                                      style={{ background: bg }}
+                                                    />
+                                                  );
+                                                }
+                                                
+                                                // Gather segment class for this bundle
+                                                const segments = matchingItinerary.segments;
+                                                
+                                                const totalDistance = segments.reduce((sum: number, seg: any) => sum + (seg.distance || 0), 0) || 1;
+                                                
+                                                // For each segment, get the class for this bundle
+                                                const segClasses = segments.map((seg: any) => {
+                                                  let segClass = bundle.class;
+                                                  
+                                                  if (Array.isArray(seg.bundleClasses) && seg.bundleClasses.length > 0) {
+                                                    // Look for a key matching the bundle, e.g., 'WClass' for W
+                                                    const key = bundle.class + 'Class';
+                                                    
+                                                    const entry = seg.bundleClasses.find((obj: Record<string, string>) => key in obj);
+                                                    
+                                                    if (entry && typeof entry[key] === 'string' && ['Y','W','J','F'].includes(entry[key])) {
+                                                      segClass = entry[key];
+                                                    }
+                                                  }
+                                                  
+                                                  const result = { segClass, distance: seg.distance || 0 };
+                                                  return result;
+                                                });
+                                                
+                                                // Only render split bar if there are multiple unique classes
+                                                const uniqueClasses = Array.from(new Set(segClasses.map((sc: any) => sc.segClass)));
+                                                const isMixed = uniqueClasses.length > 1;
+                                                
+                                                if (!isMixed) {
+                                                  return (
+                                                    <div
+                                                      className="w-full h-1 rounded-full mt-0.5"
+                                                      style={{ background: bg }}
+                                                    />
+                                                  );
+                                                }
+                                                
+                                                // Otherwise, render a flex row of colored segments
+                                                return (
+                                                  <div className="w-full flex flex-row h-1 rounded-full mt-0.5 overflow-hidden">
+                                                    {segClasses.map((sc: any, idx: number) => {
+                                                      const segWidth = `${(sc.distance / totalDistance) * 100}%`;
+                                                      const segColor = classBarColors[sc.segClass] || '#E8E1F2';
+                                                      // Get segment path for tooltip
+                                                      const seg = segments[idx];
+                                                      const segPath = `${seg.from}-${seg.to}`;
+                                                      const classLabel = sc.segClass;
+                                                      
+                                                      return (
+                                                        <div
+                                                          key={idx}
+                                                          title={`${segPath}: ${classLabel}`}
+                                                          style={{
+                                                            width: segWidth,
+                                                            background: segColor,
+                                                            borderRadius: '9999px',
+                                                            marginLeft: idx > 0 ? '1px' : 0,
+                                                            marginRight: idx < segClasses.length - 1 ? '1px' : 0,
+                                                            cursor: 'pointer',
+                                                          }}
+                                                        />
+                                                      );
+                                                    })}
+                                                  </div>
+                                                );
+                                              })()}
                                             </div>
                                           );
                                         })}
