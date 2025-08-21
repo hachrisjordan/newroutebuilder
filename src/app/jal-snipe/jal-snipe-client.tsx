@@ -456,20 +456,6 @@ export default function JALSnipeClient() {
           </CardContent>
         </Card>
       )}
-
-      {/* Alaska Airlines Link */}
-      <div className="mb-6">
-        <a
-          href={`https://www.alaskaair.com/plan/flights/award-flights?from=${airports.join(',')}&to=${airports.join(',')}&depart=${date?.from ? format(date.from, 'yyyy-MM-dd') : ''}&return=${date?.to ? format(date.to, 'yyyy-MM-dd') : ''}&adults=1&children=0&infants=0&class=premium`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="ml-2 text-muted-foreground hover:text-primary transition-colors"
-          aria-label="Search Alaska Airlines"
-        >
-          <LinkIcon className="w-4 h-4" />
-        </a>
-      </div>
-
       {searchResults && !isSearching && (
         <>
           {(() => {
