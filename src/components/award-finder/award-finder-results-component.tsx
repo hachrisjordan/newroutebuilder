@@ -3,7 +3,7 @@ import type { Flight } from '@/types/award-finder-results';
 import React from 'react';
 import Image from 'next/image';
 import { Progress } from '../ui/progress';
-import { ChevronDown, ChevronUp, X, Check, AlertTriangle } from 'lucide-react';
+import { ChevronDown, ChevronUp, X, Check, AlertTriangle, Banknote } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -1083,7 +1083,7 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                           className="ml-2 p-1 rounded hover:bg-muted transition-colors"
                           aria-label={expandedFlightNumbers === cardKey ? "Collapse verification" : "Expand verification"}
                         >
-                          {expandedFlightNumbers === cardKey ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          <Banknote className="h-4 w-4" />
                         </button>
                       );
                     })()}
