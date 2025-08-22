@@ -37,16 +37,26 @@ export function SeatsAeroConnectionStatus() {
       // Get user metadata to see linked providers
       const linkedProviders = user.user_metadata?.linked_providers || [];
       
+      // Check if user is signed in via Google OAuth
+      const isGoogleUser = user.app_metadata?.provider === 'google' || 
+                          user.user_metadata?.provider === 'google' ||
+                          linkedProviders.includes('google');
+      
+      // Check if user is signed in via Seats.aero OAuth
+      const isSeatsAeroUser = user.app_metadata?.provider === 'seatsaero' || 
+                              user.user_metadata?.provider === 'seatsaero' ||
+                              linkedProviders.includes('seatsaero');
+      
       const providersList: OAuthProvider[] = [
         {
           name: 'Google',
-          linked: linkedProviders.includes('google'),
+          linked: isGoogleUser,
           email: user.email,
           lastLinked: user.created_at
         },
         {
           name: 'Seats.aero',
-          linked: linkedProviders.includes('seatsaero'),
+          linked: isSeatsAeroUser,
           email: user.user_metadata?.seatsaero_user_email,
           lastLinked: user.user_metadata?.seatsaero_linked_at
         }
@@ -66,7 +76,11 @@ export function SeatsAeroConnectionStatus() {
       // Redirect to Seats.aero OAuth
       const redirectUri = encodeURIComponent(`${window.location.origin}/seatsaero`);
       const state = Math.random().toString(36).substring(7);
-      const consentUrl = `https://seats.aero/oauth2/consent?response_type=code&client_id=${process.env.NEXT_PUBLIC_SEATS_AERO_CLIENT_ID}&redirect_uri=${redirectUri}&scope=openid&state=${state}`;
+      
+      // Use the hardcoded client ID since this runs on the client side
+      const clientId = 'seats:cid:31cVzYWxiOhZ7w31VpQW27Se4Tg';
+      
+      const consentUrl = `https://seats.aero/oauth2/consent?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=openid&state=${state}`;
       
       window.location.href = consentUrl;
     } catch (error) {
@@ -227,6 +241,21 @@ export function SeatsAeroConnectionStatus() {
             </div>
           </div>
         )}
+
+        {/* Debug Info - Remove this after fixing */}
+        <details className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+          <summary className="cursor-pointer text-sm font-medium text-gray-700">
+            Debug Info (Click to expand)
+          </summary>
+          <div className="mt-2 text-xs text-gray-600 space-y-1">
+            <div><strong>User ID:</strong> {user?.id}</div>
+            <div><strong>Email:</strong> {user?.email}</div>
+            <div><strong>Provider (app_metadata):</strong> {JSON.stringify(user?.app_metadata)}</div>
+            <div><strong>Provider (user_metadata):</strong> {JSON.stringify(user?.user_metadata)}</div>
+            <div><strong>Created At:</strong> {user?.created_at}</div>
+            <div><strong>Last Sign In:</strong> {user?.last_sign_in_at}</div>
+          </div>
+        </details>
       </CardContent>
     </Card>
   );
