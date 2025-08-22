@@ -19,7 +19,7 @@ import {
 export const SEATS_AERO_OAUTH_CONFIG: SeatsAeroOAuthConfig = {
   clientId: process.env.CLIENT_ID!,
   clientSecret: process.env.CLIENT_SECRET!,
-  redirectUri: 'https://www.bbairtools.com/seatsaero',
+  redirectUri: 'https://bbairtools.com/seatsaero',
   consentUrl: 'https://seats.aero/oauth2/consent',
   tokenUrl: 'https://seats.aero/oauth2/token',
   userInfoUrl: 'https://seats.aero/oauth2/userinfo'
@@ -28,7 +28,7 @@ export const SEATS_AERO_OAUTH_CONFIG: SeatsAeroOAuthConfig = {
 // Client-side config (for building consent URLs)
 export const SEATS_AERO_CLIENT_CONFIG = {
   clientId: 'seats:cid:31cVzYWxiOhZ7w31VpQW27Se4Tg', // Hardcoded for client-side use
-  redirectUri: 'https://www.bbairtools.com/seatsaero',
+  redirectUri: 'https://bbairtools.com/seatsaero',
   consentUrl: 'https://seats.aero/oauth2/consent'
 };
 
@@ -165,7 +165,7 @@ export async function refreshAccessToken(
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body: new URLSearchParams(tokenRequest as unknown as Record<string, string>)
+    body: `client_id=${encodeURIComponent(tokenRequest.client_id)}&client_secret=${encodeURIComponent(tokenRequest.client_secret)}&redirect_uri=${encodeURIComponent(tokenRequest.redirect_uri)}&grant_type=${encodeURIComponent(tokenRequest.grant_type)}&scope=${encodeURIComponent(tokenRequest.scope)}&refresh_token=${encodeURIComponent(refreshToken)}`
   });
 
   if (!response.ok) {

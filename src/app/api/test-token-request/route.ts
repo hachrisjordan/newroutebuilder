@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       code,
       client_id: process.env.CLIENT_ID,
       client_secret: process.env.CLIENT_SECRET,
-      redirect_uri: 'https://www.bbairtools.com/seatsaero',
+      redirect_uri: 'https://bbairtools.com/seatsaero',
       grant_type: 'authorization_code',
       state,
       scope: 'openid'
