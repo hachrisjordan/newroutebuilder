@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
+// Force this route to be dynamic
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   const supabase = createSupabaseServerClient();
   const { data: userData, error: userError } = await supabase.auth.getUser();

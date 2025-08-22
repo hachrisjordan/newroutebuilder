@@ -4,12 +4,15 @@ import { redirect } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Settings } from 'lucide-react';
-import dynamic from 'next/dynamic';
+import dynamicImport from 'next/dynamic';
 import Link from 'next/link';
 import { SeatsAeroConnectionStatus } from '@/components/auth-wizard/seatsaero-connection-status';
 import ErrorBoundary from '@/components/ui/error-boundary';
 
-const ApiKeySettings = dynamic(() => import('@/components/settings/api-key-settings'), { ssr: false });
+// Force this page to be dynamic
+export const dynamic = 'force-dynamic';
+
+const ApiKeySettings = dynamicImport(() => import('@/components/settings/api-key-settings'), { ssr: false });
 
 export default async function SettingsPage() {
   const user = await getCurrentUser();

@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
+// Force this route to be dynamic
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     // Check database connectivity

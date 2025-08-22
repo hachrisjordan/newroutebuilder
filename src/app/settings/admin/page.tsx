@@ -4,6 +4,9 @@ import { redirect } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import dynamic from 'next/dynamic';
 
+// Force this page to be dynamic
+export const dynamic = 'force-dynamic';
+
 const AircraftConfigTab = dynamic(() => import('@/components/settings/aircraft-config-tab'), { ssr: false });
 const UserManagementTab = dynamic(() => import('@/components/settings/user-management-tab'), { ssr: false });
 const ResponsiveTabs = dynamic(() => import('@/components/settings/responsive-tabs'), { ssr: false });

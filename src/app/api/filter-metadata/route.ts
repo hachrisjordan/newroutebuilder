@@ -3,6 +3,10 @@ import { z } from 'zod';
 import { createHash } from 'crypto';
 import zlib from 'zlib';
 import Redis from 'ioredis';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
+
+// Force this route to be dynamic
+export const dynamic = 'force-dynamic';
 
 // Input validation schema
 const filterMetadataSchema = z.object({
