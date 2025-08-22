@@ -19,7 +19,7 @@ import {
 export const SEATS_AERO_OAUTH_CONFIG: SeatsAeroOAuthConfig = {
   clientId: process.env.CLIENT_ID!,
   clientSecret: process.env.CLIENT_SECRET!,
-  redirectUri: process.env.NEXT_PUBLIC_SEATS_AERO_REDIRECT_URI || 'https://bbairtools.com/seatsaero',
+  redirectUri: 'https://www.bbairtools.com/seatsaero',
   consentUrl: 'https://seats.aero/oauth2/consent',
   tokenUrl: 'https://seats.aero/oauth2/token',
   userInfoUrl: 'https://seats.aero/oauth2/userinfo'
