@@ -1,47 +1,42 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
-// Force this route to be dynamic
-export const dynamic = 'force-dynamic';
-
 export async function GET() {
   try {
-    // Check database connectivity
+    // Check Supabase connection
     const supabase = createSupabaseServerClient();
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('count')
-      .limit(1);
-
+    const { data, error } = await supabase.from('profiles').select('count').limit(1);
+    
     if (error) {
+      console.error('Health check - Supabase error:', error);
       return NextResponse.json(
         { 
-          status: 'unhealthy',
-          database: 'disconnected',
-          error: error.message,
-          timestamp: new Date().toISOString()
-        },
+          status: 'degraded', 
+          message: 'Database connection issues detected',
+          timestamp: new Date().toISOString(),
+          database: 'error'
+        }, 
         { status: 503 }
       );
     }
 
     return NextResponse.json({
       status: 'healthy',
-      database: 'connected',
+      message: 'All systems operational',
       timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      memory: process.memoryUsage(),
-      environment: process.env.NODE_ENV
+      database: 'connected',
+      uptime: process.uptime()
     });
-
   } catch (error) {
+    console.error('Health check failed:', error);
     return NextResponse.json(
       { 
-        status: 'unhealthy',
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
-      },
-      { status: 503 }
+        status: 'unhealthy', 
+        message: 'Server error detected',
+        timestamp: new Date().toISOString(),
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }, 
+      { status: 500 }
     );
   }
 }

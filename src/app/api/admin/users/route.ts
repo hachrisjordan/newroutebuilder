@@ -2,9 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient, createSupabaseAdminClient } from '@/lib/supabase-server';
 import { getCurrentUser } from '@/lib/auth';
 
-// Force this route to be dynamic
-export const dynamic = 'force-dynamic';
-
 export async function GET(req: NextRequest) {
   try {
     // Check authentication

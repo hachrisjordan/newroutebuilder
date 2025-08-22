@@ -13,9 +13,6 @@ import { getCurrentUser } from '@/lib/auth';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { parseISO } from 'date-fns';
 
-// Force this page to be dynamic
-export const dynamic = 'force-dynamic';
-
 // Dynamic imports for heavy components to reduce initial bundle size
 const EtihadItineraryCard = dynamic(
   () => import('@/components/jetblue/etihad/etihad-itinerary-card'),

@@ -9,9 +9,6 @@ import { createClient } from '@supabase/supabase-js';
 import Redis from 'ioredis';
 import { parse } from 'url';
 
-// Force this route to be dynamic
-export const dynamic = 'force-dynamic';
-
 function getClassPercentages(
   flights: any[],
   reliability?: Record<string, { min_count: number; exemption?: string }>,

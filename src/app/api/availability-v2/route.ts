@@ -6,9 +6,6 @@ import zlib from 'zlib';
 import { addDays, parseISO, format } from 'date-fns';
 import { createClient } from '@supabase/supabase-js';
 
-// Force this route to be dynamic
-export const dynamic = 'force-dynamic';
-
 // Zod schema for request validation
 const availabilityV2Schema = z.object({
   routeId: z.string().min(3),

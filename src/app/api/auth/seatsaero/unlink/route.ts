@@ -1,19 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseServerClient, createSupabaseAdminClient } from '@/lib/supabase-server';
+import { createClient } from '@supabase/supabase-js';
 
-// Force this route to be dynamic
-export const dynamic = 'force-dynamic';
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: NextRequest) {
   try {
-    // Authenticate the user using server-side Supabase client
-    const supabase = createSupabaseServerClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Get the user from the request (you'll need to implement proper auth)
+    const { user_id } = await request.json();
 
-    if (authError || !user) {
+    if (!user_id) {
       return NextResponse.json(
-        { error: 'Not authenticated' },
-        { status: 401 }
+        { error: 'User ID is required' },
+        { status: 400 }
       );
     }
 
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
         seats_aero_user_email: null,
         seats_aero_user_name: null
       })
-      .eq('id', user.id);
+      .eq('id', user_id);
 
     if (updateError) {
       console.error('Error updating profile:', updateError);
@@ -38,14 +39,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update user metadata using admin client
-    try {
-      const adminSupabase = createSupabaseAdminClient();
-      const currentMetadata = user.user_metadata || {};
+    // Update user metadata to remove Seats.aero info
+    const { data: user, error: userError } = await supabase.auth.admin.getUserById(user_id);
+    
+    if (userError) {
+      console.error('Error getting user:', userError);
+      // Continue anyway, this is not critical
+    } else if (user.user) {
+      const currentMetadata = user.user.user_metadata || {};
       const linkedProviders = currentMetadata.linked_providers || [];
       
-      const { error: metadataError } = await adminSupabase.auth.admin.updateUserById(
-        user.id,
+      const { error: metadataError } = await supabase.auth.admin.updateUserById(
+        user_id,
         {
           user_metadata: {
             ...currentMetadata,
@@ -60,9 +65,6 @@ export async function POST(request: NextRequest) {
         console.error('Error updating user metadata:', metadataError);
         // Continue anyway, this is not critical
       }
-    } catch (adminError) {
-      console.error('Error with admin client:', adminError);
-      // Continue anyway, this is not critical
     }
 
     return NextResponse.json({

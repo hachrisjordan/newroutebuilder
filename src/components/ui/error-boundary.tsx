@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw } from 'lucide-react';
-import { Button } from './button';
-import { Card, CardContent } from './card';
 
 interface ErrorBoundaryState {
   hasError: boolean;
   error?: Error;
+  errorInfo?: React.ErrorInfo;
 }
 
 interface ErrorBoundaryProps {
@@ -27,10 +28,11 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
+    this.setState({ error, errorInfo });
   }
 
   resetError = () => {
-    this.setState({ hasError: false, error: undefined });
+    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
   };
 
   render() {
@@ -41,31 +43,41 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       }
 
       return (
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex flex-col items-center text-center space-y-4">
-              <AlertCircle className="h-12 w-12 text-red-500" />
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Something went wrong
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  We encountered an error while loading this component.
-                </p>
-                {this.state.error && (
-                  <details className="mt-3 text-xs text-gray-500">
-                    <summary className="cursor-pointer">Error details</summary>
-                    <pre className="mt-2 p-2 bg-gray-100 rounded text-left overflow-auto">
-                      {this.state.error.message}
-                    </pre>
-                  </details>
-                )}
-              </div>
-              <Button onClick={this.resetError} variant="outline">
+        <Card className="border-red-200 bg-red-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-600">
+              <AlertCircle className="h-5 w-5" />
+              Something went wrong
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-red-800">
+              An unexpected error occurred. This might be a temporary issue.
+            </p>
+            <div className="flex gap-2">
+              <Button onClick={this.resetError} variant="outline" size="sm">
                 <RefreshCw className="h-4 w-4 mr-2" />
-                Try again
+                Try Again
+              </Button>
+              <Button 
+                onClick={() => window.location.reload()} 
+                variant="outline" 
+                size="sm"
+              >
+                Refresh Page
               </Button>
             </div>
+            {process.env.NODE_ENV === 'development' && this.state.error && (
+              <details className="mt-4 p-3 bg-red-100 border border-red-200 rounded-lg">
+                <summary className="cursor-pointer text-sm font-medium text-red-800">
+                  Error Details (Development)
+                </summary>
+                <div className="mt-2 text-xs text-red-700 space-y-1">
+                  <div><strong>Error:</strong> {this.state.error.message}</div>
+                  <div><strong>Stack:</strong> {this.state.error.stack}</div>
+                </div>
+              </details>
+            )}
           </CardContent>
         </Card>
       );

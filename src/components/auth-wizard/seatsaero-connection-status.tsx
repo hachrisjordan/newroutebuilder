@@ -8,10 +8,15 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, CheckCircle, Link, Unlink } from 'lucide-react';
+import { AlertCircle, CheckCircle, Link, Unlink, RefreshCw } from 'lucide-react';
 import { useUser } from '@/hooks/use-user';
+import { createClient } from '@supabase/supabase-js';
 import { initiateOAuthFlow } from '@/lib/seatsaero-oauth';
-import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 interface OAuthProvider {
   name: string;
@@ -20,62 +25,96 @@ interface OAuthProvider {
   lastLinked?: string;
 }
 
-interface InitialOAuthData {
-  google: {
-    linked: boolean;
-    email?: string;
-    lastLinked?: string;
-  };
-  seatsAero: {
-    linked: boolean;
-    email?: string;
-    lastLinked?: string;
-  };
-}
-
-interface SeatsAeroConnectionStatusProps {
-  initialOAuthData: InitialOAuthData;
-}
-
-export function SeatsAeroConnectionStatus({ initialOAuthData }: SeatsAeroConnectionStatusProps) {
+export function SeatsAeroConnectionStatus() {
   const { user } = useUser();
   const [providers, setProviders] = useState<OAuthProvider[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isLinking, setIsLinking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
-    if (initialOAuthData) {
-      // Use server-side data to initialize providers
+    if (user) {
+      loadOAuthProviders();
+    }
+  }, [user, retryCount]);
+
+  const loadOAuthProviders = async () => {
+    if (!user) return;
+    
+    try {
+      setError(null);
+      setIsLoading(true);
+      
+      // Get user metadata to see linked providers
+      const linkedProviders = user.user_metadata?.linked_providers || [];
+      
+      // Check if user is signed in via Google OAuth
+      const isGoogleUser = user.app_metadata?.provider === 'google' || 
+                          user.user_metadata?.provider === 'google' ||
+                          linkedProviders.includes('google');
+      
+      // Check if user has Seats.aero tokens in their profile
+      // We need to fetch the profile from the database to check for tokens
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('seats_aero_access_token, seats_aero_user_email, seats_aero_user_name')
+        .eq('id', user.id)
+        .single();
+      
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        // Don't fail completely, just show as not connected
+      }
+      
+      const isSeatsAeroUser = !!(profile?.seats_aero_access_token);
+      
       const providersList: OAuthProvider[] = [
         {
           name: 'Google',
-          linked: initialOAuthData.google.linked,
-          email: initialOAuthData.google.email,
-          lastLinked: initialOAuthData.google.lastLinked
+          linked: isGoogleUser,
+          email: user.email,
+          lastLinked: user.created_at
         },
         {
           name: 'Seats.aero',
-          linked: initialOAuthData.seatsAero.linked,
-          email: initialOAuthData.seatsAero.email,
-          lastLinked: initialOAuthData.seatsAero.lastLinked
+          linked: isSeatsAeroUser,
+          email: profile?.seats_aero_user_email,
+          lastLinked: profile ? 'Connected' : undefined
         }
       ];
       
       setProviders(providersList);
+    } catch (error) {
+      console.error('Error loading OAuth providers:', error);
+      setError('Failed to load OAuth provider information. Please try again.');
+      
+      // Auto-retry logic for transient errors
+      if (retryCount < 3) {
+        setTimeout(() => {
+          setRetryCount(prev => prev + 1);
+        }, 2000 * (retryCount + 1)); // Exponential backoff
+      }
+    } finally {
+      setIsLoading(false);
     }
-  }, [initialOAuthData]);
+  };
+
+  const handleRetry = () => {
+    setRetryCount(0);
+    setError(null);
+    loadOAuthProviders();
+  };
 
   const handleLinkSeatsAero = async (returnUrl?: string) => {
     setIsLinking(true);
-    setError(null);
-    
     try {
       // Use the utility function to initiate OAuth flow
       initiateOAuthFlow(returnUrl);
     } catch (error) {
       console.error('Error linking Seats.aero:', error);
       setError('Failed to initiate OAuth flow. Please try again.');
+    } finally {
       setIsLinking(false);
     }
   };
@@ -85,12 +124,9 @@ export function SeatsAeroConnectionStatus({ initialOAuthData }: SeatsAeroConnect
       return;
     }
 
-    setIsLoading(true);
-    setError(null);
-
     try {
       // Call API to unlink Seats.aero
-      const response = await fetch('/api/auth/seatsaero/unlink', {
+      const response = await fetch('https://api.bbairtools.com/api/seats-auth/unlink', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -98,27 +134,63 @@ export function SeatsAeroConnectionStatus({ initialOAuthData }: SeatsAeroConnect
       });
 
       if (response.ok) {
-        // Update local state to reflect the change
-        setProviders(prev => prev.map(provider => 
-          provider.name === 'Seats.aero' 
-            ? { ...provider, linked: false, email: undefined, lastLinked: undefined }
-            : provider
-        ));
+        // Reload providers
+        await loadOAuthProviders();
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to unlink Seats.aero');
+        console.error('Failed to unlink Seats.aero');
+        setError('Failed to unlink Seats.aero. Please try again.');
       }
     } catch (error) {
       console.error('Error unlinking Seats.aero:', error);
-      setError(error instanceof Error ? error.message : 'Failed to unlink Seats.aero');
-    } finally {
-      setIsLoading(false);
+      setError('Failed to unlink Seats.aero. Please try again.');
     }
   };
 
-  // Show loading skeleton when initializing or when performing actions
-  if (providers.length === 0 || isLoading) {
-    return <LoadingSkeleton />;
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
+            <div className="space-y-3">
+              <div className="h-10 bg-gray-200 rounded"></div>
+              <div className="h-10 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show error state with retry option
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-red-600">
+            <AlertCircle className="h-5 w-5" />
+            Connection Error
+          </CardTitle>
+          <CardDescription>
+            There was an error loading your OAuth connections
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-800">{error}</p>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={handleRetry} variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+            <Button onClick={() => window.location.reload()} variant="outline" size="sm">
+              Refresh Page
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   const seatsAeroProvider = providers.find(p => p.name === 'Seats.aero');
@@ -136,19 +208,6 @@ export function SeatsAeroConnectionStatus({ initialOAuthData }: SeatsAeroConnect
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Error Display */}
-        {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="h-4 w-4 text-red-600 mt-0.5" />
-              <div className="text-sm text-red-800">
-                <div className="font-medium">Error</div>
-                <div className="text-red-700 mt-1">{error}</div>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Google OAuth Status */}
         <div className="flex items-center justify-between p-3 border rounded-lg">
           <div className="flex items-center gap-3">
@@ -191,14 +250,9 @@ export function SeatsAeroConnectionStatus({ initialOAuthData }: SeatsAeroConnect
                   variant="outline"
                   size="sm"
                   onClick={handleUnlinkSeatsAero}
-                  disabled={isLoading}
                   className="text-red-600 hover:text-red-700"
                 >
-                  {isLoading ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
-                  ) : (
-                    <Unlink className="h-4 w-4" />
-                  )}
+                  <Unlink className="h-4 w-4" />
                 </Button>
               </>
             ) : (
@@ -249,6 +303,22 @@ export function SeatsAeroConnectionStatus({ initialOAuthData }: SeatsAeroConnect
             </div>
           </div>
         )}
+
+        {/* Debug Info - Remove this after fixing */}
+        <details className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+          <summary className="cursor-pointer text-sm font-medium text-gray-700">
+            Debug Info (Click to expand)
+          </summary>
+          <div className="mt-2 text-xs text-gray-600 space-y-1">
+            <div><strong>User ID:</strong> {user?.id}</div>
+            <div><strong>Email:</strong> {user?.email}</div>
+            <div><strong>Provider (app_metadata):</strong> {JSON.stringify(user?.app_metadata)}</div>
+            <div><strong>Provider (user_metadata):</strong> {JSON.stringify(user?.user_metadata)}</div>
+            <div><strong>Created At:</strong> {user?.created_at}</div>
+            <div><strong>Last Sign In:</strong> {user?.last_sign_in_at}</div>
+            <div><strong>Retry Count:</strong> {retryCount}</div>
+          </div>
+        </details>
       </CardContent>
     </Card>
   );

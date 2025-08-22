@@ -15,7 +15,7 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   
-  // Bundle optimization
+  // Better error handling and performance
   experimental: {
     optimizePackageImports: [
       'antd',
@@ -27,10 +27,42 @@ const nextConfig = {
       '@tanstack/react-query'
     ],
     serverComponentsExternalPackages: ['ioredis', 'iovalkey'],
-    // Add server actions optimization
+    // Add better error handling
     serverActions: {
       allowedOrigins: ['localhost:3000', 'bbairtools.com', 'www.bbairtools.com'],
     },
+  },
+  
+  // Add better caching and performance headers
+  async headers() {
+    return [
+      {
+        source: '/settings',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache',
+          },
+          {
+            key: 'Expires',
+            value: '0',
+          },
+        ],
+      },
+      {
+        source: '/api/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+        ],
+      },
+    ];
   },
   
   // Webpack optimizations
@@ -66,61 +98,6 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
-  },
-
-  // Add headers for better caching and performance
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
-          },
-        ],
-      },
-      {
-        source: '/api/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'no-store, no-cache, must-revalidate, proxy-revalidate',
-          },
-          {
-            key: 'Pragma',
-            value: 'no-cache',
-          },
-          {
-            key: 'Expires',
-            value: '0',
-          },
-        ],
-      },
-    ];
-  },
-
-  // Add redirects for better routing
-  async redirects() {
-    return [
-      {
-        source: '/settings',
-        destination: '/settings/',
-        permanent: true,
-      },
-    ];
   },
 }
 
