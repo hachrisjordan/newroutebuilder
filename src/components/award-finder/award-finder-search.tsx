@@ -10,8 +10,9 @@ import type { DateRange } from 'react-day-picker';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { ChevronDown, ChevronUp, AlertTriangle, ArrowLeftRight, X } from 'lucide-react';
-import { initiateOAuthFlow } from '@/lib/seatsaero-oauth';
+import { FcGoogle } from 'react-icons/fc';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
+import { initiateOAuthFlow } from '@/lib/seatsaero-oauth';
 import { awardFinderSearchRequestSchema } from '@/lib/utils';
 import type { AwardFinderResults, AwardFinderSearchRequest } from '@/types/award-finder-results';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
@@ -93,6 +94,9 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
 
   // Check if user has any form of API access
   const hasApiAccess = (isAuthenticated && seatsAeroConnected) || hasManualApiKey;
+  
+  // Debug logging
+  console.log('Component state:', { isAuthenticated, seatsAeroConnected, hasManualApiKey, hasApiAccess });
 
   // Effect: enforce maxStops and combination limits when apiKey changes
   useEffect(() => {
@@ -191,8 +195,11 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
       setApiKeyError(null);
       try {
         const supabase = createSupabaseBrowserClient();
+        console.log('Checking authentication...');
         const { data, error } = await supabase.auth.getUser();
+        console.log('Auth check result:', { data, error, user: data?.user });
         if (error || !data.user) {
+          console.log('User not authenticated, setting states to false');
           setIsAuthenticated(false);
           setSeatsAeroConnected(false);
           setHasManualApiKey(false);
@@ -661,24 +668,32 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
         >
           <div className="flex flex-col gap-2">
             <label htmlFor="api-key" className="block text-sm font-medium text-foreground mb-1">seats.aero Connection</label>
+            {/* Debug info */}
+            <div className="text-xs text-muted-foreground mb-2">
+              Debug: Auth={isAuthenticated ? 'Yes' : 'No'}, SeatsAero={seatsAeroConnected ? 'Yes' : 'No'}, ManualAPI={hasManualApiKey ? 'Yes' : 'No'}
+            </div>
             {!isAuthenticated ? (
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  className="w-full flex items-center justify-center gap-2"
-                  onClick={() => {
-                    // Store current URL for return after Seats.aero OAuth
+                  className="w-full flex items-center justify-center gap-2 bg-red-500 text-white border-red-600 hover:bg-red-600"
+                  onClick={async () => {
+                    // Store current URL for return after Google OAuth
                     const currentUrl = window.location.pathname + window.location.search;
-                    sessionStorage.setItem('seatsaero_return_url', currentUrl);
+                    sessionStorage.setItem('auth_return_url', currentUrl);
                     
-                    // Use the working OAuth flow - redirect to external API
-                    // This is the same flow that works in the settings page
-                    window.location.href = 'https://api.bbairtools.com/api/seats-auth/consent';
+                    // Call Supabase Google OAuth (same as auth page)
+                    const supabase = createSupabaseBrowserClient();
+                    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+                    if (error) {
+                      console.error('Google OAuth error:', error);
+                    }
+                    // On success, Supabase will redirect automatically
                   }}
                 >
-                  Connect Seats.aero
+                  <FcGoogle className="h-5 w-5" />
+                  Continue with Google
                 </Button>
-                
               </div>
             ) : seatsAeroConnected ? (
               <Button
@@ -704,13 +719,12 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
                 variant="outline"
                 className="w-full h-9"
                 onClick={() => {
-                  // Redirect to seats.aero OAuth
-                  const currentUrl = window.location.pathname + window.location.search;
-                  sessionStorage.setItem('seatsaero_return_url', currentUrl);
-                  window.location.href = '/seatsaero';
+                  // Use the utility function to initiate OAuth flow
+                  // This is the same flow that works in the settings page
+                  initiateOAuthFlow();
                 }}
               >
-                Connect to seats.aero to expand your search range
+                Connect Seats.aero
               </Button>
             )}
                          {apiKeyError && <span className="text-xs text-red-600 mt-1">{apiKeyError}</span>}
