@@ -52,23 +52,141 @@ export async function POST(request: NextRequest) {
     // Calculate expiration time
     const expiresAt = calculateExpirationTime(tokens.expires_in);
 
-    // Use the database function to handle user creation/update
-    const { data: profileId, error: dbError } = await supabase
-      .rpc('handle_seatsaero_oauth', {
-        p_user_id: userInfo.sub,
-        p_email: userInfo.email,
-        p_name: userInfo.name,
-        p_access_token: tokens.access_token,
-        p_refresh_token: tokens.refresh_token,
-        p_expires_at: expiresAt
-      });
+    // Check if profile exists
+    const { data: existingProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('seats_aero_user_id', userInfo.sub)
+      .single();
 
-    if (dbError) {
-      console.error('Database error:', dbError);
+    let profileId: string | null = null;
+
+    if (profileError && profileError.code !== 'PGRST116') {
+      console.error('Error checking existing profile:', profileError);
       return NextResponse.json(
-        { error: 'Failed to save user data' },
+        { error: 'Failed to check existing profile' },
         { status: 500 }
       );
+    }
+
+    if (existingProfile) {
+      // Update existing profile
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          seats_aero_access_token: tokens.access_token,
+          seats_aero_refresh_token: tokens.refresh_token,
+          seats_aero_token_expires_at: expiresAt,
+          seats_aero_user_email: userInfo.email,
+          seats_aero_user_name: userInfo.name
+        })
+        .eq('id', existingProfile.id);
+
+      if (updateError) {
+        console.error('Error updating profile:', updateError);
+        return NextResponse.json(
+          { error: 'Failed to update profile' },
+          { status: 500 }
+        );
+      }
+      profileId = existingProfile.id;
+    } else {
+      // Check if a user with this email already exists (from Google OAuth or other providers)
+      let existingUser = null;
+      
+      if (userInfo.email) {
+        const { data: userByEmail, error: emailError } = await supabase.auth.admin.listUsers();
+        if (!emailError) {
+          existingUser = userByEmail.users.find(user => 
+            user.email === userInfo.email && user.email_confirmed_at
+          );
+        }
+      }
+
+      let supabaseUser;
+      
+      if (existingUser) {
+        // Link Seats.aero to existing user account
+        supabaseUser = existingUser;
+        
+        // Update user metadata to include Seats.aero info
+        const { error: updateUserError } = await supabase.auth.admin.updateUserById(
+          existingUser.id,
+          {
+            user_metadata: {
+              ...existingUser.user_metadata,
+              seatsaero_linked: true,
+              seatsaero_user_id: userInfo.sub,
+              seatsaero_linked_at: new Date().toISOString(),
+              linked_providers: [
+                ...(existingUser.user_metadata?.linked_providers || []),
+                'seatsaero'
+              ].filter((v, i, a) => a.indexOf(v) === i) // Remove duplicates
+            }
+          }
+        );
+
+        if (updateUserError) {
+          console.error('Error updating existing user metadata:', updateUserError);
+          // Continue anyway, this is not critical
+        }
+      } else {
+        // Create a new Supabase user
+        try {
+          const { data: newUser, error: createUserError } = await supabase.auth.admin.createUser({
+            email: userInfo.email || `${userInfo.sub}@seatsaero.oauth`,
+            user_metadata: {
+              name: userInfo.name || 'Seats.aero User',
+              provider: 'seatsaero',
+              seatsaero_user_id: userInfo.sub,
+              seatsaero_linked_at: new Date().toISOString(),
+              linked_providers: ['seatsaero']
+            },
+            email_confirm: true
+          });
+
+          if (createUserError) {
+            console.error('Error creating Supabase user:', createUserError);
+            return NextResponse.json(
+              { error: 'Failed to create user account' },
+              { status: 500 }
+            );
+          }
+          supabaseUser = newUser.user;
+        } catch (error) {
+          console.error('Error with Supabase user creation:', error);
+          return NextResponse.json(
+            { error: 'Failed to create user account' },
+            { status: 500 }
+          );
+        }
+      }
+
+      // Now create the profile with the Supabase user ID
+      const { data: newProfile, error: insertError } = await supabase
+        .from('profiles')
+        .insert({
+          id: supabaseUser.id, // Use the Supabase user ID
+          seats_aero_user_id: userInfo.sub,
+          seats_aero_user_email: userInfo.email,
+          seats_aero_user_name: userInfo.name,
+          seats_aero_access_token: tokens.access_token,
+          seats_aero_refresh_token: tokens.refresh_token,
+          seats_aero_token_expires_at: expiresAt,
+          role: 'User', // Set default role
+          min_reliability_percent: 85 // Set default value
+        })
+        .select('id')
+        .single();
+
+      if (insertError) {
+        console.error('Error creating profile:', insertError);
+        return NextResponse.json(
+          { error: 'Failed to create profile' },
+          { status: 500 }
+        );
+      }
+      profileId = newProfile.id;
     }
 
     // Build the redirect URL to Supabase auth callback

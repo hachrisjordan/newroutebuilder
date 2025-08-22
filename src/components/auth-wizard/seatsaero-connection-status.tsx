@@ -4,218 +4,229 @@
 
 'use client';
 
-import { useSeatsAeroOAuth } from '@/hooks/use-seatsaero-oauth';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  Plane, 
-  CheckCircle, 
-  XCircle, 
-  RefreshCw, 
-  Loader2,
-  ExternalLink 
-} from 'lucide-react';
+import { AlertCircle, CheckCircle, Link, Unlink } from 'lucide-react';
+import { useUser } from '@/hooks/use-user';
 
-interface SeatsAeroConnectionStatusProps {
-  className?: string;
+interface OAuthProvider {
+  name: string;
+  linked: boolean;
+  email?: string;
+  lastLinked?: string;
 }
 
-export default function SeatsAeroConnectionStatus({ className }: SeatsAeroConnectionStatusProps) {
-  const { 
-    tokens, 
-    isLoading, 
-    hasError, 
-    isAuthenticated, 
-    refreshTokens, 
-    signOut 
-  } = useSeatsAeroOAuth();
+export function SeatsAeroConnectionStatus() {
+  const { user } = useUser();
+  const [providers, setProviders] = useState<OAuthProvider[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLinking, setIsLinking] = useState(false);
 
-  const formatExpiryTime = (expiresAt: number) => {
-    const now = Date.now();
-    const timeLeft = expiresAt - now;
-    
-    if (timeLeft <= 0) return 'Expired';
-    
-    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-    
-    if (hours > 0) {
-      return `${hours}h ${minutes}m remaining`;
+  useEffect(() => {
+    if (user) {
+      loadOAuthProviders();
     }
-    return `${minutes}m remaining`;
+  }, [user]);
+
+  const loadOAuthProviders = async () => {
+    if (!user) return;
+    
+    try {
+      // Get user metadata to see linked providers
+      const linkedProviders = user.user_metadata?.linked_providers || [];
+      
+      const providersList: OAuthProvider[] = [
+        {
+          name: 'Google',
+          linked: linkedProviders.includes('google'),
+          email: user.email,
+          lastLinked: user.created_at
+        },
+        {
+          name: 'Seats.aero',
+          linked: linkedProviders.includes('seatsaero'),
+          email: user.user_metadata?.seatsaero_user_email,
+          lastLinked: user.user_metadata?.seatsaero_linked_at
+        }
+      ];
+      
+      setProviders(providersList);
+    } catch (error) {
+      console.error('Error loading OAuth providers:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const getProStatusBadge = () => {
-    // This would come from user metadata in a real implementation
-    return (
-      <Badge variant="secondary" className="ml-2">
-        Pro User
-      </Badge>
-    );
+  const handleLinkSeatsAero = async () => {
+    setIsLinking(true);
+    try {
+      // Redirect to Seats.aero OAuth
+      const redirectUri = encodeURIComponent(`${window.location.origin}/seatsaero`);
+      const state = Math.random().toString(36).substring(7);
+      const consentUrl = `https://seats.aero/oauth2/consent?response_type=code&client_id=${process.env.NEXT_PUBLIC_SEATS_AERO_CLIENT_ID}&redirect_uri=${redirectUri}&scope=openid&state=${state}`;
+      
+      window.location.href = consentUrl;
+    } catch (error) {
+      console.error('Error linking Seats.aero:', error);
+    } finally {
+      setIsLinking(false);
+    }
+  };
+
+  const handleUnlinkSeatsAero = async () => {
+    if (!confirm('Are you sure you want to unlink your Seats.aero account? This will remove access to your Seats.aero data.')) {
+      return;
+    }
+
+    try {
+      // Call API to unlink Seats.aero
+      const response = await fetch('/api/auth/seatsaero/unlink', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        // Reload providers
+        await loadOAuthProviders();
+      } else {
+        console.error('Failed to unlink Seats.aero');
+      }
+    } catch (error) {
+      console.error('Error unlinking Seats.aero:', error);
+    }
   };
 
   if (isLoading) {
     return (
-      <Card className={className}>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Plane className="h-5 w-5 text-blue-600" />
-            Seats.aero Connection
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-4">
-            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-            <span className="ml-2 text-muted-foreground">Checking connection...</span>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (hasError) {
-    return (
-      <Card className={className}>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Plane className="h-5 w-5 text-blue-600" />
-            Seats.aero Connection
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Alert variant="destructive">
-            <XCircle className="h-4 w-4" />
-            <AlertDescription>
-              {hasError}
-            </AlertDescription>
-          </Alert>
-          <div className="mt-3 space-y-2">
-            <Button 
-              onClick={refreshTokens} 
-              variant="outline" 
-              size="sm"
-              className="w-full"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Retry Connection
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!isAuthenticated || !tokens) {
-    return (
-      <Card className={className}>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Plane className="h-5 w-5 text-blue-600" />
-            Seats.aero Connection
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center space-y-3">
-            <div className="flex items-center justify-center">
-              <XCircle className="h-8 w-8 text-muted-foreground" />
+      <Card>
+        <CardContent className="p-6">
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
+            <div className="space-y-3">
+              <div className="h-10 bg-gray-200 rounded"></div>
+              <div className="h-10 bg-gray-200 rounded"></div>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Not connected to Seats.aero
-            </p>
-            <Button 
-              onClick={() => window.location.href = '/auth'} 
-              variant="outline"
-              className="w-full"
-            >
-              <Plane className="h-4 w-4 mr-2" />
-              Connect Account
-            </Button>
           </div>
         </CardContent>
       </Card>
     );
   }
+
+  const seatsAeroProvider = providers.find(p => p.name === 'Seats.aero');
+  const googleProvider = providers.find(p => p.name === 'Google');
 
   return (
-    <Card className={className}>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Plane className="h-5 w-5 text-blue-600" />
-          Seats.aero Connection
-          {getProStatusBadge()}
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Link className="h-5 w-5" />
+          OAuth Account Connections
         </CardTitle>
+        <CardDescription>
+          Manage your connected accounts and OAuth providers
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Alert>
-          <CheckCircle className="h-4 w-4" />
-          <AlertDescription>
-            Successfully connected to Seats.aero
-          </AlertDescription>
-        </Alert>
+        {/* Google OAuth Status */}
+        <div className="flex items-center justify-between p-3 border rounded-lg">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+              <span className="text-blue-600 font-semibold">G</span>
+            </div>
+            <div>
+              <div className="font-medium">Google</div>
+              <div className="text-sm text-gray-500">
+                {googleProvider?.linked ? googleProvider.email : 'Not connected'}
+              </div>
+            </div>
+          </div>
+          <Badge variant={googleProvider?.linked ? "default" : "secondary"}>
+            {googleProvider?.linked ? "Connected" : "Not Connected"}
+          </Badge>
+        </div>
 
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Status:</span>
-            <Badge variant="default">Connected</Badge>
+        {/* Seats.aero OAuth Status */}
+        <div className="flex items-center justify-between p-3 border rounded-lg">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+              <span className="text-green-600 font-semibold">S</span>
+            </div>
+            <div>
+              <div className="font-medium">Seats.aero</div>
+              <div className="text-sm text-gray-500">
+                {seatsAeroProvider?.linked ? seatsAeroProvider.email : 'Not connected'}
+              </div>
+            </div>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Access Token:</span>
-            <span className="font-mono text-xs">
-              {tokens.accessToken.substring(0, 20)}...
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Expires:</span>
-            <span className="text-xs">
-              {formatExpiryTime(tokens.expiresAt)}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Connected:</span>
-            <span className="text-xs">
-              {new Date(tokens.createdAt).toLocaleDateString()}
-            </span>
+          <div className="flex items-center gap-2">
+            {seatsAeroProvider?.linked ? (
+              <>
+                <Badge variant="default" className="flex items-center gap-1">
+                  <CheckCircle className="h-3 w-3" />
+                  Connected
+                </Badge>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleUnlinkSeatsAero}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <Unlink className="h-4 w-4" />
+                </Button>
+              </>
+            ) : (
+              <Button
+                onClick={handleLinkSeatsAero}
+                disabled={isLinking}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {isLinking ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                ) : (
+                  <>
+                    <Link className="h-4 w-4 mr-2" />
+                    Connect Seats.aero
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Button 
-            onClick={refreshTokens} 
-            variant="outline" 
-            size="sm"
-            className="w-full"
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh Connection
-          </Button>
-          
-          <Button 
-            onClick={signOut} 
-            variant="destructive" 
-            size="sm"
-            className="w-full"
-          >
-            <XCircle className="h-4 w-4 mr-2" />
-            Disconnect
-          </Button>
-        </div>
+        {/* Connection Info */}
+        {seatsAeroProvider?.linked && (
+          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-start gap-2">
+              <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+              <div className="text-sm text-green-800">
+                <div className="font-medium">Seats.aero Connected Successfully!</div>
+                <div className="text-green-700 mt-1">
+                  You can now access award travel data and use Seats.aero features.
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
-        <div className="text-xs text-muted-foreground text-center space-y-1">
-          <p>
-            Your API usage limit (1,000 requests/day) is shared across all connected applications.
-          </p>
-          <a 
-            href="https://seats.aero/settings" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="inline-flex items-center text-blue-600 hover:text-blue-800 underline"
-          >
-            Manage OAuth Apps
-            <ExternalLink className="h-3 w-3 ml-1" />
-          </a>
-        </div>
+        {/* Multiple Provider Info */}
+        {googleProvider?.linked && seatsAeroProvider?.linked && (
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-start gap-2">
+              <Link className="h-4 w-4 text-blue-600 mt-0.5" />
+              <div className="text-sm text-blue-800">
+                <div className="font-medium">Multiple OAuth Providers Linked</div>
+                <div className="text-blue-700 mt-1">
+                  Your account is connected to both Google and Seats.aero. You can sign in with either provider.
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
