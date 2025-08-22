@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: new URLSearchParams(tokenRequest as Record<string, string>)
+      body: `code=${encodeURIComponent(code)}&client_id=${encodeURIComponent(tokenRequest.client_id!)}&client_secret=${encodeURIComponent(tokenRequest.client_secret!)}&redirect_uri=${encodeURIComponent(tokenRequest.redirect_uri)}&grant_type=${encodeURIComponent(tokenRequest.grant_type)}&state=${encodeURIComponent(tokenRequest.state)}&scope=${encodeURIComponent(tokenRequest.scope)}`
     });
 
     const responseText = await response.text();
