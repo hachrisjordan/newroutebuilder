@@ -10,28 +10,28 @@ export async function POST(request: NextRequest) {
   try {
     const { tokens, userInfo, expiresIn } = await request.json();
     
+    // Get the current user from the auth header
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'No valid auth token' }, { status: 401 });
+    }
+    
+    const token = authHeader.replace('Bearer ', '');
+    
+    // Verify the token and get user info
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    if (userError || !user) {
+      return NextResponse.json({ error: 'Invalid auth token' }, { status: 401 });
+    }
+    
     // Calculate expiration time
     const expiresAt = new Date(Date.now() + (expiresIn * 1000)).toISOString();
-    
-    // Find user by email
-    const { data: userByEmail, error: emailError } = await supabase.auth.admin.listUsers();
-    if (emailError) {
-      return NextResponse.json({ error: 'Failed to list users' }, { status: 500 });
-    }
-    
-    const existingUser = userByEmail.users.find(user => 
-      user.email === userInfo.email && user.email_confirmed_at
-    );
-    
-    if (!existingUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
     
     // Check if profile exists
     const { data: existingProfile, error: profileError } = await supabase
       .from('profiles')
       .select('id')
-      .eq('id', existingUser.id)
+      .eq('id', user.id)
       .single();
     
     if (existingProfile) {
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       const { error: insertError } = await supabase
         .from('profiles')
         .insert({
-          id: existingUser.id,
+          id: user.id,
           seats_aero_user_id: userInfo.sub,
           seats_aero_access_token: tokens.access_token,
           seats_aero_refresh_token: tokens.refresh_token,
