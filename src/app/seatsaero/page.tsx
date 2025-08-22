@@ -46,8 +46,8 @@ function SeatsAeroCallbackContent() {
           return;
         }
 
-        // Call our external API to exchange code for tokens
-        const response = await fetch('https://api.bbairtools.com/api/seats-auth', {
+        // Get tokens from external API
+        const tokenResponse = await fetch('https://api.bbairtools.com/api/seats-auth', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -55,37 +55,89 @@ function SeatsAeroCallbackContent() {
           body: JSON.stringify({ code, state }),
         });
 
-        const data: OAuthResponse = await response.json();
-
-        if (response.ok && data.success) {
-          setStatus('success');
-          setMessage('Successfully connected to Seats.aero! Redirecting...');
-          
-          // Determine where to redirect the user
-          const returnUrl = searchParams.get('returnUrl') || 
-                           sessionStorage.getItem('seatsaero_return_url') || 
-                           (document.referrer && document.referrer.includes(window.location.origin) ? 
-                             new URL(document.referrer).pathname + new URL(document.referrer).search : null) || 
-                           '/dashboard';
-          
-          // Clean up stored return URL
-          sessionStorage.removeItem('seatsaero_return_url');
-          
-          // Redirect to the appropriate page
-          setTimeout(() => {
-            // If returnUrl is valid internal path, use it; otherwise default to dashboard
-            if (returnUrl && returnUrl.startsWith('/') && !returnUrl.includes('seatsaero')) {
-              console.log('Redirecting to:', returnUrl);
-              router.push(returnUrl);
-            } else {
-              console.log('Redirecting to dashboard (fallback)');
-              router.push('/dashboard');
-            }
-          }, 2000);
-        } else {
+        if (!tokenResponse.ok) {
           setStatus('error');
-          setMessage(data.error || 'Failed to complete OAuth authentication');
+          setMessage('Failed to get tokens from Seats.aero');
+          return;
         }
+
+        const tokenData = await tokenResponse.json();
+        
+        if (!tokenData.success) {
+          setStatus('error');
+          setMessage('Failed to get tokens from Seats.aero');
+          return;
+        }
+
+        const tokens = tokenData.data;
+
+        // Get user info from Seats.aero
+        const userInfoResponse = await fetch('https://seats.aero/oauth2/userinfo', {
+          headers: {
+            'Authorization': `Bearer ${tokens.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!userInfoResponse.ok) {
+          setStatus('error');
+          setMessage('Failed to get user info from Seats.aero');
+          return;
+        }
+
+        const userInfo = await userInfoResponse.json();
+
+        // Store tokens in Supabase
+        const supabaseResponse = await fetch('/api/auth/seatsaero/store-tokens', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            tokens, 
+            userInfo,
+            expiresIn: tokens.expires_in
+          }),
+        });
+
+        if (!supabaseResponse.ok) {
+          setStatus('error');
+          setMessage('Failed to store tokens in database');
+          return;
+        }
+
+        const supabaseData = await supabaseResponse.json();
+        
+        if (!supabaseData.success) {
+          setStatus('error');
+          setMessage(supabaseData.error || 'Failed to store tokens');
+          return;
+        }
+
+        setStatus('success');
+        setMessage('Successfully connected to Seats.aero! Redirecting...');
+        
+        // Determine where to redirect the user
+        const returnUrl = searchParams.get('returnUrl') || 
+                         sessionStorage.getItem('seatsaero_return_url') || 
+                         (document.referrer && document.referrer.includes(window.location.origin) ? 
+                           new URL(document.referrer).pathname + new URL(document.referrer).search : null) || 
+                         '/dashboard';
+        
+        // Clean up stored return URL
+        sessionStorage.removeItem('seatsaero_return_url');
+        
+        // Redirect to the appropriate page
+        setTimeout(() => {
+          // If returnUrl is valid internal path, use it; otherwise default to dashboard
+          if (returnUrl && returnUrl.startsWith('/') && !returnUrl.includes('seatsaero')) {
+            console.log('Redirecting to:', returnUrl);
+            router.push(returnUrl);
+          } else {
+            console.log('Redirecting to dashboard (fallback)');
+            router.push('/dashboard');
+          }
+        }, 2000);
       } catch (error) {
         console.error('OAuth callback error:', error);
         setStatus('error');
