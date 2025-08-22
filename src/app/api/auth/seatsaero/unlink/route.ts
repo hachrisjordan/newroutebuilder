@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { createSupabaseServerClient, createSupabaseAdminClient } from '@/lib/supabase-server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,21 +35,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update user metadata to remove Seats.aero info
-    const currentMetadata = user.user_metadata || {};
-    const linkedProviders = currentMetadata.linked_providers || [];
-    
-    const { error: metadataError } = await supabase.auth.updateUser({
-      user_metadata: {
-        ...currentMetadata,
-        seatsaero_linked: false,
-        seatsaero_user_id: null,
-        linked_providers: linkedProviders.filter((p: string) => p !== 'seatsaero')
-      }
-    });
+    // Update user metadata using admin client
+    try {
+      const adminSupabase = createSupabaseAdminClient();
+      const currentMetadata = user.user_metadata || {};
+      const linkedProviders = currentMetadata.linked_providers || [];
+      
+      const { error: metadataError } = await adminSupabase.auth.admin.updateUserById(
+        user.id,
+        {
+          user_metadata: {
+            ...currentMetadata,
+            seatsaero_linked: false,
+            seatsaero_user_id: null,
+            linked_providers: linkedProviders.filter((p: string) => p !== 'seatsaero')
+          }
+        }
+      );
 
-    if (metadataError) {
-      console.error('Error updating user metadata:', metadataError);
+      if (metadataError) {
+        console.error('Error updating user metadata:', metadataError);
+        // Continue anyway, this is not critical
+      }
+    } catch (adminError) {
+      console.error('Error with admin client:', adminError);
       // Continue anyway, this is not critical
     }
 
