@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
             ...currentMetadata,
             seatsaero_linked: false,
             seatsaero_user_id: null,
-            linked_providers: linkedProviders.filter(p => p !== 'seatsaero')
+            linked_providers: linkedProviders.filter((p: string) => p !== 'seatsaero')
           }
         }
       );
