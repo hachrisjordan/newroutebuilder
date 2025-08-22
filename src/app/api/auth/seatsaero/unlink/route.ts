@@ -1,20 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export async function POST(request: NextRequest) {
   try {
-    // Get the user from the request (you'll need to implement proper auth)
-    const { user_id } = await request.json();
+    // Authenticate the user using server-side Supabase client
+    const supabase = createSupabaseServerClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (!user_id) {
+    if (authError || !user) {
       return NextResponse.json(
-        { error: 'User ID is required' },
-        { status: 400 }
+        { error: 'Not authenticated' },
+        { status: 401 }
       );
     }
 
@@ -29,7 +25,7 @@ export async function POST(request: NextRequest) {
         seats_aero_user_email: null,
         seats_aero_user_name: null
       })
-      .eq('id', user_id);
+      .eq('id', user.id);
 
     if (updateError) {
       console.error('Error updating profile:', updateError);
@@ -40,31 +36,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Update user metadata to remove Seats.aero info
-    const { data: user, error: userError } = await supabase.auth.admin.getUserById(user_id);
+    const currentMetadata = user.user_metadata || {};
+    const linkedProviders = currentMetadata.linked_providers || [];
     
-    if (userError) {
-      console.error('Error getting user:', userError);
-      // Continue anyway, this is not critical
-    } else if (user.user) {
-      const currentMetadata = user.user.user_metadata || {};
-      const linkedProviders = currentMetadata.linked_providers || [];
-      
-      const { error: metadataError } = await supabase.auth.admin.updateUserById(
-        user_id,
-        {
-          user_metadata: {
-            ...currentMetadata,
-            seatsaero_linked: false,
-            seatsaero_user_id: null,
-            linked_providers: linkedProviders.filter((p: string) => p !== 'seatsaero')
-          }
-        }
-      );
-
-      if (metadataError) {
-        console.error('Error updating user metadata:', metadataError);
-        // Continue anyway, this is not critical
+    const { error: metadataError } = await supabase.auth.updateUser({
+      user_metadata: {
+        ...currentMetadata,
+        seatsaero_linked: false,
+        seatsaero_user_id: null,
+        linked_providers: linkedProviders.filter((p: string) => p !== 'seatsaero')
       }
+    });
+
+    if (metadataError) {
+      console.error('Error updating user metadata:', metadataError);
+      // Continue anyway, this is not critical
     }
 
     return NextResponse.json({

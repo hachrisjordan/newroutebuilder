@@ -10,13 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, CheckCircle, Link, Unlink } from 'lucide-react';
 import { useUser } from '@/hooks/use-user';
-import { createClient } from '@supabase/supabase-js';
 import { initiateOAuthFlow } from '@/lib/seatsaero-oauth';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
 
 interface OAuthProvider {
   name: string;
@@ -25,70 +20,62 @@ interface OAuthProvider {
   lastLinked?: string;
 }
 
-export function SeatsAeroConnectionStatus() {
+interface InitialOAuthData {
+  google: {
+    linked: boolean;
+    email?: string;
+    lastLinked?: string;
+  };
+  seatsAero: {
+    linked: boolean;
+    email?: string;
+    lastLinked?: string;
+  };
+}
+
+interface SeatsAeroConnectionStatusProps {
+  initialOAuthData: InitialOAuthData;
+}
+
+export function SeatsAeroConnectionStatus({ initialOAuthData }: SeatsAeroConnectionStatusProps) {
   const { user } = useUser();
   const [providers, setProviders] = useState<OAuthProvider[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isLinking, setIsLinking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user) {
-      loadOAuthProviders();
-    }
-  }, [user]);
-
-  const loadOAuthProviders = async () => {
-    if (!user) return;
-    
-    try {
-      // Get user metadata to see linked providers
-      const linkedProviders = user.user_metadata?.linked_providers || [];
-      
-      // Check if user is signed in via Google OAuth
-      const isGoogleUser = user.app_metadata?.provider === 'google' || 
-                          user.user_metadata?.provider === 'google' ||
-                          linkedProviders.includes('google');
-      
-      // Check if user has Seats.aero tokens in their profile
-      // We need to fetch the profile from the database to check for tokens
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('seats_aero_access_token, seats_aero_user_email, seats_aero_user_name')
-        .eq('id', user.id)
-        .single();
-      
-      const isSeatsAeroUser = !!(profile?.seats_aero_access_token);
-      
+    if (initialOAuthData) {
+      // Use server-side data to initialize providers
       const providersList: OAuthProvider[] = [
         {
           name: 'Google',
-          linked: isGoogleUser,
-          email: user.email,
-          lastLinked: user.created_at
+          linked: initialOAuthData.google.linked,
+          email: initialOAuthData.google.email,
+          lastLinked: initialOAuthData.google.lastLinked
         },
         {
           name: 'Seats.aero',
-          linked: isSeatsAeroUser,
-          email: profile?.seats_aero_user_email,
-          lastLinked: profile ? 'Connected' : undefined
+          linked: initialOAuthData.seatsAero.linked,
+          email: initialOAuthData.seatsAero.email,
+          lastLinked: initialOAuthData.seatsAero.lastLinked
         }
       ];
       
       setProviders(providersList);
-    } catch (error) {
-      console.error('Error loading OAuth providers:', error);
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [initialOAuthData]);
 
   const handleLinkSeatsAero = async (returnUrl?: string) => {
     setIsLinking(true);
+    setError(null);
+    
     try {
       // Use the utility function to initiate OAuth flow
       initiateOAuthFlow(returnUrl);
     } catch (error) {
       console.error('Error linking Seats.aero:', error);
+      setError('Failed to initiate OAuth flow. Please try again.');
       setIsLinking(false);
     }
   };
@@ -98,40 +85,40 @@ export function SeatsAeroConnectionStatus() {
       return;
     }
 
+    setIsLoading(true);
+    setError(null);
+
     try {
       // Call API to unlink Seats.aero
-              const response = await fetch('https://api.bbairtools.com/api/seats-auth/unlink', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+      const response = await fetch('/api/auth/seatsaero/unlink', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
       if (response.ok) {
-        // Reload providers
-        await loadOAuthProviders();
+        // Update local state to reflect the change
+        setProviders(prev => prev.map(provider => 
+          provider.name === 'Seats.aero' 
+            ? { ...provider, linked: false, email: undefined, lastLinked: undefined }
+            : provider
+        ));
       } else {
-        console.error('Failed to unlink Seats.aero');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to unlink Seats.aero');
       }
     } catch (error) {
       console.error('Error unlinking Seats.aero:', error);
+      setError(error instanceof Error ? error.message : 'Failed to unlink Seats.aero');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
-            <div className="space-y-3">
-              <div className="h-10 bg-gray-200 rounded"></div>
-              <div className="h-10 bg-gray-200 rounded"></div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
+  // Show loading skeleton when initializing or when performing actions
+  if (providers.length === 0 || isLoading) {
+    return <LoadingSkeleton />;
   }
 
   const seatsAeroProvider = providers.find(p => p.name === 'Seats.aero');
@@ -149,6 +136,19 @@ export function SeatsAeroConnectionStatus() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Error Display */}
+        {error && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 text-red-600 mt-0.5" />
+              <div className="text-sm text-red-800">
+                <div className="font-medium">Error</div>
+                <div className="text-red-700 mt-1">{error}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Google OAuth Status */}
         <div className="flex items-center justify-between p-3 border rounded-lg">
           <div className="flex items-center gap-3">
@@ -191,9 +191,14 @@ export function SeatsAeroConnectionStatus() {
                   variant="outline"
                   size="sm"
                   onClick={handleUnlinkSeatsAero}
+                  disabled={isLoading}
                   className="text-red-600 hover:text-red-700"
                 >
-                  <Unlink className="h-4 w-4" />
+                  {isLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                  ) : (
+                    <Unlink className="h-4 w-4" />
+                  )}
                 </Button>
               </>
             ) : (
@@ -244,21 +249,6 @@ export function SeatsAeroConnectionStatus() {
             </div>
           </div>
         )}
-
-        {/* Debug Info - Remove this after fixing */}
-        <details className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-          <summary className="cursor-pointer text-sm font-medium text-gray-700">
-            Debug Info (Click to expand)
-          </summary>
-          <div className="mt-2 text-xs text-gray-600 space-y-1">
-            <div><strong>User ID:</strong> {user?.id}</div>
-            <div><strong>Email:</strong> {user?.email}</div>
-            <div><strong>Provider (app_metadata):</strong> {JSON.stringify(user?.app_metadata)}</div>
-            <div><strong>Provider (user_metadata):</strong> {JSON.stringify(user?.user_metadata)}</div>
-            <div><strong>Created At:</strong> {user?.created_at}</div>
-            <div><strong>Last Sign In:</strong> {user?.last_sign_in_at}</div>
-          </div>
-        </details>
       </CardContent>
     </Card>
   );

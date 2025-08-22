@@ -7,6 +7,7 @@ import { Settings } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { SeatsAeroConnectionStatus } from '@/components/auth-wizard/seatsaero-connection-status';
+import ErrorBoundary from '@/components/ui/error-boundary';
 
 const ApiKeySettings = dynamic(() => import('@/components/settings/api-key-settings'), { ssr: false });
 
@@ -16,15 +17,46 @@ export default async function SettingsPage() {
     redirect('/auth');
   }
 
-  // Check if user has Owner role
-  const supabase = createSupabaseServerClient();
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
+  // Check if user has Owner role and get OAuth data server-side with retry logic
+  let profile = null;
+  let profileError = null;
+  
+  try {
+    const supabase = createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('role, seats_aero_access_token, seats_aero_user_email, seats_aero_user_name')
+      .eq('id', user.id)
+      .single();
+    
+    if (error) {
+      profileError = error;
+      console.error('Error fetching profile:', error);
+    } else {
+      profile = data;
+    }
+  } catch (error) {
+    profileError = error;
+    console.error('Unexpected error fetching profile:', error);
+  }
 
   const isOwner = profile?.role === 'Owner';
+  
+  // Prepare OAuth data for the client component with fallbacks
+  const oauthData = {
+    google: {
+      linked: user.app_metadata?.provider === 'google' || 
+               user.user_metadata?.provider === 'google' ||
+               (user.user_metadata?.linked_providers || []).includes('google'),
+      email: user.email,
+      lastLinked: user.created_at
+    },
+    seatsAero: {
+      linked: !!(profile?.seats_aero_access_token),
+      email: profile?.seats_aero_user_email || null,
+      lastLinked: profile?.seats_aero_access_token ? 'Connected' : undefined
+    }
+  };
 
   return (
     <main className="flex flex-1 flex-col items-center bg-background pt-8 pb-12 px-2 sm:px-4">
@@ -57,7 +89,9 @@ export default async function SettingsPage() {
         </Card>
 
         {/* OAuth Connections */}
-        <SeatsAeroConnectionStatus />
+        <ErrorBoundary>
+          <SeatsAeroConnectionStatus initialOAuthData={oauthData} />
+        </ErrorBoundary>
 
         {/* API Key Settings */}
         <ApiKeySettings />

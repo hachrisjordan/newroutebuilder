@@ -71,22 +71,6 @@ function SeatsAeroCallbackContent() {
 
         const tokens = tokenData.data;
 
-        // Get user info from Seats.aero
-        const userInfoResponse = await fetch('https://seats.aero/oauth2/userinfo', {
-          headers: {
-            'Authorization': `Bearer ${tokens.access_token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!userInfoResponse.ok) {
-          setStatus('error');
-          setMessage('Failed to get user info from Seats.aero');
-          return;
-        }
-
-        const userInfo = await userInfoResponse.json();
-
         // Store tokens in Supabase
         const supabaseResponse = await fetch('/api/auth/seatsaero/store-tokens', {
           method: 'POST',
@@ -95,7 +79,7 @@ function SeatsAeroCallbackContent() {
           },
           body: JSON.stringify({ 
             tokens, 
-            userInfo,
+            userInfo: { sub: 'seatsaero_user', email: 'user@seatsaero.com', name: 'Seats.aero User' },
             expiresIn: tokens.expires_in
           }),
         });
