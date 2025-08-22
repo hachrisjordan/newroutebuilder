@@ -11,7 +11,6 @@ import { useSearchParams, useRouter } from 'next/navigation';
 interface OAuthResponse {
   success: boolean;
   message: string;
-  redirect_url: string;
   user_info: {
     id: string;
     email: string;
@@ -38,8 +37,8 @@ function SeatsAeroCallbackContent() {
           return;
         }
 
-        // Call our backend API to exchange code for tokens
-        const response = await fetch('/api/auth/seatsaero', {
+        // Call our external API to exchange code for tokens
+        const response = await fetch('https://api.bbairtools.com/api/seats-auth', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -51,12 +50,11 @@ function SeatsAeroCallbackContent() {
 
         if (response.ok && data.success) {
           setStatus('success');
-          setMessage('Successfully connected to Seats.aero! Redirecting to Supabase...');
+          setMessage('Successfully connected to Seats.aero! Redirecting to dashboard...');
           
-          // Redirect to Supabase auth callback to complete the OAuth flow
-          // This integrates with Supabase Auth like Google OAuth does
+          // Redirect to dashboard instead of Supabase callback to avoid duplicate OAuth
           setTimeout(() => {
-            window.location.href = data.redirect_url;
+            window.location.href = '/dashboard';
           }, 2000);
         } else {
           setStatus('error');

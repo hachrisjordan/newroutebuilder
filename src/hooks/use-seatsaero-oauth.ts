@@ -80,7 +80,7 @@ export function useSeatsAeroOAuth(): UseSeatsAeroOAuthReturn {
         throw new Error('No refresh token available');
       }
 
-      const response = await fetch('/api/auth/seatsaero/refresh', {
+      const response = await fetch('https://api.bbairtools.com/api/seats-auth/refresh', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

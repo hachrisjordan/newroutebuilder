@@ -97,12 +97,12 @@ export function SeatsAeroConnectionStatus() {
 
     try {
       // Call API to unlink Seats.aero
-      const response = await fetch('/api/auth/seatsaero/unlink', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+              const response = await fetch('https://api.bbairtools.com/api/seats-auth/unlink', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
 
       if (response.ok) {
         // Reload providers
