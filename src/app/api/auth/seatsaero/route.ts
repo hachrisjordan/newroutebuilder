@@ -126,27 +126,46 @@ export async function POST(request: NextRequest) {
     let existingProfile = null;
     
     if (userInfo.email) {
-      console.log('Checking for existing user by email...');
+      console.log('Checking for existing user by email:', userInfo.email);
       const { data: userByEmail, error: emailError } = await supabase.auth.admin.listUsers();
       if (!emailError) {
         existingUser = userByEmail.users.find(user => 
           user.email === userInfo.email && user.email_confirmed_at
         );
         console.log('Existing user found:', existingUser ? 'YES' : 'NO');
+        if (existingUser) {
+          console.log('Existing user details:', {
+            id: existingUser.id,
+            email: existingUser.email,
+            emailConfirmed: existingUser.email_confirmed_at
+          });
+        }
         
         // If we found an existing user, check if they have a profile
         if (existingUser) {
+          console.log('Looking for profile with user ID:', existingUser.id);
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
-            .select('id')
+            .select('id, seats_aero_user_id, seats_aero_access_token')
             .eq('id', existingUser.id)
             .single();
           
           if (!profileError) {
             existingProfile = profile;
-            console.log('Existing profile found for user');
+            console.log('Existing profile found:', {
+              profileId: profile.id,
+              hasSeatsAeroUserId: !!profile.seats_aero_user_id,
+              hasSeatsAeroToken: !!profile.seats_aero_access_token
+            });
+          } else {
+            console.log('Profile lookup error:', profileError);
+            if (profileError.code === 'PGRST116') {
+              console.log('No profile found for user - will create one');
+            }
           }
         }
+      } else {
+        console.log('Error listing users:', emailError);
       }
     }
 
@@ -154,7 +173,16 @@ export async function POST(request: NextRequest) {
     let supabaseUser;
 
     if (existingProfile) {
-      console.log('Updating existing profile...');
+      console.log('Updating existing profile with ID:', existingProfile.id);
+      console.log('Update data:', {
+        seats_aero_user_id: userInfo.sub,
+        seats_aero_access_token: tokens.access_token ? 'PRESENT' : 'MISSING',
+        seats_aero_refresh_token: tokens.refresh_token ? 'PRESENT' : 'MISSING',
+        seats_aero_token_expires_at: expiresAt,
+        seats_aero_user_email: userInfo.email,
+        seats_aero_user_name: userInfo.name
+      });
+      
       // Update existing profile
       const { error: updateError } = await supabase
         .from('profiles')
@@ -170,6 +198,12 @@ export async function POST(request: NextRequest) {
 
       if (updateError) {
         console.error('Error updating profile:', updateError);
+        console.error('Update error details:', {
+          code: updateError.code,
+          message: updateError.message,
+          details: updateError.details,
+          hint: updateError.hint
+        });
         return NextResponse.json(
           { error: 'Failed to update profile' },
           { status: 500 }
@@ -179,17 +213,21 @@ export async function POST(request: NextRequest) {
       console.log('Profile updated successfully');
       
       // Verify the update by fetching the profile
-      const { data: verifyProfile } = await supabase
+      const { data: verifyProfile, error: verifyError } = await supabase
         .from('profiles')
         .select('seats_aero_access_token, seats_aero_refresh_token, seats_aero_token_expires_at')
         .eq('id', existingProfile.id)
         .single();
       
-      console.log('Profile verification after update:', {
-        hasAccessToken: !!verifyProfile?.seats_aero_access_token,
-        hasRefreshToken: !!verifyProfile?.seats_aero_refresh_token,
-        expiresAt: verifyProfile?.seats_aero_token_expires_at
-      });
+      if (verifyError) {
+        console.error('Error verifying profile update:', verifyError);
+      } else {
+        console.log('Profile verification after update:', {
+          hasAccessToken: !!verifyProfile?.seats_aero_access_token,
+          hasRefreshToken: !!verifyProfile?.seats_aero_refresh_token,
+          expiresAt: verifyProfile?.seats_aero_token_expires_at
+        });
+      }
     } else {
       console.log('Creating new profile...');
       
@@ -255,7 +293,19 @@ export async function POST(request: NextRequest) {
       }
 
       // Now create the profile with the Supabase user ID
-      console.log('Creating profile...');
+      console.log('Creating profile for user ID:', supabaseUser.id);
+      console.log('Profile data to insert:', {
+        id: supabaseUser.id, // Use the Supabase user ID
+        seats_aero_user_id: userInfo.sub,
+        seats_aero_user_email: userInfo.email,
+        seats_aero_user_name: userInfo.name,
+        seats_aero_access_token: tokens.access_token ? 'PRESENT' : 'MISSING',
+        seats_aero_refresh_token: tokens.refresh_token ? 'PRESENT' : 'MISSING',
+        seats_aero_token_expires_at: expiresAt,
+        role: 'User',
+        min_reliability_percent: 85
+      });
+      
       const { data: newProfile, error: insertError } = await supabase
         .from('profiles')
         .insert({
@@ -274,26 +324,36 @@ export async function POST(request: NextRequest) {
 
       if (insertError) {
         console.error('Error creating profile:', insertError);
+        console.error('Insert error details:', {
+          code: insertError.code,
+          message: insertError.message,
+          details: insertError.details,
+          hint: insertError.hint
+        });
         return NextResponse.json(
           { error: 'Failed to create profile' },
           { status: 500 }
         );
       }
       profileId = newProfile.id;
-      console.log('Profile created successfully');
+      console.log('Profile created successfully with ID:', profileId);
       
       // Verify the creation by fetching the profile
-      const { data: verifyProfile } = await supabase
+      const { data: verifyProfile, error: verifyError } = await supabase
         .from('profiles')
         .select('seats_aero_access_token, seats_aero_refresh_token, seats_aero_token_expires_at')
         .eq('id', newProfile.id)
         .single();
       
-      console.log('Profile verification after creation:', {
-        hasAccessToken: !!verifyProfile?.seats_aero_access_token,
-        hasRefreshToken: !!verifyProfile?.seats_aero_refresh_token,
-        expiresAt: verifyProfile?.seats_aero_token_expires_at
-      });
+      if (verifyError) {
+        console.error('Error verifying profile creation:', verifyError);
+      } else {
+        console.log('Profile verification after creation:', {
+          hasAccessToken: !!verifyProfile?.seats_aero_access_token,
+          hasRefreshToken: !!verifyProfile?.seats_aero_refresh_token,
+          expiresAt: verifyProfile?.seats_aero_token_expires_at
+        });
+      }
     }
 
     // Build the redirect URL to Supabase auth callback
@@ -320,6 +380,30 @@ export async function POST(request: NextRequest) {
     redirectUrl.searchParams.set('expires_in', tokens.expires_in.toString());
     
     console.log('OAuth processing completed successfully');
+    
+    // Final verification - check the profile one more time
+    if (profileId) {
+      console.log('=== FINAL PROFILE VERIFICATION ===');
+      const { data: finalProfile, error: finalError } = await supabase
+        .from('profiles')
+        .select('id, seats_aero_user_id, seats_aero_user_email, seats_aero_access_token, seats_aero_refresh_token, seats_aero_token_expires_at')
+        .eq('id', profileId)
+        .single();
+      
+      if (finalError) {
+        console.error('Final verification error:', finalError);
+      } else {
+        console.log('Final profile state:', {
+          profileId: finalProfile.id,
+          hasSeatsAeroUserId: !!finalProfile.seats_aero_user_id,
+          hasSeatsAeroEmail: !!finalProfile.seats_aero_user_email,
+          hasAccessToken: !!finalProfile.seats_aero_access_token,
+          hasRefreshToken: !!finalProfile.seats_aero_refresh_token,
+          hasExpiresAt: !!finalProfile.seats_aero_token_expires_at
+        });
+      }
+      console.log('=====================================');
+    }
     
     return NextResponse.json({
       success: true,
