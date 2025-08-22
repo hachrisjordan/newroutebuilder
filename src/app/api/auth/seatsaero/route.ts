@@ -72,14 +72,32 @@ export async function POST(request: NextRequest) {
     
     // Exchange authorization code for tokens
     console.log('Exchanging code for tokens...');
-    const tokens = await exchangeCodeForTokens(code, state);
-    if (!tokens) {
+    
+    // TEMPORARY: Call Seats.aero directly to bypass our function
+    console.log('=== CALLING SEATS.AERO DIRECTLY ===');
+    const directResponse = await fetch('https://seats.aero/oauth2/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: `code=${encodeURIComponent(code)}&client_id=${encodeURIComponent(SEATS_AERO_OAUTH_CONFIG.clientId)}&client_secret=${encodeURIComponent(SEATS_AERO_OAUTH_CONFIG.clientSecret)}&redirect_uri=${encodeURIComponent(SEATS_AERO_OAUTH_CONFIG.redirectUri)}&grant_type=authorization_code&state=${encodeURIComponent(state)}&scope=openid`
+    });
+    
+    console.log('Direct response status:', directResponse.status);
+    const directResponseText = await directResponse.text();
+    console.log('Direct response body:', directResponseText);
+    
+    if (!directResponse.ok) {
+      console.error('Direct call to Seats.aero failed!');
       return NextResponse.json(
-        { error: 'Token exchange failed' },
-        { status: 400 }
+        { error: 'Direct Seats.aero call failed', status: directResponse.status, body: directResponseText },
+        { status: 500 }
       );
     }
-    console.log('Token exchange successful');
+    
+    console.log('Direct call succeeded! Parsing response...');
+    const tokens = JSON.parse(directResponseText);
+    console.log('Tokens received:', { access_token: tokens.access_token ? 'PRESENT' : 'MISSING' });
 
     // Get user info from Seats.aero
     console.log('Getting user info from Seats.aero...');
