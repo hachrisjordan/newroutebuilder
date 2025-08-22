@@ -11,7 +11,7 @@ import { FcGoogle } from 'react-icons/fc';
  */
 const AuthForm = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [isSeatsAeroLoading, setIsSeatsAeroLoading] = useState(false);
+
   const [hasError, setHasError] = useState<string | null>(null);
 
   const handleGoogleSignIn = async () => {
@@ -26,20 +26,7 @@ const AuthForm = () => {
     // On success, Supabase will redirect automatically
   };
 
-  const handleSeatsAeroSignIn = async (returnUrl?: string) => {
-    try {
-      setIsSeatsAeroLoading(true);
-      setHasError(null);
 
-      // Use the utility function to initiate OAuth flow
-      initiateOAuthFlow(returnUrl);
-      
-    } catch (error) {
-      console.error('Seats.aero OAuth error:', error);
-      setHasError('Failed to initiate Seats.aero authentication');
-      setIsSeatsAeroLoading(false);
-    }
-  };
 
   return (
     <main className="flex flex-1 flex-col items-center bg-background pt-8 pb-12 px-2 sm:px-4">
