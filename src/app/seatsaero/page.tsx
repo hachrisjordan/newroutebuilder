@@ -16,6 +16,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 
 interface OAuthResponse {
   success: boolean;
@@ -71,11 +72,22 @@ function SeatsAeroCallbackContent() {
 
         const tokens = tokenData.data;
 
+        // Get current user's auth token from Supabase
+        const supabase = createSupabaseBrowserClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session?.access_token) {
+          setStatus('error');
+          setMessage('User not authenticated');
+          return;
+        }
+
         // Store tokens in Supabase
         const supabaseResponse = await fetch('/api/auth/seatsaero/store-tokens', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
           },
           body: JSON.stringify({ 
             tokens, 
