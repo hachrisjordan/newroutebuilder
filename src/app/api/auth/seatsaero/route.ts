@@ -19,23 +19,38 @@ const supabase = createClient(
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('=== SEATS.AERO OAUTH API START ===');
     console.log('Starting Seats.aero OAuth processing...');
+    
+    // Log environment variables (without exposing secrets)
+    console.log('Environment check:', {
+      hasClientId: !!process.env.CLIENT_ID,
+      hasClientSecret: !!process.env.CLIENT_SECRET,
+      hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      hasServiceRoleKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+    });
     
     // Validate OAuth configuration
     console.log('Validating OAuth config...');
     validateOAuthConfig();
     console.log('OAuth config validation passed');
 
+    console.log('Parsing request body...');
     const { code, state } = await request.json();
-    console.log('Received code and state:', { code: code ? 'PRESENT' : 'MISSING', state: state ? 'PRESENT' : 'MISSING' });
+    console.log('Received code and state:', { 
+      code: code ? `PRESENT (${code.substring(0, 20)}...)` : 'MISSING', 
+      state: state ? `PRESENT (${state})` : 'MISSING' 
+    });
 
     if (!code || !state) {
+      console.log('Missing parameters, returning 400');
       return NextResponse.json(
         { error: 'Missing required parameters: code and state' },
         { status: 400 }
       );
     }
 
+    console.log('=== ABOUT TO CALL EXCHANGE CODE FOR TOKENS ===');
     // Exchange authorization code for tokens
     console.log('Exchanging code for tokens...');
     const tokens = await exchangeCodeForTokens(code, state);
@@ -249,9 +264,19 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Seats.aero OAuth error:', error);
+    console.error('=== SEATS.AERO OAUTH API ERROR ===');
+    console.error('Error type:', error?.constructor?.name);
+    console.error('Error message:', error instanceof Error ? error.message : 'No message');
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
+    console.error('Full error object:', error);
+    console.error('=====================================');
+    
     return NextResponse.json(
-      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { 
+        error: 'Internal server error', 
+        details: error instanceof Error ? error.message : 'Unknown error',
+        errorType: error?.constructor?.name
+      },
       { status: 500 }
     );
   }
