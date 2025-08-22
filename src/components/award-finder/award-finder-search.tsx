@@ -73,6 +73,7 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
   const [seatsAeroConnected, setSeatsAeroConnected] = useState(false);
   const [hasManualApiKey, setHasManualApiKey] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLinkingSeatsAero, setIsLinkingSeatsAero] = useState(false);
 
   const combinationCount = origin.length * destination.length;
 
@@ -668,15 +669,12 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
         >
           <div className="flex flex-col gap-2">
             <label htmlFor="api-key" className="block text-sm font-medium text-foreground mb-1">seats.aero Connection</label>
-            {/* Debug info */}
-            <div className="text-xs text-muted-foreground mb-2">
-              Debug: Auth={isAuthenticated ? 'Yes' : 'No'}, SeatsAero={seatsAeroConnected ? 'Yes' : 'No'}, ManualAPI={hasManualApiKey ? 'Yes' : 'No'}
-            </div>
+
             {!isAuthenticated ? (
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  className="w-full flex items-center justify-center gap-2 bg-red-500 text-white border-red-600 hover:bg-red-600"
+                  className="w-full flex items-center justify-center gap-2"
                   onClick={async () => {
                     // Store current URL for return after Google OAuth
                     const currentUrl = window.location.pathname + window.location.search;
@@ -719,9 +717,9 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
                 variant="outline"
                 className="w-full h-9"
                 onClick={() => {
-                  // Use the utility function to initiate OAuth flow
-                  // This is the same flow that works in the settings page
-                  initiateOAuthFlow();
+                  // Pass current page URL for proper redirect after OAuth
+                  const currentUrl = window.location.pathname + window.location.search;
+                  initiateOAuthFlow(currentUrl);
                 }}
               >
                 Connect Seats.aero

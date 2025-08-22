@@ -93,10 +93,19 @@ export function initiateOAuthFlow(returnUrl?: string): void {
     sessionStorage.setItem('seatsaero_return_url', currentUrl);
   }
   
-  // Use the working external API endpoint instead of building custom consent URL
-  // This is the same flow that works in the settings page
+  // Generate state parameter
+  const state = generateOAuthState();
+  
+  // Store state for validation
   if (typeof window !== 'undefined') {
-    window.location.href = 'https://api.bbairtools.com/api/seats-auth/consent';
+    sessionStorage.setItem('seatsaero_oauth_state', state);
+  }
+  
+  // Build and redirect to consent URL
+  const consentUrl = buildConsentUrl(state);
+  
+  if (typeof window !== 'undefined') {
+    window.location.href = consentUrl;
   }
 }
 
