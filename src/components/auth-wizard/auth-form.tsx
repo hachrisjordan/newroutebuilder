@@ -4,12 +4,14 @@ import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FcGoogle } from 'react-icons/fc';
+import { Plane } from 'lucide-react';
 
 /**
- * AuthForm - Google OAuth sign in/up
+ * AuthForm - Google OAuth and Seats.aero OAuth sign in/up
  */
 const AuthForm = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isSeatsAeroLoading, setIsSeatsAeroLoading] = useState(false);
   const [hasError, setHasError] = useState<string | null>(null);
 
   const handleGoogleSignIn = async () => {
@@ -22,6 +24,51 @@ const AuthForm = () => {
       setIsLoading(false);
     }
     // On success, Supabase will redirect automatically
+  };
+
+  const handleSeatsAeroSignIn = async () => {
+    try {
+      setIsSeatsAeroLoading(true);
+      setHasError(null);
+
+      // Generate a random state parameter for security
+      const state = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      
+      // Store state in sessionStorage for validation
+      sessionStorage.setItem('seatsaero_oauth_state', state);
+      
+      // Build the consent URL with proper parameters
+      // Note: All parameters must match exactly what's configured in Seats.aero
+      const consentUrl = new URL('https://seats.aero/oauth2/consent');
+      consentUrl.searchParams.set('response_type', 'code');
+      consentUrl.searchParams.set('client_id', 'seats:cid:31cVzYWxiOhZ7w31VpQW27Se4Tg');
+      consentUrl.searchParams.set('redirect_uri', 'https://bbairtools.com/seatsaero');
+      consentUrl.searchParams.set('state', state);
+      consentUrl.searchParams.set('scope', 'openid');
+
+      const finalUrl = consentUrl.toString();
+      console.log('OAuth Parameters:', {
+        response_type: 'code',
+        client_id: 'seats:cid:31cVzYWxiOhZ7w31VpQW27Se4Tg',
+        redirect_uri: 'https://bbairtools.com/seatsaero',
+        state,
+        scope: 'openid'
+      });
+      console.log('Final consent URL:', finalUrl);
+      
+      // Verify the URL is properly formatted
+      if (!finalUrl.includes('client_id=seats:cid:31cVzYWxiOhZ7w31VpQW27Se4Tg')) {
+        throw new Error('Client ID not properly encoded in URL');
+      }
+      
+      // Redirect to Seats.aero consent page
+      window.location.href = finalUrl;
+      
+    } catch (error) {
+      console.error('Seats.aero OAuth error:', error);
+      setHasError('Failed to initiate Seats.aero authentication');
+      setIsSeatsAeroLoading(false);
+    }
   };
 
   return (
@@ -40,11 +87,42 @@ const AuthForm = () => {
             <FcGoogle className="h-5 w-5" />
             {isLoading ? 'Redirecting…' : 'Continue with Google'}
           </Button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                Or continue with
+              </span>
+            </div>
+          </div>
+
+          <Button
+            variant="outline"
+            className="w-full flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 border-blue-200 hover:border-blue-300"
+            onClick={handleSeatsAeroSignIn}
+            disabled={isSeatsAeroLoading}
+          >
+            <Plane className="h-5 w-5 text-blue-600" />
+            {isSeatsAeroLoading ? 'Redirecting…' : 'Sign in with Seats.aero'}
+          </Button>
+
           {hasError && (
             <div className="text-sm text-red-600 text-center" role="alert">
               {hasError}
             </div>
           )}
+
+          <div className="text-xs text-muted-foreground text-center space-y-1">
+            <p>
+              <strong>Seats.aero Pro users:</strong> Connect your account to access award travel data and advanced features.
+            </p>
+            <p>
+              Your API usage limit (1,000 requests/day) is shared across all connected applications.
+            </p>
+          </div>
         </CardContent>
       </Card>
     </main>

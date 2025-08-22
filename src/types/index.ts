@@ -40,6 +40,18 @@ export type {
   PathRow
 } from './shortest-route';
 
+// Seats.aero OAuth types
+export type {
+  SeatsAeroOAuthConfig,
+  SeatsAeroConsentParams,
+  SeatsAeroTokenRequest,
+  SeatsAeroTokenResponse,
+  SeatsAeroUserInfo,
+  SeatsAeroOAuthState,
+  SeatsAeroStoredTokens,
+  SeatsAeroOAuthError
+} from './seatsaero-oauth';
+
 // PZ (United specific data) types
 export interface PZSearchParams {
   departureAirports: string[];
