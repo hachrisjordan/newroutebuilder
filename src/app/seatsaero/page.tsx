@@ -1,6 +1,15 @@
 /**
  * Seats.aero OAuth Callback Page
  * Handles the OAuth callback after user consent
+ * 
+ * Return URL Priority (in order):
+ * 1. returnUrl query parameter (if explicitly passed)
+ * 2. seatsaero_return_url from sessionStorage (stored before OAuth initiation)
+ * 3. Valid referrer from same origin (if user came from another page on the site)
+ * 4. /dashboard (fallback)
+ * 
+ * This ensures users are redirected back to where they were before starting OAuth,
+ * providing a seamless user experience.
  */
 
 'use client';
@@ -50,11 +59,28 @@ function SeatsAeroCallbackContent() {
 
         if (response.ok && data.success) {
           setStatus('success');
-          setMessage('Successfully connected to Seats.aero! Redirecting to dashboard...');
+          setMessage('Successfully connected to Seats.aero! Redirecting...');
           
-          // Redirect to dashboard instead of Supabase callback to avoid duplicate OAuth
+          // Determine where to redirect the user
+          const returnUrl = searchParams.get('returnUrl') || 
+                           sessionStorage.getItem('seatsaero_return_url') || 
+                           (document.referrer && document.referrer.includes(window.location.origin) ? 
+                             new URL(document.referrer).pathname + new URL(document.referrer).search : null) || 
+                           '/dashboard';
+          
+          // Clean up stored return URL
+          sessionStorage.removeItem('seatsaero_return_url');
+          
+          // Redirect to the appropriate page
           setTimeout(() => {
-            window.location.href = '/dashboard';
+            // If returnUrl is valid internal path, use it; otherwise default to dashboard
+            if (returnUrl && returnUrl.startsWith('/') && !returnUrl.includes('seatsaero')) {
+              console.log('Redirecting to:', returnUrl);
+              router.push(returnUrl);
+            } else {
+              console.log('Redirecting to dashboard (fallback)');
+              router.push('/dashboard');
+            }
           }, 2000);
         } else {
           setStatus('error');
@@ -68,7 +94,7 @@ function SeatsAeroCallbackContent() {
     };
 
     processOAuthCallback();
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

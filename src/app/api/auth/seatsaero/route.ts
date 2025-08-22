@@ -121,23 +121,37 @@ export async function POST(request: NextRequest) {
     const expiresAt = calculateExpirationTime(tokens.expires_in);
     console.log('Expiration calculated:', expiresAt);
 
-    // Check if profile exists
-    console.log('Checking for existing profile...');
-    const { data: existingProfile, error: profileError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('seats_aero_user_id', userInfo.sub)
-      .single();
+    // First check if a user with this email already exists
+    let existingUser = null;
+    let existingProfile = null;
+    
+    if (userInfo.email) {
+      console.log('Checking for existing user by email...');
+      const { data: userByEmail, error: emailError } = await supabase.auth.admin.listUsers();
+      if (!emailError) {
+        existingUser = userByEmail.users.find(user => 
+          user.email === userInfo.email && user.email_confirmed_at
+        );
+        console.log('Existing user found:', existingUser ? 'YES' : 'NO');
+        
+        // If we found an existing user, check if they have a profile
+        if (existingUser) {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', existingUser.id)
+            .single();
+          
+          if (!profileError) {
+            existingProfile = profile;
+            console.log('Existing profile found for user');
+          }
+        }
+      }
+    }
 
     let profileId: string | null = null;
-
-    if (profileError && profileError.code !== 'PGRST116') {
-      console.error('Error checking existing profile:', profileError);
-      return NextResponse.json(
-        { error: 'Failed to check existing profile' },
-        { status: 500 }
-      );
-    }
+    let supabaseUser;
 
     if (existingProfile) {
       console.log('Updating existing profile...');
@@ -145,6 +159,7 @@ export async function POST(request: NextRequest) {
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
+          seats_aero_user_id: userInfo.sub,
           seats_aero_access_token: tokens.access_token,
           seats_aero_refresh_token: tokens.refresh_token,
           seats_aero_token_expires_at: expiresAt,
@@ -162,23 +177,21 @@ export async function POST(request: NextRequest) {
       }
       profileId = existingProfile.id;
       console.log('Profile updated successfully');
+      
+      // Verify the update by fetching the profile
+      const { data: verifyProfile } = await supabase
+        .from('profiles')
+        .select('seats_aero_access_token, seats_aero_refresh_token, seats_aero_token_expires_at')
+        .eq('id', existingProfile.id)
+        .single();
+      
+      console.log('Profile verification after update:', {
+        hasAccessToken: !!verifyProfile?.seats_aero_access_token,
+        hasRefreshToken: !!verifyProfile?.seats_aero_refresh_token,
+        expiresAt: verifyProfile?.seats_aero_token_expires_at
+      });
     } else {
       console.log('Creating new profile...');
-      // Check if a user with this email already exists (from Google OAuth or other providers)
-      let existingUser = null;
-      
-      if (userInfo.email) {
-        console.log('Checking for existing user by email...');
-        const { data: userByEmail, error: emailError } = await supabase.auth.admin.listUsers();
-        if (!emailError) {
-          existingUser = userByEmail.users.find(user => 
-            user.email === userInfo.email && user.email_confirmed_at
-          );
-          console.log('Existing user found:', existingUser ? 'YES' : 'NO');
-        }
-      }
-
-      let supabaseUser;
       
       if (existingUser) {
         console.log('Linking to existing user...');
@@ -268,6 +281,19 @@ export async function POST(request: NextRequest) {
       }
       profileId = newProfile.id;
       console.log('Profile created successfully');
+      
+      // Verify the creation by fetching the profile
+      const { data: verifyProfile } = await supabase
+        .from('profiles')
+        .select('seats_aero_access_token, seats_aero_refresh_token, seats_aero_token_expires_at')
+        .eq('id', newProfile.id)
+        .single();
+      
+      console.log('Profile verification after creation:', {
+        hasAccessToken: !!verifyProfile?.seats_aero_access_token,
+        hasRefreshToken: !!verifyProfile?.seats_aero_refresh_token,
+        expiresAt: verifyProfile?.seats_aero_token_expires_at
+      });
     }
 
     // Build the redirect URL to Supabase auth callback

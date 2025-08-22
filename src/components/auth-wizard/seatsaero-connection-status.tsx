@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertCircle, CheckCircle, Link, Unlink } from 'lucide-react';
 import { useUser } from '@/hooks/use-user';
 import { createClient } from '@supabase/supabase-js';
+import { initiateOAuthFlow } from '@/lib/seatsaero-oauth';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -81,22 +82,13 @@ export function SeatsAeroConnectionStatus() {
     }
   };
 
-  const handleLinkSeatsAero = async () => {
+  const handleLinkSeatsAero = async (returnUrl?: string) => {
     setIsLinking(true);
     try {
-      // Redirect to Seats.aero OAuth
-      const redirectUri = encodeURIComponent(`${window.location.origin}/seatsaero`);
-      const state = Math.random().toString(36).substring(7);
-      
-      // Use the hardcoded client ID since this runs on the client side
-      const clientId = 'seats:cid:31cVzYWxiOhZ7w31VpQW27Se4Tg';
-      
-      const consentUrl = `https://seats.aero/oauth2/consent?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=openid&state=${state}`;
-      
-      window.location.href = consentUrl;
+      // Use the utility function to initiate OAuth flow
+      initiateOAuthFlow(returnUrl);
     } catch (error) {
       console.error('Error linking Seats.aero:', error);
-    } finally {
       setIsLinking(false);
     }
   };
@@ -206,7 +198,7 @@ export function SeatsAeroConnectionStatus() {
               </>
             ) : (
               <Button
-                onClick={handleLinkSeatsAero}
+                onClick={() => handleLinkSeatsAero()}
                 disabled={isLinking}
                 className="bg-green-600 hover:bg-green-700"
               >

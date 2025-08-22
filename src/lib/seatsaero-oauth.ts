@@ -81,6 +81,35 @@ export function buildConsentUrl(state: string): string {
 }
 
 /**
+ * Initiate OAuth flow with optional return URL
+ * This function handles storing the return URL and redirecting to OAuth
+ */
+export function initiateOAuthFlow(returnUrl?: string): void {
+  // Store the return URL for after OAuth completion
+  const currentUrl = returnUrl || (typeof window !== 'undefined' ? 
+    window.location.pathname + window.location.search : '/dashboard');
+  
+  if (typeof window !== 'undefined') {
+    sessionStorage.setItem('seatsaero_return_url', currentUrl);
+  }
+  
+  // Generate state parameter
+  const state = generateOAuthState();
+  
+  // Store state for validation
+  if (typeof window !== 'undefined') {
+    sessionStorage.setItem('seatsaero_oauth_state', state);
+  }
+  
+  // Build and redirect to consent URL
+  const consentUrl = buildConsentUrl(state);
+  
+  if (typeof window !== 'undefined') {
+    window.location.href = consentUrl;
+  }
+}
+
+/**
  * Exchange authorization code for access and refresh tokens
  */
 export async function exchangeCodeForTokens(

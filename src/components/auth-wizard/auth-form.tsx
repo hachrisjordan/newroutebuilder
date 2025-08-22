@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FcGoogle } from 'react-icons/fc';
 import { Plane } from 'lucide-react';
-import { buildConsentUrl, SEATS_AERO_CLIENT_CONFIG } from '@/lib/seatsaero-oauth';
+import { SEATS_AERO_CLIENT_CONFIG, buildConsentUrl, initiateOAuthFlow } from '@/lib/seatsaero-oauth';
 
 /**
  * AuthForm - Google OAuth and Seats.aero OAuth sign in/up
@@ -27,31 +27,13 @@ const AuthForm = () => {
     // On success, Supabase will redirect automatically
   };
 
-  const handleSeatsAeroSignIn = async () => {
+  const handleSeatsAeroSignIn = async (returnUrl?: string) => {
     try {
       setIsSeatsAeroLoading(true);
       setHasError(null);
 
-      // Generate a random state parameter for security
-      const state = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-      
-      // Store state in sessionStorage for validation
-      sessionStorage.setItem('seatsaero_oauth_state', state);
-      
-      // Build the consent URL using our OAuth library function
-      const consentUrl = buildConsentUrl(state);
-      
-      console.log('OAuth Parameters:', {
-        response_type: 'code',
-        client_id: SEATS_AERO_CLIENT_CONFIG.clientId,
-        redirect_uri: SEATS_AERO_CLIENT_CONFIG.redirectUri,
-        state,
-        scope: 'openid'
-      });
-      console.log('Final consent URL:', consentUrl);
-      
-      // Redirect to Seats.aero consent page
-      window.location.href = consentUrl;
+      // Use the utility function to initiate OAuth flow
+      initiateOAuthFlow(returnUrl);
       
     } catch (error) {
       console.error('Seats.aero OAuth error:', error);
@@ -91,7 +73,7 @@ const AuthForm = () => {
           <Button
             variant="outline"
             className="w-full flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 border-blue-200 hover:border-blue-300"
-            onClick={handleSeatsAeroSignIn}
+            onClick={() => handleSeatsAeroSignIn()}
             disabled={isSeatsAeroLoading}
           >
             <Plane className="h-5 w-5 text-blue-600" />
