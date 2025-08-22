@@ -6,6 +6,7 @@ import AwardFinderResultsCard from '@/components/award-finder/award-finder-resul
 import type { AwardFinderResults } from '@/types/award-finder-results';
 import { getTotalDuration, getClassPercentages } from '@/lib/utils';
 import Link from 'next/link';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 
 const PAGE_SIZE = 10;
 
@@ -215,6 +216,7 @@ export default function AwardFinderPage() {
     const pageParam = pageOverride ?? page;
     const pageSizeParam = pageSizeOverride ?? pageSize;
     const url = `https://api.bbairtools.com/api/build-itineraries${query ? '?' + query : ''}&page=${pageParam}&pageSize=${pageSizeParam}`;
+    
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

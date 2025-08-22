@@ -110,6 +110,7 @@ const buildItinerariesSchema = z.object({
   cabin: z.string().optional(),
   carriers: z.string().optional(),
   minReliabilityPercent: z.number().min(0).max(100).optional(),
+  useSeatsAeroToken: z.boolean().optional(),
 });
 
 // Types for availability response
@@ -630,9 +631,55 @@ export async function POST(req: NextRequest) {
     if (!parseResult.success) {
       return NextResponse.json({ error: 'Invalid input', details: parseResult.error.errors }, { status: 400 });
     }
-    let { origin, destination, maxStop, startDate, endDate, apiKey, cabin, carriers, minReliabilityPercent } = parseResult.data;
+    let { origin, destination, maxStop, startDate, endDate, apiKey, cabin, carriers, minReliabilityPercent, useSeatsAeroToken } = parseResult.data;
     if (typeof minReliabilityPercent !== 'number' || isNaN(minReliabilityPercent)) {
       minReliabilityPercent = 85;
+    }
+
+    // Handle seats.aero token if requested
+    if (useSeatsAeroToken && apiKey === 'BEARER_TOKEN') {
+      // Get the user's authentication context from the request
+      const authHeader = req.headers.get('authorization');
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return NextResponse.json({ error: 'Authentication required for seats.aero token access' }, { status: 401 });
+      }
+      
+      const userToken = authHeader.replace('Bearer ', '');
+      
+      try {
+        // Verify the user token and get their profile
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        if (!supabaseUrl || !supabaseServiceRoleKey) {
+          return NextResponse.json({ error: 'Supabase credentials not set' }, { status: 500 });
+        }
+        
+        const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+        const { data: { user }, error: userError } = await supabase.auth.getUser(userToken);
+        
+        if (userError || !user) {
+          return NextResponse.json({ error: 'Invalid authentication token' }, { status: 401 });
+        }
+        
+        // Get the user's profile to fetch the seats.aero access token
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('seats_aero_access_token')
+          .eq('id', user.id)
+          .single();
+        
+        if (profileError || !profileData?.seats_aero_access_token) {
+          return NextResponse.json({ error: 'No seats.aero access token found in profile' }, { status: 400 });
+        }
+        
+        // Use the actual Bearer token from the profile
+        apiKey = profileData.seats_aero_access_token;
+        console.log(`[build-itineraries] Using seats.aero Bearer token for user ${user.id}`);
+        
+      } catch (error) {
+        console.error('Error fetching seats.aero token:', error);
+        return NextResponse.json({ error: 'Failed to fetch seats.aero token from profile' }, { status: 500 });
+      }
     }
 
     // --- Extract query params for pagination/filter/sort/search ---

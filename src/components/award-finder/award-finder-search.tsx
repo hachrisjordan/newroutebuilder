@@ -68,6 +68,9 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
   const [error, setError] = useState<string | null>(null);
   const [seats, setSeats] = useState<number>(1);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [seatsAeroConnected, setSeatsAeroConnected] = useState(false);
+  const [hasManualApiKey, setHasManualApiKey] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const combinationCount = origin.length * destination.length;
 
@@ -87,28 +90,99 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
   // Helper to get allowed max combinations based on apiKey
   const getAllowedMaxCombination = (hasApiKey: boolean) => (hasApiKey ? 9 : 3);
 
+  // Check if user has any form of API access
+  const hasApiAccess = (isAuthenticated && seatsAeroConnected) || hasManualApiKey;
+
   // Effect: enforce maxStops and combination limits when apiKey changes
   useEffect(() => {
-    const hasApiKey = !!apiKey.trim();
     // 1. Enforce maxStops
-    const allowedMaxStops = getAllowedMaxStops(origin.length * destination.length, hasApiKey);
+    const allowedMaxStops = getAllowedMaxStops(origin.length * destination.length, hasApiAccess);
     if (maxStops > allowedMaxStops) {
       setMaxStops(allowedMaxStops);
     }
     // 2. Enforce combination limit
-    const allowedMaxComb = getAllowedMaxCombination(hasApiKey);
+    const allowedMaxComb = getAllowedMaxCombination(hasApiAccess);
     if (origin.length * destination.length > allowedMaxComb) {
       setOrigin([]);
       setDestination([]);
     }
     // 3. Enforce date range limit
-    if (!hasApiKey && date?.from && date?.to) {
+    if (!hasApiAccess && date?.from && date?.to) {
       const diff = Math.ceil((date.to.getTime() - date.from.getTime()) / (1000 * 60 * 60 * 24)) + 1;
       if (diff > 3) {
         setDate({ from: date.from, to: undefined });
       }
     }
-  }, [apiKey, origin, destination, maxStops, date]);
+  }, [hasApiAccess, origin, destination, maxStops, date]);
+
+  // Helper function to check if token is expired
+  const isTokenExpired = (expiresAt: string | null): boolean => {
+    if (!expiresAt) return true;
+    const expirationTime = new Date(expiresAt).getTime();
+    const currentTime = new Date().getTime();
+    // Add 5 minute buffer to refresh before actual expiration
+    return currentTime >= (expirationTime - 5 * 60 * 1000);
+  };
+
+  // Helper function to refresh expired token
+  const refreshSeatsAeroToken = async (refreshToken: string): Promise<{
+    access_token: string;
+    refresh_token: string;
+    expires_in: number;
+  } | null> => {
+    try {
+      const response = await fetch('https://api.bbairtools.com/api/seats-auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          grant_type: 'refresh_token',
+          refresh_token: refreshToken
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to refresh token');
+      }
+
+      const data = await response.json();
+      if (data.success && data.data) {
+        return data.data;
+      }
+      throw new Error('Invalid refresh response');
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      return null;
+    }
+  };
+
+  // Helper function to update profile with new tokens
+  const updateProfileWithNewTokens = async (
+    userId: string, 
+    newTokens: { access_token: string; refresh_token: string; expires_in: number }
+  ): Promise<boolean> => {
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const expiresAt = new Date(Date.now() + newTokens.expires_in * 1000).toISOString();
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          seats_aero_access_token: newTokens.access_token,
+          seats_aero_refresh_token: newTokens.refresh_token,
+          seats_aero_token_expires_at: expiresAt
+        })
+        .eq('id', userId);
+
+      if (error) {
+        console.error('Failed to update profile with new tokens:', error);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      return false;
+    }
+  };
 
   useEffect(() => {
     const fetchApiKey = async () => {
@@ -117,22 +191,90 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
       try {
         const supabase = createSupabaseBrowserClient();
         const { data, error } = await supabase.auth.getUser();
-        if (error || !data.user) return;
+        if (error || !data.user) {
+          setIsAuthenticated(false);
+          setSeatsAeroConnected(false);
+          setHasManualApiKey(false);
+          setApiKey('');
+          return;
+        }
+        
+        setIsAuthenticated(true);
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('id, api_key')
+          .select('id, api_key, seats_aero_access_token, seats_aero_refresh_token, seats_aero_token_expires_at')
           .eq('id', data.user.id)
           .single();
-        if (!profileError && profileData?.api_key) {
-          setApiKey(profileData.api_key);
+        if (!profileError) {
+          if (profileData?.seats_aero_access_token && !isTokenExpired(profileData.seats_aero_token_expires_at)) {
+            // User has seats.aero connected and token is not expired
+            setSeatsAeroConnected(true);
+            setHasManualApiKey(false);
+            setApiKey(profileData.seats_aero_access_token); // Store the actual token
+          } else if (profileData?.seats_aero_access_token && profileData?.seats_aero_refresh_token) {
+            // Token is expired, try to refresh it
+            console.log('Seats.aero token expired, attempting refresh...');
+            const newTokens = await refreshSeatsAeroToken(profileData.seats_aero_refresh_token);
+            if (newTokens) {
+              // Update profile with new tokens
+              const updateSuccess = await updateProfileWithNewTokens(profileData.id, newTokens);
+              if (updateSuccess) {
+                setSeatsAeroConnected(true);
+                setHasManualApiKey(false);
+                setApiKey(newTokens.access_token);
+                console.log('Token refreshed successfully');
+              } else {
+                // Failed to update profile, fall back to manual API key
+                setSeatsAeroConnected(false);
+                setHasManualApiKey(!!profileData.api_key);
+                setApiKey(profileData.api_key || '');
+              }
+            } else {
+              // Refresh failed, fall back to manual API key
+              setSeatsAeroConnected(false);
+              setHasManualApiKey(!!profileData.api_key);
+              setApiKey(profileData.api_key || '');
+            }
+          } else if (profileData?.api_key) {
+            // User has manual API key
+            setSeatsAeroConnected(false);
+            setHasManualApiKey(true);
+            setApiKey(profileData.api_key);
+          } else {
+            // No connection and no API key
+            setSeatsAeroConnected(false);
+            setHasManualApiKey(false);
+            setApiKey('');
+          }
         }
       } catch (err) {
-        setApiKeyError('Failed to fetch API key');
+        setApiKeyError('Failed to fetch profile data');
+        setIsAuthenticated(false);
       } finally {
         setIsApiKeyLoading(false);
       }
     };
+
+    // Initial fetch
     fetchApiKey();
+
+    // Set up auth state listener
+    const supabase = createSupabaseBrowserClient();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        // User signed in, refresh the connection status
+        await fetchApiKey();
+      } else if (event === 'SIGNED_OUT') {
+        // User signed out, reset all states
+        setIsAuthenticated(false);
+        setSeatsAeroConnected(false);
+        setHasManualApiKey(false);
+        setApiKey('');
+      }
+    });
+
+    // Cleanup subscription
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -194,10 +336,10 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
     maxStops <= 3 &&
     !apiKeyError &&
     !maxStopsError &&
-    combinationCount <= getAllowedMaxCombination(!!apiKey.trim());
+    combinationCount <= getAllowedMaxCombination(hasApiAccess);
 
-  const allowedMaxStops = getAllowedMaxStops(combinationCount, !!apiKey.trim());
-  const maxCombination = getAllowedMaxCombination(!!apiKey.trim());
+  const allowedMaxStops = getAllowedMaxStops(combinationCount, hasApiAccess);
+  const maxCombination = getAllowedMaxCombination(hasApiAccess);
 
   const getDateRangeDays = () => {
     if (date?.from && date?.to) {
@@ -210,7 +352,7 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
   const showDateRangeWarning = dateRangeDays > 7;
 
   // Calendar disabled days logic for 3-day range when no API key
-  const calendarDisabled = !apiKey.trim() && date?.from
+  const calendarDisabled = !hasApiAccess && date?.from
     ? [
         {
           before: date.from,
@@ -219,10 +361,55 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
       ]
     : undefined;
 
+  // Helper function to ensure we have a fresh token before search
+  const ensureFreshToken = async (): Promise<string | null> => {
+    if (!seatsAeroConnected) return null;
+    
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('seats_aero_access_token, seats_aero_refresh_token, seats_aero_token_expires_at')
+        .eq('id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      if (profileError || !profileData) return null;
+
+      // Check if token is expired
+      if (isTokenExpired(profileData.seats_aero_token_expires_at) && profileData.seats_aero_refresh_token) {
+        console.log('Token expired before search, refreshing...');
+        const newTokens = await refreshSeatsAeroToken(profileData.seats_aero_refresh_token);
+        if (newTokens) {
+          const updateSuccess = await updateProfileWithNewTokens(
+            (await supabase.auth.getUser()).data.user!.id, 
+            newTokens
+          );
+          if (updateSuccess) {
+            console.log('Token refreshed before search');
+            return newTokens.access_token;
+          }
+        }
+        return null; // Refresh failed
+      }
+
+      return profileData.seats_aero_access_token;
+    } catch (error) {
+      console.error('Error ensuring fresh token:', error);
+      return null;
+    }
+  };
+
   // --- SUBMIT HANDLER ---
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
+    
+    // Allow manual API key users OR authenticated users
+    if (!isAuthenticated && !hasManualApiKey) {
+      setError('Please connect to Google or enter a manual API key to access full features.');
+      return;
+    }
+
     if (!date?.from || !date?.to) {
       setError('Please select a valid date range.');
       return;
@@ -240,13 +427,32 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
     const endDate = format(date.to, 'yyyy-MM-dd');
     const originStr = origin.length > 1 ? origin.join('/') : origin[0];
     const destinationStr = destination.length > 1 ? destination.join('/') : destination[0];
+    
+    // Determine API key to use
+    let apiKeyToUse = null;
+    if (seatsAeroConnected) {
+      // Ensure we have a fresh token before search
+      const freshToken = await ensureFreshToken();
+      if (freshToken) {
+        apiKeyToUse = `Bearer ${freshToken}`;
+      } else {
+        // Token refresh failed, fall back to manual API key if available
+        if (hasManualApiKey && apiKey.trim()) {
+          apiKeyToUse = apiKey.trim();
+        }
+      }
+    } else if (hasManualApiKey && apiKey.trim()) {
+      // Use manual API key
+      apiKeyToUse = apiKey.trim();
+    }
+    
     const requestBody = {
       origin: originStr,
       destination: destinationStr,
       maxStop: maxStops,
       startDate,
       endDate,
-      apiKey: apiKey.trim() ? apiKey.trim() : null,
+      apiKey: apiKeyToUse,
       minReliabilityPercent: typeof minReliabilityPercent === 'number' ? minReliabilityPercent : 85,
       seats,
     };
@@ -354,7 +560,7 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
                 disabled={calendarDisabled}
                 onMonthChange={setCurrentMonth}
                 onSelect={(range, selectedDay) => {
-                  if (!apiKey.trim() && range?.from && range?.to) {
+                  if (!hasApiAccess && range?.from && range?.to) {
                     const diff = Math.ceil((range.to.getTime() - range.from.getTime()) / (1000 * 60 * 60 * 24)) + 1;
                     if (diff > 3) {
                       setDate({ from: range.from, to: undefined });
@@ -459,18 +665,143 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
           className="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-lg p-4"
         >
           <div className="flex flex-col gap-2">
-            <label htmlFor="api-key" className="block text-sm font-medium text-foreground mb-1">seats.aero API Key</label>
-            <Input
-              id="api-key"
-              type="password"
-              value={apiKey}
-              onChange={e => setApiKey(e.target.value)}
-              placeholder="Enter your API key"
-              disabled={isApiKeyLoading}
-              autoComplete="off"
-              className="h-9"
-            />
+            <label htmlFor="api-key" className="block text-sm font-medium text-foreground mb-1">seats.aero Connection</label>
+            {!isAuthenticated ? (
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 h-9"
+                  onClick={() => {
+                    // Redirect to auth page
+                    const currentUrl = window.location.pathname + window.location.search;
+                    sessionStorage.setItem('auth_return_url', currentUrl);
+                    window.location.href = '/auth';
+                  }}
+                >
+                  Connect to Google to access seats.aero
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 px-2"
+                  onClick={async () => {
+                    // Manual refresh of connection status
+                    setIsApiKeyLoading(true);
+                    setApiKeyError(null);
+                    try {
+                      const supabase = createSupabaseBrowserClient();
+                      const { data, error } = await supabase.auth.getUser();
+                      if (error || !data.user) {
+                        setIsAuthenticated(false);
+                        setSeatsAeroConnected(false);
+                        setHasManualApiKey(false);
+                        setApiKey('');
+                        return;
+                      }
+                      
+                      setIsAuthenticated(true);
+                      const { data: profileData, error: profileError } = await supabase
+                        .from('profiles')
+                        .select('id, api_key, seats_aero_access_token, seats_aero_refresh_token, seats_aero_token_expires_at')
+                        .eq('id', data.user.id)
+                        .single();
+                      if (!profileError) {
+                        if (profileData?.seats_aero_access_token && !isTokenExpired(profileData.seats_aero_token_expires_at)) {
+                          setSeatsAeroConnected(true);
+                          setHasManualApiKey(false);
+                          setApiKey(profileData.seats_aero_access_token);
+                        } else if (profileData?.seats_aero_access_token && profileData?.seats_aero_refresh_token) {
+                          // Token is expired, try to refresh it
+                          console.log('Seats.aero token expired, attempting refresh...');
+                          const newTokens = await refreshSeatsAeroToken(profileData.seats_aero_refresh_token);
+                          if (newTokens) {
+                            // Update profile with new tokens
+                            const updateSuccess = await updateProfileWithNewTokens(profileData.id, newTokens);
+                            if (updateSuccess) {
+                              setSeatsAeroConnected(true);
+                              setHasManualApiKey(false);
+                              setApiKey(newTokens.access_token);
+                              console.log('Token refreshed successfully');
+                            } else {
+                              // Failed to update profile, fall back to manual API key
+                              setSeatsAeroConnected(false);
+                              setHasManualApiKey(!!profileData.api_key);
+                              setApiKey(profileData.api_key || '');
+                            }
+                          } else {
+                            // Refresh failed, fall back to manual API key
+                            setSeatsAeroConnected(false);
+                            setHasManualApiKey(!!profileData.api_key);
+                            setApiKey(profileData.api_key || '');
+                          }
+                        } else if (profileData?.api_key) {
+                          setSeatsAeroConnected(false);
+                          setHasManualApiKey(true);
+                          setApiKey(profileData.api_key);
+                        } else {
+                          setSeatsAeroConnected(false);
+                          setHasManualApiKey(false);
+                          setApiKey('');
+                        }
+                      }
+                    } catch (err) {
+                      setApiKeyError('Failed to fetch profile data');
+                      setIsAuthenticated(false);
+                    } finally {
+                      setIsApiKeyLoading(false);
+                    }
+                  }}
+                  disabled={isApiKeyLoading}
+                >
+                  {isApiKeyLoading ? (
+                    <span className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-primary"></span>
+                  ) : (
+                    '🔄'
+                  )}
+                </Button>
+              </div>
+            ) : seatsAeroConnected ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-9 text-green-600 border-green-600"
+                disabled={true}
+              >
+                <span className="flex items-center gap-2">✓ seats.aero connected</span>
+              </Button>
+            ) : hasManualApiKey ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-9 text-blue-600 border-blue-600"
+                disabled={true}
+              >
+                <span className="flex items-center gap-2">🔑 Manual API Key</span>
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-9"
+                onClick={() => {
+                  // Redirect to seats.aero OAuth
+                  const currentUrl = window.location.pathname + window.location.search;
+                  sessionStorage.setItem('seatsaero_return_url', currentUrl);
+                  window.location.href = '/seatsaero';
+                }}
+              >
+                Connect to seats.aero to expand your search range
+              </Button>
+            )}
             {apiKeyError && <span className="text-xs text-red-600 mt-1">{apiKeyError}</span>}
+            {/* Debug info - remove in production */}
+            <div className="text-xs text-muted-foreground mt-1">
+              Debug: Auth={isAuthenticated ? 'Yes' : 'No'}, 
+              SeatsAero={seatsAeroConnected ? 'Yes' : 'No'}, 
+              ManualAPI={hasManualApiKey ? 'Yes' : 'No'}
+            </div>
           </div>
           <div className="flex flex-col gap-2">
             <div className="flex gap-4">
