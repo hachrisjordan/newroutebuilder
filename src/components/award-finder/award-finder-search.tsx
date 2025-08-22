@@ -10,6 +10,7 @@ import type { DateRange } from 'react-day-picker';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { ChevronDown, ChevronUp, AlertTriangle, ArrowLeftRight, X } from 'lucide-react';
+import { initiateOAuthFlow } from '@/lib/seatsaero-oauth';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { awardFinderSearchRequestSchema } from '@/lib/utils';
 import type { AwardFinderResults, AwardFinderSearchRequest } from '@/types/award-finder-results';
@@ -403,12 +404,6 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
-    
-    // Allow manual API key users OR authenticated users
-    if (!isAuthenticated && !hasManualApiKey) {
-      setError('Please connect to Google or enter a manual API key to access full features.');
-      return;
-    }
 
     if (!date?.from || !date?.to) {
       setError('Please select a valid date range.');
@@ -669,98 +664,21 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
             {!isAuthenticated ? (
               <div className="flex gap-2">
                 <Button
-                  type="button"
                   variant="outline"
-                  className="flex-1 h-9"
+                  className="w-full flex items-center justify-center gap-2"
                   onClick={() => {
-                    // Redirect to auth page
+                    // Store current URL for return after Seats.aero OAuth
                     const currentUrl = window.location.pathname + window.location.search;
-                    sessionStorage.setItem('auth_return_url', currentUrl);
-                    window.location.href = '/auth';
+                    sessionStorage.setItem('seatsaero_return_url', currentUrl);
+                    
+                    // Use the working OAuth flow - redirect to external API
+                    // This is the same flow that works in the settings page
+                    window.location.href = 'https://api.bbairtools.com/api/seats-auth/consent';
                   }}
                 >
-                  Connect to Google to access seats.aero
+                  Connect Seats.aero
                 </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-9 px-2"
-                  onClick={async () => {
-                    // Manual refresh of connection status
-                    setIsApiKeyLoading(true);
-                    setApiKeyError(null);
-                    try {
-                      const supabase = createSupabaseBrowserClient();
-                      const { data, error } = await supabase.auth.getUser();
-                      if (error || !data.user) {
-                        setIsAuthenticated(false);
-                        setSeatsAeroConnected(false);
-                        setHasManualApiKey(false);
-                        setApiKey('');
-                        return;
-                      }
-                      
-                      setIsAuthenticated(true);
-                      const { data: profileData, error: profileError } = await supabase
-                        .from('profiles')
-                        .select('id, api_key, seats_aero_access_token, seats_aero_refresh_token, seats_aero_token_expires_at')
-                        .eq('id', data.user.id)
-                        .single();
-                      if (!profileError) {
-                        if (profileData?.seats_aero_access_token && !isTokenExpired(profileData.seats_aero_token_expires_at)) {
-                          setSeatsAeroConnected(true);
-                          setHasManualApiKey(false);
-                          setApiKey(profileData.seats_aero_access_token);
-                        } else if (profileData?.seats_aero_access_token && profileData?.seats_aero_refresh_token) {
-                          // Token is expired, try to refresh it
-                          console.log('Seats.aero token expired, attempting refresh...');
-                          const newTokens = await refreshSeatsAeroToken(profileData.seats_aero_refresh_token);
-                          if (newTokens) {
-                            // Update profile with new tokens
-                            const updateSuccess = await updateProfileWithNewTokens(profileData.id, newTokens);
-                            if (updateSuccess) {
-                              setSeatsAeroConnected(true);
-                              setHasManualApiKey(false);
-                              setApiKey(newTokens.access_token);
-                              console.log('Token refreshed successfully');
-                            } else {
-                              // Failed to update profile, fall back to manual API key
-                              setSeatsAeroConnected(false);
-                              setHasManualApiKey(!!profileData.api_key);
-                              setApiKey(profileData.api_key || '');
-                            }
-                          } else {
-                            // Refresh failed, fall back to manual API key
-                            setSeatsAeroConnected(false);
-                            setHasManualApiKey(!!profileData.api_key);
-                            setApiKey(profileData.api_key || '');
-                          }
-                        } else if (profileData?.api_key) {
-                          setSeatsAeroConnected(false);
-                          setHasManualApiKey(true);
-                          setApiKey(profileData.api_key);
-                        } else {
-                          setSeatsAeroConnected(false);
-                          setHasManualApiKey(false);
-                          setApiKey('');
-                        }
-                      }
-                    } catch (err) {
-                      setApiKeyError('Failed to fetch profile data');
-                      setIsAuthenticated(false);
-                    } finally {
-                      setIsApiKeyLoading(false);
-                    }
-                  }}
-                  disabled={isApiKeyLoading}
-                >
-                  {isApiKeyLoading ? (
-                    <span className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-primary"></span>
-                  ) : (
-                    '🔄'
-                  )}
-                </Button>
+                
               </div>
             ) : seatsAeroConnected ? (
               <Button
@@ -795,13 +713,7 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
                 Connect to seats.aero to expand your search range
               </Button>
             )}
-            {apiKeyError && <span className="text-xs text-red-600 mt-1">{apiKeyError}</span>}
-            {/* Debug info - remove in production */}
-            <div className="text-xs text-muted-foreground mt-1">
-              Debug: Auth={isAuthenticated ? 'Yes' : 'No'}, 
-              SeatsAero={seatsAeroConnected ? 'Yes' : 'No'}, 
-              ManualAPI={hasManualApiKey ? 'Yes' : 'No'}
-            </div>
+                         {apiKeyError && <span className="text-xs text-red-600 mt-1">{apiKeyError}</span>}
           </div>
           <div className="flex flex-col gap-2">
             <div className="flex gap-4">
