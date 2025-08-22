@@ -19,7 +19,7 @@ import {
 export const SEATS_AERO_OAUTH_CONFIG: SeatsAeroOAuthConfig = {
   clientId: process.env.CLIENT_ID!,
   clientSecret: process.env.CLIENT_SECRET!,
-  redirectUri: 'https://bbairtools.com/seatsaero',
+  redirectUri: 'https://www.bbairtools.com/seatsaero',
   consentUrl: 'https://seats.aero/oauth2/consent',
   tokenUrl: 'https://seats.aero/oauth2/token',
   userInfoUrl: 'https://seats.aero/oauth2/userinfo'
@@ -28,7 +28,7 @@ export const SEATS_AERO_OAUTH_CONFIG: SeatsAeroOAuthConfig = {
 // Client-side config (for building consent URLs)
 export const SEATS_AERO_CLIENT_CONFIG = {
   clientId: 'seats:cid:31cVzYWxiOhZ7w31VpQW27Se4Tg', // Hardcoded for client-side use
-  redirectUri: 'https://bbairtools.com/seatsaero',
+  redirectUri: 'https://www.bbairtools.com/seatsaero',
   consentUrl: 'https://seats.aero/oauth2/consent'
 };
 
@@ -107,12 +107,33 @@ export async function exchangeCodeForTokens(
     scope: tokenRequest.scope
   });
 
+  // Log the full request details
+  const requestBody = `code=${encodeURIComponent(code)}&client_id=${encodeURIComponent(tokenRequest.client_id)}&client_secret=${encodeURIComponent(tokenRequest.client_secret)}&redirect_uri=${encodeURIComponent(tokenRequest.redirect_uri)}&grant_type=${encodeURIComponent(tokenRequest.grant_type)}&state=${encodeURIComponent(tokenRequest.state)}&scope=${encodeURIComponent(tokenRequest.scope)}`;
+  
+  console.log('=== FULL SEATS.AERO TOKEN REQUEST ===');
+  console.log('URL:', SEATS_AERO_OAUTH_CONFIG.tokenUrl);
+  console.log('Method: POST');
+  console.log('Headers:', {
+    'Content-Type': 'application/x-www-form-urlencoded'
+  });
+  console.log('Body (raw):', requestBody);
+  console.log('Body (decoded):', {
+    code: tokenRequest.code,
+    client_id: tokenRequest.client_id,
+    client_secret: tokenRequest.client_secret,
+    redirect_uri: tokenRequest.redirect_uri,
+    grant_type: tokenRequest.grant_type,
+    state: tokenRequest.state,
+    scope: tokenRequest.scope
+  });
+  console.log('=====================================');
+
   const response = await fetch(SEATS_AERO_OAUTH_CONFIG.tokenUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body: `code=${encodeURIComponent(code)}&client_id=${encodeURIComponent(tokenRequest.client_id)}&client_secret=${encodeURIComponent(tokenRequest.client_secret)}&redirect_uri=${encodeURIComponent(tokenRequest.redirect_uri)}&grant_type=${encodeURIComponent(tokenRequest.grant_type)}&state=${encodeURIComponent(tokenRequest.state)}&scope=${encodeURIComponent(tokenRequest.scope)}`
+    body: requestBody
   });
 
   console.log('Token response status:', response.status);

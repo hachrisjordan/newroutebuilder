@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       code,
       client_id: process.env.CLIENT_ID,
       client_secret: process.env.CLIENT_SECRET,
-      redirect_uri: 'https://bbairtools.com/seatsaero',
+      redirect_uri: 'https://www.bbairtools.com/seatsaero',
       grant_type: 'authorization_code',
       state,
       scope: 'openid'
@@ -28,12 +28,33 @@ export async function POST(request: NextRequest) {
       scope: tokenRequest.scope
     });
 
+    // Log the full request details
+    const requestBody = `code=${encodeURIComponent(code)}&client_id=${encodeURIComponent(tokenRequest.client_id!)}&client_secret=${encodeURIComponent(tokenRequest.client_secret!)}&redirect_uri=${encodeURIComponent(tokenRequest.redirect_uri)}&grant_type=${encodeURIComponent(tokenRequest.grant_type)}&state=${encodeURIComponent(tokenRequest.state)}&scope=${encodeURIComponent(tokenRequest.scope)}`;
+    
+    console.log('=== FULL SEATS.AERO TOKEN REQUEST (TEST) ===');
+    console.log('URL: https://seats.aero/oauth2/token');
+    console.log('Method: POST');
+    console.log('Headers:', {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    });
+    console.log('Body (raw):', requestBody);
+    console.log('Body (decoded):', {
+      code: tokenRequest.code,
+      client_id: tokenRequest.client_id,
+      client_secret: tokenRequest.client_secret,
+      redirect_uri: tokenRequest.redirect_uri,
+      grant_type: tokenRequest.grant_type,
+      state: tokenRequest.state,
+      scope: tokenRequest.scope
+    });
+    console.log('============================================');
+
     const response = await fetch('https://seats.aero/oauth2/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: `code=${encodeURIComponent(code)}&client_id=${encodeURIComponent(tokenRequest.client_id!)}&client_secret=${encodeURIComponent(tokenRequest.client_secret!)}&redirect_uri=${encodeURIComponent(tokenRequest.redirect_uri)}&grant_type=${encodeURIComponent(tokenRequest.grant_type)}&state=${encodeURIComponent(tokenRequest.state)}&scope=${encodeURIComponent(tokenRequest.scope)}`
+      body: requestBody
     });
 
     const responseText = await response.text();
