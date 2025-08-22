@@ -430,7 +430,7 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
     
     // Determine API key to use
     let apiKeyToUse = null;
-    if (seatsAeroConnected) {
+    if (seatsAeroConnected && isAuthenticated) {
       // Ensure we have a fresh token before search
       const freshToken = await ensureFreshToken();
       if (freshToken) {
@@ -442,7 +442,7 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
         }
       }
     } else if (hasManualApiKey && apiKey.trim()) {
-      // Use manual API key
+      // Use manual API key (works for both authenticated and non-authenticated users)
       apiKeyToUse = apiKey.trim();
     }
     
