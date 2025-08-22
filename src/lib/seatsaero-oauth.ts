@@ -65,8 +65,10 @@ export function buildConsentUrl(state: string): string {
     scope: 'openid'
   };
 
-  const searchParams = new URLSearchParams(params as unknown as Record<string, string>);
-  return `${SEATS_AERO_OAUTH_CONFIG.consentUrl}?${searchParams.toString()}`;
+  // Manually encode the redirect_uri to avoid double-encoding issues
+  const encodedRedirectUri = encodeURIComponent(params.redirect_uri);
+  
+  return `${SEATS_AERO_OAUTH_CONFIG.consentUrl}?response_type=${params.response_type}&client_id=${encodeURIComponent(params.client_id)}&redirect_uri=${encodedRedirectUri}&state=${encodeURIComponent(params.state)}&scope=${params.scope}`;
 }
 
 /**
@@ -87,7 +89,14 @@ export async function exchangeCodeForTokens(
   };
 
   console.log('Token request URL:', SEATS_AERO_OAUTH_CONFIG.tokenUrl);
-  console.log('Token request body:', tokenRequest);
+  console.log('Token request body:', {
+    code: tokenRequest.code,
+    client_id: tokenRequest.client_id,
+    redirect_uri: tokenRequest.redirect_uri,
+    grant_type: tokenRequest.grant_type,
+    state: tokenRequest.state,
+    scope: tokenRequest.scope
+  });
 
   const response = await fetch(SEATS_AERO_OAUTH_CONFIG.tokenUrl, {
     method: 'POST',

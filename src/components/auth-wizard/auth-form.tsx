@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FcGoogle } from 'react-icons/fc';
 import { Plane } from 'lucide-react';
+import { buildConsentUrl } from '@/lib/seatsaero-oauth';
 
 /**
  * AuthForm - Google OAuth and Seats.aero OAuth sign in/up
@@ -37,16 +38,9 @@ const AuthForm = () => {
       // Store state in sessionStorage for validation
       sessionStorage.setItem('seatsaero_oauth_state', state);
       
-      // Build the consent URL with proper parameters
-      // Note: All parameters must match exactly what's configured in Seats.aero
-      const consentUrl = new URL('https://seats.aero/oauth2/consent');
-      consentUrl.searchParams.set('response_type', 'code');
-      consentUrl.searchParams.set('client_id', 'seats:cid:31cVzYWxiOhZ7w31VpQW27Se4Tg');
-      consentUrl.searchParams.set('redirect_uri', 'https://bbairtools.com/seatsaero');
-      consentUrl.searchParams.set('state', state);
-      consentUrl.searchParams.set('scope', 'openid');
-
-      const finalUrl = consentUrl.toString();
+      // Build the consent URL using our OAuth library function
+      const consentUrl = buildConsentUrl(state);
+      
       console.log('OAuth Parameters:', {
         response_type: 'code',
         client_id: 'seats:cid:31cVzYWxiOhZ7w31VpQW27Se4Tg',
@@ -54,10 +48,10 @@ const AuthForm = () => {
         state,
         scope: 'openid'
       });
-      console.log('Final consent URL:', finalUrl);
+      console.log('Final consent URL:', consentUrl);
       
       // Redirect to Seats.aero consent page
-      window.location.href = finalUrl;
+      window.location.href = consentUrl;
       
     } catch (error) {
       console.error('Seats.aero OAuth error:', error);
