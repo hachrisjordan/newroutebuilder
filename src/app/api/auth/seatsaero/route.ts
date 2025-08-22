@@ -9,7 +9,8 @@ import {
   exchangeCodeForTokens, 
   getUserInfo, 
   validateOAuthConfig,
-  calculateExpirationTime
+  calculateExpirationTime,
+  SEATS_AERO_OAUTH_CONFIG
 } from '@/lib/seatsaero-oauth';
 
 const supabase = createClient(
@@ -51,6 +52,24 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('=== ABOUT TO CALL EXCHANGE CODE FOR TOKENS ===');
+    console.log('Parameters being sent:', {
+      code,
+      state,
+      expectedRedirectUri: 'https://www.bbairtools.com/seatsaero'
+    });
+    
+    // DEBUG: Show exactly what we're about to send to Seats.aero
+    console.log('=== DEBUG: COMPARING WITH WORKING CURL ===');
+    console.log('Your working curl uses:');
+    console.log('- redirect_uri: "https://www.bbairtools.com/seatsaero"');
+    console.log('- grant_type: "authorization_code"');
+    console.log('- scope: "openid"');
+    console.log('Our request will use:');
+    console.log('- redirect_uri:', SEATS_AERO_OAUTH_CONFIG.redirectUri);
+    console.log('- grant_type: authorization_code');
+    console.log('- scope: openid');
+    console.log('==========================================');
+    
     // Exchange authorization code for tokens
     console.log('Exchanging code for tokens...');
     const tokens = await exchangeCodeForTokens(code, state);
