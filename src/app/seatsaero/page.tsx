@@ -17,6 +17,7 @@ interface OAuthResponse {
     email: string;
     name: string;
   };
+  error?: string; // Add optional error property
 }
 
 function SeatsAeroCallbackContent() {
