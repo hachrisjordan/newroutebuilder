@@ -108,13 +108,21 @@ export async function exchangeCodeForTokens(
   });
 
   // Log the full request details
-  const requestBody = `code=${encodeURIComponent(code)}&client_id=${encodeURIComponent(tokenRequest.client_id)}&client_secret=${encodeURIComponent(tokenRequest.client_secret)}&redirect_uri=${encodeURIComponent(tokenRequest.redirect_uri)}&grant_type=${encodeURIComponent(tokenRequest.grant_type)}&state=${encodeURIComponent(tokenRequest.state)}&scope=${encodeURIComponent(tokenRequest.scope)}`;
+  const requestBody = JSON.stringify({
+    grant_type: 'authorization_code',
+    code: code,
+    client_id: tokenRequest.client_id,
+    redirect_uri: tokenRequest.redirect_uri,
+    state: tokenRequest.state,
+    scope: 'openid',
+    client_secret: tokenRequest.client_secret
+  });
   
   console.log('=== FULL SEATS.AERO TOKEN REQUEST ===');
   console.log('URL:', SEATS_AERO_OAUTH_CONFIG.tokenUrl);
   console.log('Method: POST');
   console.log('Headers:', {
-    'Content-Type': 'application/x-www-form-urlencoded'
+    'Content-Type': 'application/json'
   });
   console.log('Body (raw):', requestBody);
   console.log('Body (decoded):', {
@@ -131,7 +139,7 @@ export async function exchangeCodeForTokens(
   const response = await fetch(SEATS_AERO_OAUTH_CONFIG.tokenUrl, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Type': 'application/json',
     },
     body: requestBody
   });

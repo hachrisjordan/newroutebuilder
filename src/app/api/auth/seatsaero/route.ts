@@ -70,34 +70,41 @@ export async function POST(request: NextRequest) {
     console.log('- scope: openid');
     console.log('==========================================');
     
-    // Exchange authorization code for tokens
-    console.log('Exchanging code for tokens...');
+    // CRITICAL: Show the EXACT request body we're about to send
+    const ourRequestBody = `code=${code}&client_id=${SEATS_AERO_OAUTH_CONFIG.clientId}&client_secret=${SEATS_AERO_OAUTH_CONFIG.clientSecret}&redirect_uri=${SEATS_AERO_OAUTH_CONFIG.redirectUri}&grant_type=authorization_code&state=${state}&scope=openid`;
+    console.log('=== OUR EXACT REQUEST BODY ===');
+    console.log(ourRequestBody);
+    console.log('================================');
     
-    // TEMPORARY: Call Seats.aero directly to bypass our function
-    console.log('=== CALLING SEATS.AERO DIRECTLY ===');
-    const directResponse = await fetch('https://seats.aero/oauth2/token', {
+    // Exchange authorization code for tokens
+    const apiResponse = await fetch('https://api.bbairtools.com/api/seats-auth', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json',
       },
-      body: `code=${encodeURIComponent(code)}&client_id=${encodeURIComponent(SEATS_AERO_OAUTH_CONFIG.clientId)}&client_secret=${encodeURIComponent(SEATS_AERO_OAUTH_CONFIG.clientSecret)}&redirect_uri=${encodeURIComponent(SEATS_AERO_OAUTH_CONFIG.redirectUri)}&grant_type=authorization_code&state=${encodeURIComponent(state)}&scope=openid`
+      body: JSON.stringify({
+        code: code,
+        state: state
+      })
     });
     
-    console.log('Direct response status:', directResponse.status);
-    const directResponseText = await directResponse.text();
-    console.log('Direct response body:', directResponseText);
-    
-    if (!directResponse.ok) {
-      console.error('Direct call to Seats.aero failed!');
+    if (!apiResponse.ok) {
       return NextResponse.json(
-        { error: 'Direct Seats.aero call failed', status: directResponse.status, body: directResponseText },
+        { error: 'API call failed', status: apiResponse.status },
         { status: 500 }
       );
     }
     
-    console.log('Direct call succeeded! Parsing response...');
-    const tokens = JSON.parse(directResponseText);
-    console.log('Tokens received:', { access_token: tokens.access_token ? 'PRESENT' : 'MISSING' });
+    const responseData = await apiResponse.json();
+    
+    if (!responseData.success) {
+      return NextResponse.json(
+        { error: 'API returned failure' },
+        { status: 500 }
+      );
+    }
+    
+    const tokens = responseData.data;
 
     // Get user info from Seats.aero
     console.log('Getting user info from Seats.aero...');
