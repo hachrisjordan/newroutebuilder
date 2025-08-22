@@ -10,6 +10,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, CheckCircle, Link, Unlink } from 'lucide-react';
 import { useUser } from '@/hooks/use-user';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 interface OAuthProvider {
   name: string;
@@ -42,10 +48,15 @@ export function SeatsAeroConnectionStatus() {
                           user.user_metadata?.provider === 'google' ||
                           linkedProviders.includes('google');
       
-      // Check if user is signed in via Seats.aero OAuth
-      const isSeatsAeroUser = user.app_metadata?.provider === 'seatsaero' || 
-                              user.user_metadata?.provider === 'seatsaero' ||
-                              linkedProviders.includes('seatsaero');
+      // Check if user has Seats.aero tokens in their profile
+      // We need to fetch the profile from the database to check for tokens
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('seats_aero_access_token, seats_aero_user_email, seats_aero_user_name')
+        .eq('id', user.id)
+        .single();
+      
+      const isSeatsAeroUser = !!(profile?.seats_aero_access_token);
       
       const providersList: OAuthProvider[] = [
         {
@@ -57,8 +68,8 @@ export function SeatsAeroConnectionStatus() {
         {
           name: 'Seats.aero',
           linked: isSeatsAeroUser,
-          email: user.user_metadata?.seatsaero_user_email,
-          lastLinked: user.user_metadata?.seatsaero_linked_at
+          email: profile?.seats_aero_user_email,
+          lastLinked: profile ? 'Connected' : undefined
         }
       ];
       
