@@ -4,8 +4,7 @@ import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FcGoogle } from 'react-icons/fc';
-import { Plane } from 'lucide-react';
-import { SEATS_AERO_CLIENT_CONFIG, buildConsentUrl, initiateOAuthFlow } from '@/lib/seatsaero-oauth';
+
 
 /**
  * AuthForm - Google OAuth and Seats.aero OAuth sign in/up
@@ -59,41 +58,11 @@ const AuthForm = () => {
             {isLoading ? 'Redirecting…' : 'Continue with Google'}
           </Button>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Or continue with
-              </span>
-            </div>
-          </div>
-
-          <Button
-            variant="outline"
-            className="w-full flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 border-blue-200 hover:border-blue-300"
-            onClick={() => handleSeatsAeroSignIn()}
-            disabled={isSeatsAeroLoading}
-          >
-            <Plane className="h-5 w-5 text-blue-600" />
-            {isSeatsAeroLoading ? 'Redirecting…' : 'Sign in with Seats.aero'}
-          </Button>
-
           {hasError && (
             <div className="text-sm text-red-600 text-center" role="alert">
               {hasError}
             </div>
           )}
-
-          <div className="text-xs text-muted-foreground text-center space-y-1">
-            <p>
-              <strong>Seats.aero Pro users:</strong> Connect your account to access award travel data and advanced features.
-            </p>
-            <p>
-              Your API usage limit (1,000 requests/day) is shared across all connected applications.
-            </p>
-          </div>
         </CardContent>
       </Card>
     </main>
