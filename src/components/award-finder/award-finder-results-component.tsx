@@ -390,8 +390,10 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
     }
     
     // Try merged searches first for groups with multiple segments
+    console.log(`Processing segment groups for merge:`, segmentGroups);
     for (const group of segmentGroups) {
       if (group.routes.length > 1) {
+        console.log(`Attempting merge for group:`, group);
         
                  try {
            // Calculate departure date for the first segment
@@ -410,29 +412,36 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
            // Check cache first for merged search
            const mergeCacheKey = generateCacheKey(group.program, group.startSegment, group.endSegment, departDate, seats);
            let mergeData = getCachedResult(mergeCacheKey);
+           let isFromCache = false;
            
            if (!mergeData) {
              // Try merged search if not in cache
-             const mergeResponse = await fetch(`https://api.bbairtools.com/api/live-search-${group.program.toLowerCase()}`, {
-               method: "POST",
-               headers: { "Content-Type": "application/json" },
-               body: JSON.stringify({ 
-                 from: group.startSegment, 
-                 to: group.endSegment, 
-                 depart: departDate, 
-                 ADT: seats 
-               }),
-             });
-             
-             if (mergeResponse.ok) {
-               mergeData = await mergeResponse.json();
-               // Cache the successful result
-               cacheResult(mergeCacheKey, mergeData);
+             try {
+               const mergeResponse = await fetch(`https://api.bbairtools.com/api/live-search-${group.program.toLowerCase()}`, {
+                 method: "POST",
+                 headers: { "Content-Type": "application/json" },
+                 body: JSON.stringify({ 
+                   from: group.startSegment, 
+                   to: group.endSegment, 
+                   depart: departDate, 
+                   ADT: seats 
+                 }),
+               });
+               
+               if (mergeResponse.ok) {
+                 mergeData = await mergeResponse.json();
+                   // Cache the successful result
+                   cacheResult(mergeCacheKey, mergeData);
+               }
+             } catch (error) {
+               console.error(`Merged search error for ${group.startSegment}-${group.endSegment}:`, error);
              }
+           } else {
+             isFromCache = true;
+             console.log(`Using cached merge data for ${group.startSegment}-${group.endSegment}:`, mergeData);
            }
            
            if (mergeData) {
-             
              // Check if merged result contains all required flight numbers
              const requiredFlightNumbers = group.routes.map(route => {
                const [start, end] = route.split('-');
@@ -440,12 +449,34 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                return cardFlights[startIndex]?.FlightNumbers;
              }).filter(Boolean);
              
-             const hasAllFlights = mergeData.itinerary?.some((itinerary: any) => {
-               const itineraryFlightNumbers = itinerary.segments?.map((segment: any) => segment.flightnumber) || [];
-               return requiredFlightNumbers.every(required => 
+             console.log(`Required flight numbers for merge:`, requiredFlightNumbers);
+             console.log(`Merge data structure:`, mergeData);
+             
+             // Handle different data structures consistently
+             let hasAllFlights = false;
+             
+             if (mergeData.itinerary && Array.isArray(mergeData.itinerary)) {
+               // Standard structure: mergeData.itinerary array
+               hasAllFlights = mergeData.itinerary.some((itinerary: any) => {
+                 if (!itinerary.segments || !Array.isArray(itinerary.segments)) return false;
+                 const itineraryFlightNumbers = itinerary.segments.map((segment: any) => segment.flightnumber);
+                 return requiredFlightNumbers.every(required => 
+                   itineraryFlightNumbers.includes(required)
+                 );
+               });
+             } else if (mergeData.segments && Array.isArray(mergeData.segments)) {
+               // Alternative structure: direct segments array
+               const itineraryFlightNumbers = mergeData.segments.map((segment: any) => segment.flightnumber);
+               hasAllFlights = requiredFlightNumbers.every(required => 
                  itineraryFlightNumbers.includes(required)
                );
-             });
+             } else if (mergeData.bundles) {
+               // Fallback: if we have bundles but no clear itinerary structure, 
+               // assume it's valid (this handles cases where the API response structure varies)
+               hasAllFlights = true;
+             }
+             
+             console.log(`Merge validation result: hasAllFlights=${hasAllFlights}, isFromCache=${isFromCache}`);
              
              if (hasAllFlights) {
                mergeResults[`${group.startSegment}-${group.endSegment}`] = {
@@ -453,7 +484,15 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                  routes: group.routes,
                  program: group.program
                };
+               console.log(`Successfully using merge result for ${group.startSegment}-${group.endSegment}`);
                continue; // Skip individual searches for this group
+             } else {
+               console.log(`Merge result validation failed for ${group.startSegment}-${group.endSegment}, falling back to individual searches`);
+               if (isFromCache) {
+                 // If cached data failed validation, remove it from cache
+                 liveSearchCache.delete(mergeCacheKey);
+                 console.log(`Removed invalid cached merge data for ${group.startSegment}-${group.endSegment}`);
+               }
              }
            }
         } catch (error) {
@@ -463,12 +502,17 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
     }
     
     // Fall back to individual segment searches for segments not covered by merges
+    console.log(`Merge results summary:`, mergeResults);
     const segmentsToSearchIndividually = selectedSegments.filter(route => {
       // Check if this route is covered by any successful merge
-      return !Object.values(mergeResults).some(mergeResult => 
+      const isCoveredByMerge = Object.values(mergeResults).some(mergeResult => 
         mergeResult.routes.includes(route)
       );
+      console.log(`Route ${route} covered by merge: ${isCoveredByMerge}`);
+      return !isCoveredByMerge;
     });
+    
+    console.log(`Segments to search individually:`, segmentsToSearchIndividually);
     
     // Create an array of promises for parallel API calls for individual segments
     const apiCalls = segmentsToSearchIndividually.map(async (route) => {
@@ -549,6 +593,7 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
     });
     
     // Store results in state for display
+    console.log(`Final results for ${cardKey}:`, allResults);
     setLiveSearchResults(prev => ({
       ...prev,
       [cardKey]: allResults
@@ -1276,10 +1321,12 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                            
                            // Check if there's a merged result that covers this route
                            // Look for both the new merge structure (with routes array) and the direct merge structure
+                           console.log(`Checking for merge results for route ${route} in cardKey ${cardKey}:`, liveSearchResults[cardKey]);
                            const mergedResult = liveSearchResults[cardKey] && 
-                             Object.values(liveSearchResults[cardKey]).find((result: any) => {
+                             Object.entries(liveSearchResults[cardKey]).find(([key, result]: [string, any]) => {
                                // Check if this is a multi-route merge result
                                if ((result as any).routes && (result as any).routes.includes(route)) {
+                                 console.log(`Found multi-route merge result for ${route}:`, result);
                                  return true;
                                }
                                // Check if this is a direct merge result that covers this route
@@ -1293,14 +1340,23 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                                  const routeTo = route.split('-')[1];
                                  
                                  // Check if this merge result covers our route
-                                 return resultFrom === routeFrom && resultTo === routeTo;
+                                 const coversRoute = resultFrom === routeFrom && resultTo === routeTo;
+                                 console.log(`Direct merge result ${resultFrom}-${resultTo} covers route ${route}: ${coversRoute}`);
+                                 return coversRoute;
                                }
                                return false;
-                             }) as any;
+                             })?.[1] as any;
                            
 
                            
                            // If this is a merged route and we have a program selected, show the merged route
+                           console.log(`Merge result check for route ${route}:`, {
+                             selectedProgram,
+                             mergedResult,
+                             hasRoutes: mergedResult?.routes && mergedResult.routes.length > 1,
+                             hasDirectMerge: mergedResult?.from && mergedResult?.to && mergedResult?.bundles
+                           });
+                           
                            if (selectedProgram && mergedResult && 
                                ((mergedResult.routes && mergedResult.routes.length > 1) || 
                                 (mergedResult.from && mergedResult.to && mergedResult.bundles))) {
@@ -1309,8 +1365,10 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                                // This prevents duplicate merged displays
                                const isFirstMergedGroup = groupIndex === 0;
                                if (!isFirstMergedGroup) {
+                                 console.log(`Skipping duplicate merged route for group ${groupIndex}`);
                                  return null; // Skip duplicate merged routes
                                }
+                               console.log(`Displaying merged route for group ${groupIndex}:`, mergedResult);
                                // This is a multi-segment merge, show the full route
                                let mergedRoute: string;
                                
@@ -1541,6 +1599,7 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                            
                            // Check if this route is already handled by a merge (to prevent duplicate display)
                            // We need to check if ANY route in the current lineGroups would result in the same merged display
+                           console.log(`Checking if route ${route} is already handled by merge`);
                            const isAlreadyHandledByMerge = liveSearchResults[cardKey] && 
                              Object.values(liveSearchResults[cardKey]).some((result: any) => {
                                // Check multi-route merge structure
@@ -1592,8 +1651,11 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                            
                            // Skip this route if it's already handled by a merge
                            if (isAlreadyHandledByMerge) {
+                             console.log(`Route ${route} is already handled by merge, skipping individual display`);
                              return null;
                            }
+                           
+                           console.log(`Route ${route} will use individual search results`);
                            
 
                            
