@@ -19,10 +19,15 @@ const supabase = createClient(
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('Starting Seats.aero OAuth processing...');
+    
     // Validate OAuth configuration
+    console.log('Validating OAuth config...');
     validateOAuthConfig();
+    console.log('OAuth config validation passed');
 
     const { code, state } = await request.json();
+    console.log('Received code and state:', { code: code ? 'PRESENT' : 'MISSING', state: state ? 'PRESENT' : 'MISSING' });
 
     if (!code || !state) {
       return NextResponse.json(
@@ -32,6 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Exchange authorization code for tokens
+    console.log('Exchanging code for tokens...');
     const tokens = await exchangeCodeForTokens(code, state);
     if (!tokens) {
       return NextResponse.json(
@@ -39,8 +45,10 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+    console.log('Token exchange successful');
 
     // Get user info from Seats.aero
+    console.log('Getting user info from Seats.aero...');
     const userInfo = await getUserInfo(tokens.access_token);
     if (!userInfo) {
       return NextResponse.json(
@@ -48,11 +56,14 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+    console.log('User info retrieved:', { id: userInfo.sub, email: userInfo.email ? 'PRESENT' : 'MISSING' });
 
     // Calculate expiration time
     const expiresAt = calculateExpirationTime(tokens.expires_in);
+    console.log('Expiration calculated:', expiresAt);
 
     // Check if profile exists
+    console.log('Checking for existing profile...');
     const { data: existingProfile, error: profileError } = await supabase
       .from('profiles')
       .select('id')
@@ -70,6 +81,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (existingProfile) {
+      console.log('Updating existing profile...');
       // Update existing profile
       const { error: updateError } = await supabase
         .from('profiles')
@@ -90,22 +102,27 @@ export async function POST(request: NextRequest) {
         );
       }
       profileId = existingProfile.id;
+      console.log('Profile updated successfully');
     } else {
+      console.log('Creating new profile...');
       // Check if a user with this email already exists (from Google OAuth or other providers)
       let existingUser = null;
       
       if (userInfo.email) {
+        console.log('Checking for existing user by email...');
         const { data: userByEmail, error: emailError } = await supabase.auth.admin.listUsers();
         if (!emailError) {
           existingUser = userByEmail.users.find(user => 
             user.email === userInfo.email && user.email_confirmed_at
           );
+          console.log('Existing user found:', existingUser ? 'YES' : 'NO');
         }
       }
 
       let supabaseUser;
       
       if (existingUser) {
+        console.log('Linking to existing user...');
         // Link Seats.aero to existing user account
         supabaseUser = existingUser;
         
@@ -130,7 +147,9 @@ export async function POST(request: NextRequest) {
           console.error('Error updating existing user metadata:', updateUserError);
           // Continue anyway, this is not critical
         }
+        console.log('User metadata updated');
       } else {
+        console.log('Creating new Supabase user...');
         // Create a new Supabase user
         try {
           const { data: newUser, error: createUserError } = await supabase.auth.admin.createUser({
@@ -153,6 +172,7 @@ export async function POST(request: NextRequest) {
             );
           }
           supabaseUser = newUser.user;
+          console.log('New Supabase user created');
         } catch (error) {
           console.error('Error with Supabase user creation:', error);
           return NextResponse.json(
@@ -163,6 +183,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Now create the profile with the Supabase user ID
+      console.log('Creating profile...');
       const { data: newProfile, error: insertError } = await supabase
         .from('profiles')
         .insert({
@@ -187,10 +208,11 @@ export async function POST(request: NextRequest) {
         );
       }
       profileId = newProfile.id;
+      console.log('Profile created successfully');
     }
 
     // Build the redirect URL to Supabase auth callback
-    // This integrates with Supabase Auth like Google OAuth does
+    console.log('Building redirect URL...');
     const supabaseAuthCallbackUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/callback`;
     const redirectUrl = new URL(supabaseAuthCallbackUrl);
     
@@ -212,6 +234,8 @@ export async function POST(request: NextRequest) {
     redirectUrl.searchParams.set('refresh_token', tokens.refresh_token);
     redirectUrl.searchParams.set('expires_in', tokens.expires_in.toString());
     
+    console.log('OAuth processing completed successfully');
+    
     return NextResponse.json({
       success: true,
       message: 'Successfully connected to Seats.aero',
@@ -227,7 +251,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Seats.aero OAuth error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

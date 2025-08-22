@@ -25,11 +25,20 @@ export const SEATS_AERO_OAUTH_CONFIG: SeatsAeroOAuthConfig = {
   userInfoUrl: 'https://seats.aero/oauth2/userinfo'
 };
 
+// Log the config for debugging
+console.log('Seats.aero OAuth Config:', {
+  clientId: SEATS_AERO_OAUTH_CONFIG.clientId ? 'SET' : 'NOT SET',
+  clientSecret: SEATS_AERO_OAUTH_CONFIG.clientSecret ? 'SET' : 'NOT SET',
+  redirectUri: SEATS_AERO_OAUTH_CONFIG.redirectUri,
+  consentUrl: SEATS_AERO_OAUTH_CONFIG.consentUrl,
+  tokenUrl: SEATS_AERO_OAUTH_CONFIG.tokenUrl
+});
+
 /**
  * Validate OAuth configuration
  */
 export function validateOAuthConfig(): void {
-  if (!SEATS_AERO_OAUTH_CONFIG.clientId || SEATS_AERO_OAUTH_CONFIG.clientId === 'seats:cid:31cVzYWxiOhZ7w31VpQW27Se4Tg') {
+  if (!SEATS_AERO_OAUTH_CONFIG.clientId) {
     throw new Error('CLIENT_ID environment variable is not set. Please add CLIENT_ID to your .env.local file.');
   }
   if (!SEATS_AERO_OAUTH_CONFIG.clientSecret) {
@@ -77,6 +86,9 @@ export async function exchangeCodeForTokens(
     scope: 'openid'
   };
 
+  console.log('Token request URL:', SEATS_AERO_OAUTH_CONFIG.tokenUrl);
+  console.log('Token request body:', tokenRequest);
+
   const response = await fetch(SEATS_AERO_OAUTH_CONFIG.tokenUrl, {
     method: 'POST',
     headers: {
@@ -85,12 +97,32 @@ export async function exchangeCodeForTokens(
     body: new URLSearchParams(tokenRequest as unknown as Record<string, string>)
   });
 
+  console.log('Token response status:', response.status);
+  console.log('Token response headers:', Object.fromEntries(response.headers.entries()));
+
   if (!response.ok) {
-    const errorData: SeatsAeroOAuthError = await response.json();
-    throw new Error(`Token exchange failed: ${errorData.error_description || errorData.error}`);
+    const responseText = await response.text();
+    console.error('Token exchange failed. Response:', responseText);
+    
+    // Try to parse as JSON for error details
+    try {
+      const errorData: SeatsAeroOAuthError = JSON.parse(responseText);
+      throw new Error(`Token exchange failed: ${errorData.error_description || errorData.error}`);
+    } catch (parseError) {
+      // If it's not JSON, throw the raw response
+      throw new Error(`Token exchange failed with status ${response.status}: ${responseText.substring(0, 200)}`);
+    }
   }
 
-  return response.json();
+  const responseText = await response.text();
+  console.log('Token response body:', responseText);
+
+  try {
+    return JSON.parse(responseText);
+  } catch (parseError) {
+    console.error('Failed to parse token response as JSON:', responseText);
+    throw new Error(`Invalid JSON response from Seats.aero: ${responseText.substring(0, 200)}`);
+  }
 }
 
 /**
