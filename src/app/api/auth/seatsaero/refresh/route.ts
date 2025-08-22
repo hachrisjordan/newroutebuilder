@@ -4,88 +4,73 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { refreshAccessToken, calculateExpirationTime, validateOAuthConfig } from '@/lib/seatsaero-oauth';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { createClient } from '@supabase/supabase-js';
+import { 
+  refreshAccessToken, 
+  validateOAuthConfig,
+  calculateExpirationTime
+} from '@/lib/seatsaero-oauth';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: NextRequest) {
   try {
-    // Validate OAuth configuration first
+    // Validate OAuth configuration
     validateOAuthConfig();
 
-    const { refreshToken } = await request.json();
+    const { refresh_token, user_id } = await request.json();
 
-    // Validate required parameters
-    if (!refreshToken) {
+    if (!refresh_token || !user_id) {
       return NextResponse.json(
-        { message: 'Missing refresh token' },
+        { error: 'Missing required parameters: refresh_token and user_id' },
         { status: 400 }
       );
     }
 
     // Refresh the access token
-    const tokenResponse = await refreshAccessToken(refreshToken);
-    
-    // Initialize Supabase client
-    const supabase = createSupabaseServerClient();
-
-    // Get the current user to update their tokens
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !user) {
+    const tokens = await refreshAccessToken(refresh_token);
+    if (!tokens) {
       return NextResponse.json(
-        { message: 'User not authenticated' },
-        { status: 401 }
+        { error: 'Token refresh failed' },
+        { status: 400 }
       );
     }
 
-    // Calculate new expiration time
-    const expiresAt = calculateExpirationTime(tokenResponse.expires_in);
-    const now = Date.now();
+    // Calculate expiration time
+    const expiresAt = calculateExpirationTime(tokens.expires_in);
 
-    // Update the stored tokens
-    const { error: updateError } = await supabase.auth.updateUser({
-      data: {
-        seatsaero_tokens: {
-          accessToken: tokenResponse.access_token,
-          refreshToken: tokenResponse.refresh_token,
-          expiresAt,
-          createdAt: user.user_metadata?.seatsaero_tokens?.createdAt || now,
-          updatedAt: now
-        }
-      }
-    });
+    // Update the user's tokens in the database
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({
+        seats_aero_access_token: tokens.access_token,
+        seats_aero_refresh_token: tokens.refresh_token,
+        seats_aero_token_expires_at: expiresAt
+      })
+      .eq('seats_aero_user_id', user_id);
 
     if (updateError) {
       console.error('Error updating tokens:', updateError);
       return NextResponse.json(
-        { message: 'Failed to update authentication tokens' },
+        { error: 'Failed to update tokens' },
         { status: 500 }
       );
     }
 
     return NextResponse.json({
+      success: true,
       message: 'Tokens refreshed successfully',
-      tokens: {
-        accessToken: tokenResponse.access_token,
-        refreshToken: tokenResponse.refresh_token,
-        expiresAt,
-        createdAt: user.user_metadata?.seatsaero_tokens?.createdAt || now,
-        updatedAt: now
-      }
+      access_token: tokens.access_token,
+      expires_at: expiresAt
     });
 
   } catch (error) {
     console.error('Token refresh error:', error);
-    
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { message: error.message },
-        { status: 500 }
-      );
-    }
-
     return NextResponse.json(
-      { message: 'An unexpected error occurred during token refresh' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

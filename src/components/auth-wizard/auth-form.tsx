@@ -56,11 +56,6 @@ const AuthForm = () => {
       });
       console.log('Final consent URL:', finalUrl);
       
-      // Verify the URL is properly formatted
-      if (!finalUrl.includes('client_id=seats:cid:31cVzYWxiOhZ7w31VpQW27Se4Tg')) {
-        throw new Error('Client ID not properly encoded in URL');
-      }
-      
       // Redirect to Seats.aero consent page
       window.location.href = finalUrl;
       

@@ -4,118 +4,112 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import { 
   exchangeCodeForTokens, 
   getUserInfo, 
-  calculateExpirationTime,
-  validateOAuthConfig
+  validateOAuthConfig,
+  calculateExpirationTime
 } from '@/lib/seatsaero-oauth';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: NextRequest) {
   try {
-    // Validate OAuth configuration first
+    // Validate OAuth configuration
     validateOAuthConfig();
 
     const { code, state } = await request.json();
 
-    // Validate required parameters
     if (!code || !state) {
       return NextResponse.json(
-        { message: 'Missing required parameters: code and state' },
+        { error: 'Missing required parameters: code and state' },
         { status: 400 }
       );
     }
 
     // Exchange authorization code for tokens
-    const tokenResponse = await exchangeCodeForTokens(code, state);
-    
-    // Get user information using the access token
-    const userInfo = await getUserInfo(tokenResponse.access_token);
-
-    // Initialize Supabase client
-    const supabase = createSupabaseServerClient();
-
-    // Check if user exists, create if not
-    let { data: user, error: userError } = await supabase.auth.admin.getUserById(userInfo.sub);
-    
-    if (userError || !user.user) {
-      // Create new user if they don't exist
-      const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-        email: userInfo.email || `${userInfo.sub}@seatsaero.oauth`,
-        user_metadata: {
-          name: userInfo.name || 'Seats.aero User',
-          picture: userInfo.picture,
-          provider: 'seatsaero',
-          pro_status: userInfo.pro_status,
-          subscription_end: userInfo.subscription_end
-        },
-        email_confirm: true
-      });
-
-      if (createError) {
-        console.error('Error creating user:', createError);
-        return NextResponse.json(
-          { message: 'Failed to create user account' },
-          { status: 500 }
-        );
-      }
-
-      user = newUser;
+    const tokens = await exchangeCodeForTokens(code, state);
+    if (!tokens) {
+      return NextResponse.json(
+        { error: 'Token exchange failed' },
+        { status: 400 }
+      );
     }
 
-    // Store OAuth tokens in the database
-    const expiresAt = calculateExpirationTime(tokenResponse.expires_in);
-    const now = Date.now();
-
-    // For now, we'll store tokens in user metadata
-    // In production, you might want to store these in a separate table
-    const { error: updateError } = await supabase.auth.admin.updateUserById(
-      user.user.id,
-      {
-        user_metadata: {
-          ...user.user.user_metadata,
-          seatsaero_tokens: {
-            accessToken: tokenResponse.access_token,
-            refreshToken: tokenResponse.refresh_token,
-            expiresAt,
-            createdAt: now,
-            updatedAt: now
-          }
-        }
-      }
-    );
-
-    if (updateError) {
-      console.error('Error storing tokens:', updateError);
+    // Get user info from Seats.aero
+    const userInfo = await getUserInfo(tokens.access_token);
+    if (!userInfo) {
       return NextResponse.json(
-        { message: 'Failed to store authentication tokens' },
+        { error: 'Failed to get user info from Seats.aero' },
         { status: 500 }
       );
     }
 
+    // Calculate expiration time
+    const expiresAt = calculateExpirationTime(tokens.expires_in);
+
+    // Use the database function to handle user creation/update
+    const { data: profileId, error: dbError } = await supabase
+      .rpc('handle_seatsaero_oauth', {
+        p_user_id: userInfo.sub,
+        p_email: userInfo.email,
+        p_name: userInfo.name,
+        p_access_token: tokens.access_token,
+        p_refresh_token: tokens.refresh_token,
+        p_expires_at: expiresAt
+      });
+
+    if (dbError) {
+      console.error('Database error:', dbError);
+      return NextResponse.json(
+        { error: 'Failed to save user data' },
+        { status: 500 }
+      );
+    }
+
+    // Build the redirect URL to Supabase auth callback
+    // This integrates with Supabase Auth like Google OAuth does
+    const supabaseAuthCallbackUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/callback`;
+    const redirectUrl = new URL(supabaseAuthCallbackUrl);
+    
+    // Add OAuth success parameters
+    redirectUrl.searchParams.set('success', 'true');
+    redirectUrl.searchParams.set('provider', 'seatsaero');
+    redirectUrl.searchParams.set('user_id', userInfo.sub);
+    
+    // Add user info if available
+    if (userInfo.email) {
+      redirectUrl.searchParams.set('email', userInfo.email);
+    }
+    if (userInfo.name) {
+      redirectUrl.searchParams.set('name', userInfo.name);
+    }
+    
+    // Add token information for the client to handle
+    redirectUrl.searchParams.set('access_token', tokens.access_token);
+    redirectUrl.searchParams.set('refresh_token', tokens.refresh_token);
+    redirectUrl.searchParams.set('expires_in', tokens.expires_in.toString());
+    
     return NextResponse.json({
-      message: 'Authentication successful',
-      user: {
-        id: user.user.id,
-        email: user.user.email,
-        name: user.user.user_metadata?.name,
-        pro_status: userInfo.pro_status
-      }
+      success: true,
+      message: 'Successfully connected to Seats.aero',
+      redirect_url: redirectUrl.toString(),
+      user_info: {
+        id: userInfo.sub,
+        email: userInfo.email,
+        name: userInfo.name
+      },
+      profile_id: profileId
     });
 
   } catch (error) {
     console.error('Seats.aero OAuth error:', error);
-    
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { message: error.message },
-        { status: 500 }
-      );
-    }
-
     return NextResponse.json(
-      { message: 'An unexpected error occurred during authentication' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
