@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FcGoogle } from 'react-icons/fc';
 import { Plane } from 'lucide-react';
-import { buildConsentUrl } from '@/lib/seatsaero-oauth';
+import { buildConsentUrl, SEATS_AERO_CLIENT_CONFIG } from '@/lib/seatsaero-oauth';
 
 /**
  * AuthForm - Google OAuth and Seats.aero OAuth sign in/up
@@ -43,8 +43,8 @@ const AuthForm = () => {
       
       console.log('OAuth Parameters:', {
         response_type: 'code',
-        client_id: 'seats:cid:31cVzYWxiOhZ7w31VpQW27Se4Tg',
-        redirect_uri: 'https://bbairtools.com/seatsaero',
+        client_id: SEATS_AERO_CLIENT_CONFIG.clientId,
+        redirect_uri: SEATS_AERO_CLIENT_CONFIG.redirectUri,
         state,
         scope: 'openid'
       });

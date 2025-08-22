@@ -25,14 +25,23 @@ export const SEATS_AERO_OAUTH_CONFIG: SeatsAeroOAuthConfig = {
   userInfoUrl: 'https://seats.aero/oauth2/userinfo'
 };
 
-// Log the config for debugging
-console.log('Seats.aero OAuth Config:', {
-  clientId: SEATS_AERO_OAUTH_CONFIG.clientId ? 'SET' : 'NOT SET',
-  clientSecret: SEATS_AERO_OAUTH_CONFIG.clientSecret ? 'SET' : 'NOT SET',
-  redirectUri: SEATS_AERO_OAUTH_CONFIG.redirectUri,
-  consentUrl: SEATS_AERO_OAUTH_CONFIG.consentUrl,
-  tokenUrl: SEATS_AERO_OAUTH_CONFIG.tokenUrl
-});
+// Client-side config (for building consent URLs)
+export const SEATS_AERO_CLIENT_CONFIG = {
+  clientId: 'seats:cid:31cVzYWxiOhZ7w31VpQW27Se4Tg', // Hardcoded for client-side use
+  redirectUri: 'https://www.bbairtools.com/seatsaero',
+  consentUrl: 'https://seats.aero/oauth2/consent'
+};
+
+// Log the config for debugging (only on server side)
+if (typeof window === 'undefined') {
+  console.log('Seats.aero OAuth Config (Server):', {
+    clientId: SEATS_AERO_OAUTH_CONFIG.clientId ? 'SET' : 'NOT SET',
+    clientSecret: SEATS_AERO_OAUTH_CONFIG.clientSecret ? 'SET' : 'NOT SET',
+    redirectUri: SEATS_AERO_OAUTH_CONFIG.redirectUri,
+    consentUrl: SEATS_AERO_OAUTH_CONFIG.consentUrl,
+    tokenUrl: SEATS_AERO_OAUTH_CONFIG.tokenUrl
+  });
+}
 
 /**
  * Validate OAuth configuration
@@ -59,8 +68,8 @@ export function generateOAuthState(): string {
 export function buildConsentUrl(state: string): string {
   const params: SeatsAeroConsentParams = {
     response_type: 'code',
-    client_id: SEATS_AERO_OAUTH_CONFIG.clientId,
-    redirect_uri: SEATS_AERO_OAUTH_CONFIG.redirectUri,
+    client_id: SEATS_AERO_CLIENT_CONFIG.clientId,
+    redirect_uri: SEATS_AERO_CLIENT_CONFIG.redirectUri,
     state,
     scope: 'openid'
   };
@@ -68,7 +77,7 @@ export function buildConsentUrl(state: string): string {
   // Manually encode the redirect_uri to avoid double-encoding issues
   const encodedRedirectUri = encodeURIComponent(params.redirect_uri);
   
-  return `${SEATS_AERO_OAUTH_CONFIG.consentUrl}?response_type=${params.response_type}&client_id=${encodeURIComponent(params.client_id)}&redirect_uri=${encodedRedirectUri}&state=${encodeURIComponent(params.state)}&scope=${params.scope}`;
+  return `${SEATS_AERO_CLIENT_CONFIG.consentUrl}?response_type=${params.response_type}&client_id=${encodeURIComponent(params.client_id)}&redirect_uri=${encodedRedirectUri}&state=${encodeURIComponent(params.state)}&scope=${params.scope}`;
 }
 
 /**
