@@ -4,13 +4,17 @@ import { redirect } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Settings } from 'lucide-react';
-import dynamic from 'next/dynamic';
+import dynamicImport from 'next/dynamic';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import ErrorBoundary from '@/components/ui/error-boundary';
 
+// Force dynamic rendering to prevent static generation issues
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // Dynamically import components with proper error boundaries
-const SeatsAeroConnectionStatus = dynamic(
+const SeatsAeroConnectionStatus = dynamicImport(
   () => import('@/components/auth-wizard/seatsaero-connection-status').then(mod => ({ default: mod.SeatsAeroConnectionStatus })),
   { 
     ssr: false,
@@ -18,7 +22,7 @@ const SeatsAeroConnectionStatus = dynamic(
   }
 );
 
-const ApiKeySettings = dynamic(
+const ApiKeySettings = dynamicImport(
   () => import('@/components/settings/api-key-settings'), 
   { 
     ssr: false,
