@@ -41,3 +41,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 /supabase
+src/components/award-finder/encrypted-search-example.tsx

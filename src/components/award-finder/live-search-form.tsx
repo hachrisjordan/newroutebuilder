@@ -12,6 +12,18 @@ import { Input } from "@/components/ui/input";
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeftRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
+import { 
+  processAESLiveSearchResponse, 
+  isTokenExpired 
+} from "@/lib/aes-frontend-decryption";
+import { 
+  withRetry, 
+  getAirlineRetryConfig, 
+  shouldRetryByStatus,
+  shouldRetryByError 
+} from '@/lib/retry-utils';
+
+
 
 type LiveSearchResult = {
   program: string;
@@ -108,26 +120,76 @@ const LiveSearchForm = ({ onSearch }: LiveSearchFormProps) => {
               const timeout = setTimeout(() => {
                 controller.abort();
               }, 60000); // 60s timeout
-              let attempts = 0;
-              const maxAttempts = program === 'b6' ? 3 : 1;
+              
+              const airlineConfig = getAirlineRetryConfig(program);
+              
               const doFetch = async () => {
-                attempts++;
                 try {
-                  const res = await fetch(`https://api.bbairtools.com/api/live-search-${program}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ from, to, depart, ADT: seats }),
-                    signal: controller.signal,
-                  });
+                  const res = await withRetry(
+                    async () => {
+                      const response = await fetch(`https://api.bbairtools.com/api/live-search-${program}`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ from, to, depart, ADT: seats }),
+                        signal: controller.signal,
+                      });
+                      
+                      // For any non-OK response, throw an error that withRetry can handle
+                      if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                      }
+                      
+                      return response;
+                    },
+                    airlineConfig.maxAttempts,
+                    airlineConfig.delayMs,
+                    (error) => shouldRetryByError(error.message)
+                  );
+                  
                   clearTimeout(timeout);
-                  if (res.status === 500 && attempts < maxAttempts) {
-                    // Retry for b6
-                    doFetch();
+                  
+                  const encryptedResponse = await res.json();
+                  
+                  // Check if token is expired
+                  if (isTokenExpired(encryptedResponse)) {
+                    throw new Error('Search results have expired. Please search again.');
+                  }
+                  
+                  // Process the AES-encrypted response
+                  const processedResponse = await processAESLiveSearchResponse(encryptedResponse);
+                  
+                  // Check if decryption failed
+                  if (processedResponse.decryptionFailed) {
+                    const result = { 
+                      program, 
+                      from, 
+                      to, 
+                      depart, 
+                      error: 'Failed to decrypt search results',
+                      decryptionFailed: true,
+                      decryptionError: processedResponse.decryptionError,
+                      encrypted: true,
+                      token: encryptedResponse.token,
+                      expiresAt: encryptedResponse.expiresAt
+                    };
+                    allResults.push(result);
+                    setPartialResults(prev => {
+                      const next = [...prev, result];
+                      onSearch(next);
+                      return next;
+                    });
                     return;
                   }
-                  if (!res.ok) throw new Error(`${program.toUpperCase()} ${from}-${to} ${depart}: ${res.status}`);
-                  const data = await res.json();
-                  const result = { program, from, to, depart, data };
+                  
+                  const result = { 
+                    program, 
+                    from, 
+                    to, 
+                    depart, 
+                    data: processedResponse.data || processedResponse, // Extract the nested data
+                    encrypted: processedResponse._encryptionInfo?.wasEncrypted || false,
+                    expiresAt: processedResponse._encryptionInfo?.expiresAt
+                  };
                   allResults.push(result);
                   setPartialResults(prev => {
                     const next = [...prev, result];
@@ -137,17 +199,28 @@ const LiveSearchForm = ({ onSearch }: LiveSearchFormProps) => {
                 } catch (err: any) {
                   clearTimeout(timeout);
                   const isTimeout = err.name === 'AbortError';
-                  if (program === 'b6' && attempts < maxAttempts && String(err).includes('500')) {
-                    doFetch();
-                    return;
+                  
+                  // Handle expired token errors specifically
+                  if (err.message.includes('expired')) {
+                    const result = { program, from, to, depart, error: 'Search results expired. Please search again.' };
+                    allResults.push(result);
+                    setPartialResults(prev => {
+                      const next = [...prev, result];
+                      onSearch(next);
+                      return next;
+                    });
+                  } else if (shouldRetryByError(err.message)) {
+                    // Let withRetry handle the retry logic
+                    throw err;
+                  } else {
+                    const result = { program, from, to, depart, error: isTimeout ? 'Timeout (60s)' : err.message };
+                    allResults.push(result);
+                    setPartialResults(prev => {
+                      const next = [...prev, result];
+                      onSearch(next);
+                      return next;
+                    });
                   }
-                  const result = { program, from, to, depart, error: isTimeout ? 'Timeout (60s)' : err.message };
-                  allResults.push(result);
-                  setPartialResults(prev => {
-                    const next = [...prev, result];
-                    onSearch(next);
-                    return next;
-                  });
                 } finally {
                   done++;
                   setProgress((p) => ({ ...p, done: done }));

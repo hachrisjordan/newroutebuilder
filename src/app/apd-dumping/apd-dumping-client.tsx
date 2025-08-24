@@ -16,6 +16,7 @@ import { Pagination } from '@/components/ui/pagination';
 import ExpandFade from '@/components/ui/expand-fade';
 import airportsData from '@/data/airports.json';
 import type { DateRange } from 'react-day-picker';
+import { processAESLiveSearchResponse } from '@/lib/aes-frontend-decryption';
 
 interface APDFlight {
   TotalTaxes: number;
@@ -227,7 +228,16 @@ export default function APDDumpingPage() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const data = await response.json();
+      const encryptedResponse = await response.json();
+      
+      // Process and decrypt the AES-encrypted response
+      const processedResponse = await processAESLiveSearchResponse(encryptedResponse);
+      
+      if (processedResponse.decryptionFailed) {
+        throw new Error(`Failed to decrypt response: ${processedResponse.decryptionError}`);
+      }
+      
+      const data = processedResponse.data || processedResponse;
       
       // Find the specific itinerary with the exact flight numbers
       let foundItinerary: Itinerary | null = null;

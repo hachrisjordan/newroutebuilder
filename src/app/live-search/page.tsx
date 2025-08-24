@@ -36,18 +36,24 @@ export default function LiveSearchPage() {
   // Find all itineraries from all results
   const allItins = results
     ? results
-        .filter(r => r.data && Array.isArray(r.data.itinerary) && r.data.itinerary.length > 0)
-        .flatMap(r => r.data.itinerary.map((itin: any) => ({ 
-          ...itin, 
-          __program: r.program,
-          __currency: r.data.currency // Add currency from the result's data
-        })))
+        .filter(r => r.data && Array.isArray(r.data.data?.itinerary || r.data.itinerary) && (r.data.data?.itinerary || r.data.itinerary).length > 0)
+        .flatMap(r => {
+          const itinerary = r.data.data?.itinerary || r.data.itinerary;
+          return itinerary.map((itin: any) => ({ 
+            ...itin, 
+            __program: r.program,
+            __currency: (r.data.data || r.data).currency // Add currency from the result's data
+          }));
+        })
     : [];
 
   // --- Filter state and logic ---
   // Compute min/max for initial state
   function getPointsRange(cls: string): [number, number] {
-    const pts = allItins.flatMap(i => i.bundles.filter((b: any) => b.class === cls).map((b: any) => Number(b.points)));
+    const pts = allItins.flatMap(i => {
+      const bundles = i.bundles || [];
+      return bundles.filter((b: any) => b.class === cls).map((b: any) => Number(b.points));
+    });
     if (!pts.length) return [0, 0];
     return [Math.min(...pts), Math.max(...pts)];
   }
@@ -200,8 +206,9 @@ export default function LiveSearchPage() {
     if (!results) return;
     const allIatas = new Set<string>();
     results.forEach(r => {
-      if (r.data && Array.isArray(r.data.itinerary)) {
-        r.data.itinerary.forEach((itin: any) => {
+      if (r.data && Array.isArray(r.data.data?.itinerary || r.data.itinerary)) {
+        const itinerary = r.data.data?.itinerary || r.data.itinerary;
+        itinerary.forEach((itin: any) => {
           allIatas.add(itin.from);
           allIatas.add(itin.to);
           (itin.connections || []).forEach((conn: string) => allIatas.add(conn));

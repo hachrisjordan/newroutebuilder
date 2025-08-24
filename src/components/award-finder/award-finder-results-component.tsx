@@ -14,6 +14,7 @@ import { TooltipTouch } from '@/components/ui/tooltip-touch';
 import ExpandFade from '../ui/expand-fade';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { processAESLiveSearchResponse } from '@/lib/aes-frontend-decryption';
 
 // Cache interface for live search results
 interface CacheEntry {
@@ -429,9 +430,19 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                });
                
                if (mergeResponse.ok) {
-                 mergeData = await mergeResponse.json();
-                   // Cache the successful result
-                   cacheResult(mergeCacheKey, mergeData);
+                 const encryptedResponse = await mergeResponse.json();
+                 
+                 // Process and decrypt the AES-encrypted response
+                 const processedResponse = await processAESLiveSearchResponse(encryptedResponse);
+                 
+                 if (processedResponse.decryptionFailed) {
+                   console.error(`Decryption failed for merged search ${group.startSegment}-${group.endSegment}:`, processedResponse.decryptionError);
+                   continue; // Skip this merge and fall back to individual searches
+                 }
+                 
+                 mergeData = processedResponse.data || processedResponse;
+                 // Cache the successful result
+                 cacheResult(mergeCacheKey, mergeData);
                }
              } catch (error) {
                console.error(`Merged search error for ${group.startSegment}-${group.endSegment}:`, error);
@@ -565,7 +576,17 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
             return { route, error: `HTTP ${response.status}` };
           }
           
-          data = await response.json();
+          const encryptedResponse = await response.json();
+          
+          // Process and decrypt the AES-encrypted response
+          const processedResponse = await processAESLiveSearchResponse(encryptedResponse);
+          
+          if (processedResponse.decryptionFailed) {
+            console.error(`Decryption failed for ${route}:`, processedResponse.decryptionError);
+            return { route, error: `Decryption failed: ${processedResponse.decryptionError}` };
+          }
+          
+          data = processedResponse.data || processedResponse;
           // Cache the successful result
           cacheResult(individualCacheKey, data);
         }
