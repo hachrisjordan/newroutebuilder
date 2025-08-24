@@ -7,15 +7,29 @@ import { Button } from '@/components/ui/button';
 import { useUser } from '@/providers/user-provider';
 
 const HeaderUserMenu = () => {
-  const { user } = useUser();
+  const { user, isLoading } = useUser();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
-    const supabase = createSupabaseBrowserClient();
-    await supabase.auth.signOut();
-    window.location.href = '/auth';
+    try {
+      const supabase = createSupabaseBrowserClient();
+      await supabase.auth.signOut();
+      window.location.href = '/auth';
+    } catch (error) {
+      console.error('Logout error:', error);
+      setIsLoggingOut(false);
+    }
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="text-sm font-medium text-foreground/60 px-2">
+        Loading...
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -37,7 +51,7 @@ const HeaderUserMenu = () => {
           <Link href="/settings">Settings</Link>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut} className="text-red-600">
-          Log out
+          {isLoggingOut ? 'Logging out...' : 'Log out'}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

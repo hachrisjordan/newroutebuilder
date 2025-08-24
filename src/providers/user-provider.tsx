@@ -10,7 +10,7 @@ interface UserContextType {
   refreshUser: () => Promise<void>;
 }
 
-const UserContext = createContext<UserContextType>({ 
+const UserContext = createContext<UserContextType>({
   user: null, 
   isLoading: true,
   refreshUser: async () => {}
@@ -23,7 +23,18 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const refreshUser = async () => {
     try {
       const supabase = createSupabaseBrowserClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error } = await supabase.auth.getUser();
+      
+      if (error) {
+        console.error('Error refreshing user:', error);
+        // If there's an auth error, try to get the session instead
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          setUser(session.user);
+          return;
+        }
+      }
+      
       setUser(user);
     } catch (error) {
       console.error('Error refreshing user:', error);
@@ -33,13 +44,38 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
     
-    // Get initial user
+    // Get initial user with better error handling
     const getUser = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        setUser(user);
+        console.log('🔐 Initializing authentication...');
+        
+        // First try to get the current session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+        }
+        
+        if (session?.user) {
+          console.log('✅ Found existing session for user:', session.user.email);
+          setUser(session.user);
+        } else {
+          // Fallback to getUser if no session
+          const { data: { user }, error: userError } = await supabase.auth.getUser();
+          
+          if (userError) {
+            console.error('User error:', userError);
+          }
+          
+          if (user) {
+            console.log('✅ Found existing user:', user.email);
+            setUser(user);
+          } else {
+            console.log('ℹ️ No authenticated user found');
+          }
+        }
       } catch (error) {
-        console.error('Error getting user:', error);
+        console.error('❌ Error getting user:', error);
       } finally {
         setIsLoading(false);
       }
@@ -47,9 +83,19 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     getUser();
 
-    // Listen for auth changes
+    // Listen for auth changes with better logging
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('🔄 Auth state change:', event, session?.user?.email);
+        
+        if (event === 'SIGNED_IN' && session?.user) {
+          console.log('✅ User signed in:', session.user.email);
+        } else if (event === 'SIGNED_OUT') {
+          console.log('🚪 User signed out');
+        } else if (event === 'TOKEN_REFRESHED') {
+          console.log('🔄 Token refreshed for user:', session?.user?.email);
+        }
+        
         setUser(session?.user ?? null);
         setIsLoading(false);
       }

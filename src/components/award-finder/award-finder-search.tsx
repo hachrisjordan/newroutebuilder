@@ -19,6 +19,7 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { TooltipTouch } from '@/components/ui/tooltip-touch';
 import { ApiErrorDisplay } from '@/components/ui/api-error-display';
+import { useUser } from '@/providers/user-provider';
 
 interface AwardFinderSearchProps {
   onSearch: (searchParams: any, isNewSearchFromForm?: boolean) => void;
@@ -56,6 +57,7 @@ interface AwardFinderSearchProps {
 const SEARCH_CACHE_KEY = 'awardFinderSearchParams';
 
 export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedStops, setSelectedStops, selectedIncludeAirlines, setSelectedIncludeAirlines, selectedExcludeAirlines, setSelectedExcludeAirlines, yPercent, setYPercent, wPercent, setWPercent, jPercent, setJPercent, fPercent, setFPercent, duration, setDuration, depTime, setDepTime, arrTime, setArrTime, airportFilter, setAirportFilter, searchQuery, setSearchQuery, sortOrder, setSortOrder, airlineList, onSeatsChange }: AwardFinderSearchProps) {
+  const { user, isLoading: isUserLoading } = useUser();
   const [origin, setOrigin] = useState<string[]>([]);
   const [destination, setDestination] = useState<string[]>([]);
   const [date, setDate] = useState<DateRange | undefined>(undefined);
@@ -72,8 +74,9 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [seatsAeroConnected, setSeatsAeroConnected] = useState(false);
   const [hasManualApiKey, setHasManualApiKey] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLinkingSeatsAero, setIsLinkingSeatsAero] = useState(false);
+
+  // Use the main authentication state from UserProvider
+  const isAuthenticated = !!user;
 
   const combinationCount = origin.length * destination.length;
 
@@ -96,9 +99,6 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
   // Check if user has any form of API access
   const hasApiAccess = (isAuthenticated && seatsAeroConnected) || hasManualApiKey;
   
-  // Debug logging
-  console.log('Component state:', { isAuthenticated, seatsAeroConnected, hasManualApiKey, hasApiAccess });
-
   // Effect: enforce maxStops and combination limits when apiKey changes
   useEffect(() => {
     // 1. Enforce maxStops
@@ -196,23 +196,19 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
       setApiKeyError(null);
       try {
         const supabase = createSupabaseBrowserClient();
-        console.log('Checking authentication...');
-        const { data, error } = await supabase.auth.getUser();
-        console.log('Auth check result:', { data, error, user: data?.user });
-        if (error || !data.user) {
-          console.log('User not authenticated, setting states to false');
-          setIsAuthenticated(false);
+        
+        // Use the main authentication state instead of checking again
+        if (!user) {
           setSeatsAeroConnected(false);
           setHasManualApiKey(false);
           setApiKey('');
           return;
         }
         
-        setIsAuthenticated(true);
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('id, api_key, seats_aero_access_token, seats_aero_refresh_token, seats_aero_token_expires_at')
-          .eq('id', data.user.id)
+          .eq('id', user.id)
           .single();
         if (!profileError) {
           if (profileData?.seats_aero_access_token && !isTokenExpired(profileData.seats_aero_token_expires_at)) {
@@ -222,7 +218,6 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
             setApiKey(profileData.seats_aero_access_token); // Store the actual token
           } else if (profileData?.seats_aero_access_token && profileData?.seats_aero_refresh_token) {
             // Token is expired, try to refresh it
-            console.log('Seats.aero token expired, attempting refresh...');
             const newTokens = await refreshSeatsAeroToken(profileData.seats_aero_refresh_token);
             if (newTokens) {
               // Update profile with new tokens
@@ -231,7 +226,6 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
                 setSeatsAeroConnected(true);
                 setHasManualApiKey(false);
                 setApiKey(newTokens.access_token);
-                console.log('Token refreshed successfully');
               } else {
                 // Failed to update profile, fall back to manual API key
                 setSeatsAeroConnected(false);
@@ -258,33 +252,22 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
         }
       } catch (err) {
         setApiKeyError('Failed to fetch profile data');
-        setIsAuthenticated(false);
+        console.error('Profile fetch error:', err);
       } finally {
         setIsApiKeyLoading(false);
       }
     };
 
-    // Initial fetch
-    fetchApiKey();
-
-    // Set up auth state listener
-    const supabase = createSupabaseBrowserClient();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        // User signed in, refresh the connection status
-        await fetchApiKey();
-      } else if (event === 'SIGNED_OUT') {
-        // User signed out, reset all states
-        setIsAuthenticated(false);
-        setSeatsAeroConnected(false);
-        setHasManualApiKey(false);
-        setApiKey('');
-      }
-    });
-
-    // Cleanup subscription
-    return () => subscription.unsubscribe();
-  }, []);
+    // Only fetch if user is authenticated
+    if (user) {
+      fetchApiKey();
+    } else {
+      // Reset states if no user
+      setSeatsAeroConnected(false);
+      setHasManualApiKey(false);
+      setApiKey('');
+    }
+  }, [user]); // Depend on user state from UserProvider
 
   useEffect(() => {
     // On mount, load cached params (except apiKey)
@@ -347,7 +330,6 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
     !maxStopsError &&
     combinationCount <= getAllowedMaxCombination(hasApiAccess);
 
-  const allowedMaxStops = getAllowedMaxStops(combinationCount, hasApiAccess);
   const maxCombination = getAllowedMaxCombination(hasApiAccess);
 
   const getDateRangeDays = () => {
@@ -372,29 +354,27 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
 
   // Helper function to ensure we have a fresh token before search
   const ensureFreshToken = async (): Promise<string | null> => {
-    if (!seatsAeroConnected) return null;
+    if (!seatsAeroConnected || !user) return null;
     
     try {
       const supabase = createSupabaseBrowserClient();
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('seats_aero_access_token, seats_aero_refresh_token, seats_aero_token_expires_at')
-        .eq('id', (await supabase.auth.getUser()).data.user?.id)
+        .eq('id', user.id)
         .single();
 
       if (profileError || !profileData) return null;
 
       // Check if token is expired
       if (isTokenExpired(profileData.seats_aero_token_expires_at) && profileData.seats_aero_refresh_token) {
-        console.log('Token expired before search, refreshing...');
         const newTokens = await refreshSeatsAeroToken(profileData.seats_aero_refresh_token);
         if (newTokens) {
           const updateSuccess = await updateProfileWithNewTokens(
-            (await supabase.auth.getUser()).data.user!.id, 
+            user.id, 
             newTokens
           );
           if (updateSuccess) {
-            console.log('Token refreshed before search');
             return newTokens.access_token;
           }
         }
@@ -725,7 +705,7 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
                 Connect Seats.aero
               </Button>
             )}
-                         {apiKeyError && <span className="text-xs text-red-600 mt-1">{apiKeyError}</span>}
+            {apiKeyError && <span className="text-xs text-red-600 mt-1">{apiKeyError}</span>}
           </div>
           <div className="flex flex-col gap-2">
             <div className="flex gap-4">
@@ -736,7 +716,7 @@ export function AwardFinderSearch({ onSearch, minReliabilityPercent, selectedSto
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Array.from({ length: allowedMaxStops + 1 }, (_, n) => (
+                    {Array.from({ length: getAllowedMaxStops(combinationCount, hasApiAccess) + 1 }, (_, n) => (
                       <SelectItem key={n} value={String(n)}>{n}</SelectItem>
                     ))}
                   </SelectContent>

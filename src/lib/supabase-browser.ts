@@ -9,5 +9,13 @@ export const createSupabaseBrowserClient = () =>
       persistSession: true,
       storageKey: 'supabase-auth',
       storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      flowType: 'pkce',
+    },
+    global: {
+      headers: {
+        'X-Client-Info': 'bbairtools-web',
+      },
     },
   }); 
