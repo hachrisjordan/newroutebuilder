@@ -85,6 +85,28 @@ const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itinera
 
   // Helper: build route string
   function buildRoute(itin: LiveSearchResultsCardsProps['itineraries'][number]) {
+    // Check if there are airport changes (connections with "/")
+    const hasAirportChanges = itin.connections.some(conn => conn.includes('/'));
+    
+    if (hasAirportChanges) {
+      // For airport changes, show the route with the change clearly indicated
+      const routeParts = [itin.from];
+      
+      itin.connections.forEach(conn => {
+        if (conn.includes('/')) {
+          // Split the airport change and show both airports
+          const [airport1, airport2] = conn.split('/');
+          routeParts.push(`${airport1}/${airport2}`);
+        } else {
+          routeParts.push(conn);
+        }
+      });
+      
+      routeParts.push(itin.to);
+      return routeParts.join('-');
+    }
+    
+    // Standard route without airport changes
     return [itin.from, ...itin.connections, itin.to].join('-');
   }
 
@@ -334,11 +356,35 @@ const LiveSearchResultsCards: React.FC<LiveSearchResultsCardsProps> = ({ itinera
                         if (diffMin > 0) {
                           const at = seg.from;
                           const cityName = iataToCity[at] || at;
+                          
+                          // Check if this is an airport change
+                          // An airport change occurs when:
+                          // 1. The previous segment arrives at a different airport than where the current segment departs from
+                          // 2. OR there's a "/" in the connections indicating an airport change
+                          const prevArrivalAirport = prev.to;
+                          const currDepartureAirport = seg.from;
+                          const isAirportChange = prevArrivalAirport !== currDepartureAirport || 
+                                                itin.connections.some(conn => conn.includes('/'));
+                          
+                          let layoverText = '';
+                          if (isAirportChange && prevArrivalAirport !== currDepartureAirport) {
+                            // Show specific airport change information
+                            const fromCity = iataToCity[prevArrivalAirport] || prevArrivalAirport;
+                            const toCity = iataToCity[currDepartureAirport] || currDepartureAirport;
+                            layoverText = `Change airports at ${fromCity} for ${formatDuration(diffMin)} (${prevArrivalAirport} → ${currDepartureAirport})`;
+                          } else if (isAirportChange) {
+                            // General airport change
+                            layoverText = `Change airports at ${cityName} for ${formatDuration(diffMin)}`;
+                          } else {
+                            // Regular layover
+                            layoverText = `Layover at ${cityName} (${at}) for ${formatDuration(diffMin)}`;
+                          }
+                          
                           layover = (
                             <div className="flex items-center w-full my-2">
                               <div className="flex-1 h-px bg-muted" />
                               <span className="mx-3 text-xs text-muted-foreground font-mono">
-                                Layover at {cityName} ({at}) for {formatDuration(diffMin)}
+                                {layoverText}
                                 {isLoadingCities && <span className="ml-2 animate-pulse text-muted-foreground"></span>}
                                 {cityError && <span className="ml-2 text-red-500">(city error)</span>}
                               </span>
