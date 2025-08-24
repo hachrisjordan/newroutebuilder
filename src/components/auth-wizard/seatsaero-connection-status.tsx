@@ -10,13 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, CheckCircle, Link, Unlink } from 'lucide-react';
 import { useUser } from '@/providers/user-provider';
-import { createClient } from '@supabase/supabase-js';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { initiateOAuthFlow } from '@/lib/seatsaero-oauth';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 interface OAuthProvider {
   name: string;
@@ -41,6 +36,8 @@ export function SeatsAeroConnectionStatus() {
     if (!user) return;
     
     try {
+      const supabase = createSupabaseBrowserClient();
+      
       // Get user metadata to see linked providers
       const linkedProviders = user.user_metadata?.linked_providers || [];
       
@@ -53,11 +50,33 @@ export function SeatsAeroConnectionStatus() {
       // We need to fetch the profile from the database to check for tokens
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('seats_aero_access_token, seats_aero_user_email, seats_aero_user_name')
+        .select('seats_aero_access_token, seats_aero_refresh_token, seats_aero_token_expires_at, seats_aero_user_email, seats_aero_user_name')
         .eq('id', user.id)
         .single();
       
-      const isSeatsAeroUser = !!(profile?.seats_aero_access_token);
+      if (error) {
+        console.error('Error fetching profile:', error);
+      }
+      
+      console.log('Profile data:', profile);
+      console.log('User ID:', user.id);
+      
+      // Check if token exists and is not expired
+      const isTokenExpired = (expiresAt: string | null) => {
+        if (!expiresAt) return true;
+        return new Date(expiresAt) <= new Date();
+      };
+      
+      const hasValidToken = !!(profile?.seats_aero_access_token && !isTokenExpired(profile.seats_aero_token_expires_at));
+      const hasExpiredToken = !!(profile?.seats_aero_access_token && profile?.seats_aero_refresh_token && isTokenExpired(profile.seats_aero_token_expires_at));
+      
+      const isSeatsAeroUser = hasValidToken || hasExpiredToken;
+      
+      console.log('Is Seats.aero user:', isSeatsAeroUser);
+      console.log('Has valid token:', hasValidToken);
+      console.log('Has expired token:', hasExpiredToken);
+      console.log('Access token present:', !!profile?.seats_aero_access_token);
+      console.log('Token expires at:', profile?.seats_aero_token_expires_at);
       
       const providersList: OAuthProvider[] = [
         {
@@ -70,7 +89,7 @@ export function SeatsAeroConnectionStatus() {
           name: 'Seats.aero',
           linked: isSeatsAeroUser,
           email: profile?.seats_aero_user_email,
-          lastLinked: profile ? 'Connected' : undefined
+          lastLinked: hasValidToken ? 'Connected' : hasExpiredToken ? 'Token Expired' : undefined
         }
       ];
       
@@ -100,12 +119,12 @@ export function SeatsAeroConnectionStatus() {
 
     try {
       // Call API to unlink Seats.aero
-              const response = await fetch('https://api.bbairtools.com/api/seats-auth/unlink', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+      const response = await fetch('/api/auth/seatsaero/unlink', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
       if (response.ok) {
         // Reload providers
@@ -183,9 +202,13 @@ export function SeatsAeroConnectionStatus() {
           <div className="flex items-center gap-2">
             {seatsAeroProvider?.linked ? (
               <>
-                <Badge variant="default" className="flex items-center gap-1">
-                  <CheckCircle className="h-3 w-3" />
-                  Connected
+                <Badge variant={seatsAeroProvider.lastLinked === 'Token Expired' ? "destructive" : "default"} className="flex items-center gap-1">
+                  {seatsAeroProvider.lastLinked === 'Token Expired' ? (
+                    <AlertCircle className="h-3 w-3" />
+                  ) : (
+                    <CheckCircle className="h-3 w-3" />
+                  )}
+                  {seatsAeroProvider.lastLinked}
                 </Badge>
                 <Button
                   variant="outline"
@@ -216,7 +239,7 @@ export function SeatsAeroConnectionStatus() {
         </div>
 
         {/* Connection Info */}
-        {seatsAeroProvider?.linked && (
+        {seatsAeroProvider?.linked && seatsAeroProvider.lastLinked === 'Connected' && (
           <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
             <div className="flex items-start gap-2">
               <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
@@ -225,6 +248,29 @@ export function SeatsAeroConnectionStatus() {
                 <div className="text-green-700 mt-1">
                   You can now access award travel data and use Seats.aero features.
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Expired Token Warning */}
+        {seatsAeroProvider?.linked && seatsAeroProvider.lastLinked === 'Token Expired' && (
+          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
+              <div className="text-sm text-yellow-800">
+                <div className="font-medium">Seats.aero Token Expired</div>
+                <div className="text-yellow-700 mt-1">
+                  Your Seats.aero connection has expired. Please reconnect to continue using the service.
+                </div>
+                <Button
+                  onClick={() => handleLinkSeatsAero()}
+                  disabled={isLinking}
+                  size="sm"
+                  className="mt-2 bg-yellow-600 hover:bg-yellow-700 text-white"
+                >
+                  {isLinking ? 'Reconnecting...' : 'Reconnect'}
+                </Button>
               </div>
             </div>
           </div>
