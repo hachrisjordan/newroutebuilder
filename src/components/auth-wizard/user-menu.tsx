@@ -3,15 +3,7 @@ import { useEffect, useState } from 'react';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-
-interface User {
-  id: string;
-  email: string;
-  user_metadata?: {
-    name?: string;
-    avatar_url?: string;
-  };
-}
+import { useUser } from '@/providers/user-provider';
 
 interface Profile {
   id: string;
@@ -20,7 +12,7 @@ interface Profile {
 }
 
 const UserMenu = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const { user } = useUser();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [apiKey, setApiKey] = useState('');
   const [minReliabilityPercent, setMinReliabilityPercent] = useState<number>(100);
@@ -30,26 +22,26 @@ const UserMenu = () => {
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
-    const fetchUserAndProfile = async () => {
-      setIsLoading(true);
-      setHasError(null);
-      setSaveSuccess(false);
-      const supabase = createSupabaseBrowserClient();
-      const { data, error } = await supabase.auth.getUser();
-      if (error || !data.user) {
-        setHasError(error?.message || 'Failed to fetch user');
-        setUser(null);
+    const fetchProfile = async () => {
+      if (!user) {
         setProfile(null);
         setIsLoading(false);
         return;
       }
-      setUser(data.user as User);
+
+      setIsLoading(true);
+      setHasError(null);
+      setSaveSuccess(false);
+      
+      const supabase = createSupabaseBrowserClient();
+      
       // Fetch profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('id, api_key, min_reliability_percent')
-        .eq('id', data.user.id)
+        .eq('id', user.id)
         .single();
+      
       if (profileError) {
         setHasError(profileError.message);
         setProfile(null);
@@ -64,8 +56,9 @@ const UserMenu = () => {
       }
       setIsLoading(false);
     };
-    fetchUserAndProfile();
-  }, []);
+    
+    fetchProfile();
+  }, [user]);
 
   const handleSignOut = async () => {
     setIsLoading(true);
@@ -75,7 +68,6 @@ const UserMenu = () => {
     if (error) {
       setHasError(error.message);
     } else {
-      setUser(null);
       window.location.href = '/auth';
     }
     setIsLoading(false);

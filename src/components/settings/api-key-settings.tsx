@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { Button } from "@/components/ui/button";
+import { useUser } from '@/providers/user-provider';
 
 interface User {
   id: string;
@@ -19,36 +20,36 @@ interface Profile {
 }
 
 const ApiKeySettings = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const { user } = useUser();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [apiKey, setApiKey] = useState("");
+  const [apiKey, setApiKey] = useState('');
+  const [minReliabilityPercent, setMinReliabilityPercent] = useState<number>(100);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [hasError, setHasError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [minReliabilityPercent, setMinReliabilityPercent] = useState<number>(100);
 
   useEffect(() => {
-    const fetchUserAndProfile = async () => {
-      setIsLoading(true);
-      setHasError(null);
-      setSaveSuccess(false);
-      const supabase = createSupabaseBrowserClient();
-      const { data, error } = await supabase.auth.getUser();
-      if (error || !data.user) {
-        setHasError(error?.message || "Failed to fetch user");
-        setUser(null);
+    const fetchProfile = async () => {
+      if (!user) {
         setProfile(null);
         setIsLoading(false);
         return;
       }
-      setUser(data.user as User);
+
+      setIsLoading(true);
+      setHasError(null);
+      setSaveSuccess(false);
+      
+      const supabase = createSupabaseBrowserClient();
+      
       // Fetch profile
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("id, api_key, min_reliability_percent")
-        .eq("id", data.user.id)
+        .eq("id", user.id)
         .single();
+      
       if (profileError) {
         setHasError(profileError.message);
         setProfile(null);
@@ -63,8 +64,9 @@ const ApiKeySettings = () => {
       }
       setIsLoading(false);
     };
-    fetchUserAndProfile();
-  }, []);
+    
+    fetchProfile();
+  }, [user]);
 
   const handleSaveApiKey = async () => {
     if (!user) return;

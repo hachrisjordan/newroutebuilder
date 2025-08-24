@@ -10,8 +10,12 @@ export const createSupabaseServerClient = () => {
   return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       get: (key: string) => cookieStore.get(key)?.value,
-      set: (key: string, value: string, options: any) => {},
-      remove: (key: string, options: any) => {},
+      set: (key: string, value: string, options: any) => {
+        cookieStore.set(key, value, options);
+      },
+      remove: (key: string, options: any) => {
+        cookieStore.set(key, '', { ...options, maxAge: 0 });
+      },
     },
   });
 };

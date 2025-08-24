@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, CheckCircle, Link, Unlink } from 'lucide-react';
-import { useUser } from '@/hooks/use-user';
+import { useUser } from '@/providers/user-provider';
 import { createClient } from '@supabase/supabase-js';
 import { initiateOAuthFlow } from '@/lib/seatsaero-oauth';
 

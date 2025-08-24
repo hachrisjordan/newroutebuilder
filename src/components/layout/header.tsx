@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
+import { useUser } from '@/providers/user-provider';
 
 const navigation = [
   // { name: 'Home', href: '/' }, // Removed Home link
@@ -41,6 +42,7 @@ export function Header() {
   const [isAtTop, setIsAtTop] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isLoadingRole, setIsLoadingRole] = useState(true);
+  const { user } = useUser();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -53,26 +55,27 @@ export function Header() {
 
   useEffect(() => {
     const fetchUserRole = async () => {
+      if (!user) {
+        setUserRole(null);
+        setIsLoadingRole(false);
+        return;
+      }
+
       setIsLoadingRole(true);
       const supabase = createSupabaseBrowserClient();
-      const { data: { user } } = await supabase.auth.getUser();
       
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
-        
-        setUserRole(profile?.role || null);
-      } else {
-        setUserRole(null);
-      }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      
+      setUserRole(profile?.role || null);
       setIsLoadingRole(false);
     };
     
     fetchUserRole();
-  }, []);
+  }, [user]);
 
   // Shared card style for both desktop and mobile
   const cardClass =

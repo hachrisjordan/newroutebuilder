@@ -27,7 +27,7 @@ interface LiveSearchFormProps {
 }
 
 const maxCombination = 9;
-const PROGRAMS = ["b6",'as','ay'];
+const PROGRAMS = ["b6",'as','ay','aa'];
 
 const getDateLabel = (date: DateRange | undefined) => {
   if (date?.from && date?.to) {

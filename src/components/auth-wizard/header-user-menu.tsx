@@ -1,29 +1,14 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
+import { useUser } from '@/providers/user-provider';
 
 const HeaderUserMenu = () => {
-  const [user, setUser] = useState<{ email: string; user_metadata?: { name?: string } } | null>(null);
+  const { user } = useUser();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const supabase = createSupabaseBrowserClient();
-      const { data } = await supabase.auth.getUser();
-      if (data.user && typeof data.user.email === 'string') {
-        setUser({
-          email: data.user.email,
-          user_metadata: data.user.user_metadata,
-        });
-      } else {
-        setUser(null);
-      }
-    };
-    fetchUser();
-  }, []);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
