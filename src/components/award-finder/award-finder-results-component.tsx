@@ -1223,7 +1223,7 @@ const AwardFinderResultsComponent: React.FC<AwardFinderResultsComponentProps> = 
                    }
                    
                    // Check if ALL non-cash segments have at least one supported option (AS or B6)
-                   const supportedAirlines = ['AS', 'B6']; // Alaska Airlines and JetBlue
+                   const supportedAirlines = ['AS', 'B6','AA']; // Alaska Airlines and JetBlue
                    let allSegmentsHaveOptions = true;
                    
                    for (const group of lineGroups) {
